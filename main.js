@@ -1,32 +1,90 @@
-import { mat4, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
+// Setup canvas
 const canvas = document.getElementById("glcanvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
-
 const gl = canvas.getContext("webgl");
 if (!gl) throw new Error("WebGL not supported");
 
-// Vertex shader source code
+const debug = document.getElementById("cam_debug");
+
+// Mouse tracking
+let mouseX = 0;
+let mouseY = 0;
+
+let virtualCursor = [0,0]; // X/Y on smoe world plane, e.g. z=0
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+let yaw = 0; // rotation around Y (left/right)
+let pitch = 0; // rotation around X (up/down)
+
+let cursorTarget = 0;
+
+
+// Lock cursor to brower window when clicked
+canvas.addEventListener("click", () => {
+    canvas.requestPointerLock();
+});
+
+canvas.addEventListener('mousemove', e => {
+    if (document.pointerLockElement !== canvas) return; // dont move cam unless pointer is locked
+
+    const sensitivity = 0.002; // twerk as needed
+    yaw += e.movementX * sensitivity; // "-" makes it reversed look controls
+    pitch -= e.movementY * sensitivity; // "-" makes it reversed look controls
+
+    const maxPitch = Math.PI / 2 - 0.01;
+    pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+
+    yaw = yaw % (Math.PI * 2); // clamp yaw
+
+
+//     const sensitivity = 0.01; // twerk as needed
+//     virtualCursor[0] += e.movementX * sensitivity;
+//     virtualCursor[1] += e.movementY * sensitivity;
+
+//     let roundedCursor = [virtualCursor[0].toFixed(2), virtualCursor[1].toFixed(2)];
+
+//     console.log(`${roundedCursor}`);
+});
+
+// canvas.addEventListener('mousemove', e => {
+//     const rect = canvas.getBoundingClientRect();
+//     mouseX = e.clientX - rect.left;
+//     mouseY = e.clientY - rect.top;
+
+//     const dx = e.clientX - lastMouseX;
+//     const dy = e.clientY - lastMouseY;
+//     lastMouseX = e.clientX;
+//     lastMouseY = e.clientY;
+
+//     const sensitivity = 0.01; // twerk as needed
+//     virtualCursor[0] += dx * sensitivity;
+//     virtualCursor[1] += dx * sensitivity;
+// });
+
+// Vertex shader
 const vertexSrc = `
 attribute vec3 a_position;
-uniform mat4 u_projection;
-uniform mat4 u_modelView;
-
+uniform mat4 uModel;
+uniform mat4 uView;
+uniform mat4 uProjection;
 void main() {
-    gl_Position = u_projection * u_modelView * vec4(a_position, 1.0);
+    gl_Position = uProjection * uView * uModel * vec4(a_position, 1.0);
 }
 `;
 
-// Fragment shader source code
+// Fragment shader
 const fragmentSrc = `
 precision mediump float;
 void main() {
-    gl_FragColor = vec4(1.0, 0.4, 0.2, 1.0); //orange
+    gl_FragColor = vec4(1.0, 0.4, 0.2, 1.0); // orange
 }
 `;
 
-// Shader compilation
+// Shader utilities
 function compileShader(type, source) {
     const shader = gl.createShader(type);
     gl.shaderSource(shader, source);
@@ -39,7 +97,6 @@ function compileShader(type, source) {
     return shader;
 }
 
-// Link shaders into a program
 function createProgram(vsSource, fsSource) {
     const vs = compileShader(gl.VERTEX_SHADER, vsSource);
     const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
@@ -57,141 +114,173 @@ function createProgram(vsSource, fsSource) {
 const program = createProgram(vertexSrc, fragmentSrc);
 gl.useProgram(program);
 
-// // Setup projection matrix
-// function createPerspectiveMatrix(fov, aspect, near, far) {
-//     const f = 1.0 / Math.tan(fov / 2);
-//     const rangeInv = 1 / (near - far);
+// Uniform locations
+const uModelLoc = gl.getUniformLocation(program, "uModel");
+const uViewLoc = gl.getUniformLocation(program, "uView");
+const uProjLoc = gl.getUniformLocation(program, "uProjection");
 
-//     return new Float32Array([
-//         f / aspect, 0, 0,                           0,
-//         0,          f, 0,                           0,
-//         0,          0,  (near + far) * rangeInv,    -1,
-//         0,          0,  near * far * rangeInv * 2,  0
-//     ]);
-// }
+//#region Vertices
 
-
-// // Static model-view for floor (no rotation)
-// function createStaticModelViewMatrix() {
-//     return new Float32Array([
-//         1, 0, 0, 0,
-//         0, 1, 0, 0,
-//         0, 0, 1, 0,
-//         0, 0, -3, 1
-//     ]);
-// }
-
-// // Set up model-view matrix
-// function createModelViewMatrix(angle) {
-//     const c = Math.cos(angle);
-//     const s = Math.sin(angle);
-
-//     return new Float32Array([
-//         c, 0, s, 0,
-//         0, 1, 0, 0,
-//         -s, 0, c, 0, 
-//         0, 0, -2, 1  // pulls triangle "into" the screen on Z
-//     ]);
-// }
-
-
-
-
-
-
-
-
-
-// Triangle vertex data
+// Vertex data (triangle + floor)
 const vertices = new Float32Array([
-    //  x,      y,      z,
-        0.0,    0.5,    0.0,
-        -0.5,   -0.5,   0.0,
-        0.5,    -0.5,   0.0,        
-        
-        // Floor (two triangles forming a square)
-        -1.0, -0.5, -1.0,
-        1.0, -0.5, -1.0,
-       -1.0, -0.5,  1.0,
-   
-       -1.0, -0.5,  1.0,
-        1.0, -0.5, -1.0,
-        1.0, -0.5,  1.0
+    // Triangle
+     0.0,  0.5,  0.0,
+    -0.5, -0.5,  0.0,
+     0.5, -0.5,  0.0,
+
+    // Floor (2 triangles)
+    -1.0, -0.5, -1.0,
+     1.0, -0.5, -1.0,
+    -1.0, -0.5,  1.0,
+    -1.0, -0.5,  1.0,
+     1.0, -0.5, -1.0,
+     1.0, -0.5,  1.0
 ]);
 
-function createRotationMatrix(angleInRadians) {
-    const c = Math.cos(angleInRadians);
-    const s = Math.sin(angleInRadians);
-
-    // Triangle vertex positions (X, Y)
-    return new Float32Array([
-        c, -s, 0,
-        s, c, 0,
-        0, 0, 1
-    ]);
-}
-
-// Create a buffer and upload the vertex data
 const buffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);  
+gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-// Setup the attributes
 const positionLoc = gl.getAttribLocation(program, "a_position");
 gl.enableVertexAttribArray(positionLoc);
 gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
 
-// Setup uniforms
-const projectionLoc = gl.getUniformLocation(program, "u_projection");
-const modelViewLoc = gl.getUniformLocation(program, "u_modelView");
 
+
+
+//#region Camera
+// Camera movement
+let cameraX = 0;
+let cameraZ = 0;
+const keys = {};
+window.addEventListener("keydown", e => keys[e.key] = true);
+window.addEventListener("keyup", e => keys[e.key] = false);
+
+function updateCameraPosition(dt) {
+    const speed = 2;
+
+    const moveForward = [
+        Math.sin(yaw),
+        0,
+        Math.cos(yaw)
+    ];
+    const right = [
+        Math.cos(yaw),
+        0,
+        -Math.sin(yaw)
+    ];
+
+    if (keys["a"]) { 
+        cameraX -= right[0] * speed * dt;
+        cameraZ -= right[2] * speed * dt;
+    }
+    if (keys["d"]) { 
+        cameraX += right[0] * speed * dt;
+        cameraZ += right[2] * speed * dt;
+    }   
+    if (keys["w"]) { 
+        cameraX -= moveForward[0] * speed * dt;
+        cameraZ -= moveForward[2] * speed * dt;
+    }   
+    if (keys["s"]) { 
+        cameraX += moveForward[0] * speed * dt;
+        cameraZ += moveForward[2] * speed * dt;
+    }   
+}
+
+function getCameraPosition() {
+    return [cameraX, 0, 3 + cameraZ]; // cam is offset by 3 backwards
+}
+
+function getMouseWorldRayTarget(projectionMatrix, cameraPosition) {
+    const ndcX = (mouseX / canvas.width) * 2 - 1;
+    const ndcY = (mouseY / canvas.height) * -2 + 1;
+
+    const clipNear = vec4.fromValues(ndcX, ndcY, -1.0, 1.0);
+    const clipFar = vec4.fromValues(ndcX, ndcY, 1.0, 1.0);
+
+    const forward = [cameraPosition[0], cameraPosition[1], cameraPosition[2] - 1];
+    const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, forward, [0, 1, 0]);
+
+    const invProj = mat4.invert(mat4.create(), projectionMatrix);
+    const invView = mat4.invert(mat4.create(), viewMatrix);
+
+    vec4.transformMat4(clipNear, clipNear, invProj);
+    vec4.transformMat4(clipFar, clipFar, invProj);
+    vec4.transformMat4(clipNear, clipNear, invView);
+    vec4.transformMat4(clipFar, clipFar, invView);
+
+    for (let v of [clipNear, clipFar]) {
+        vec4.scale(v, v, 1 / v[3]);
+    }
+
+    return [clipFar[0], clipFar[1], clipFar[2]];
+}
+
+
+
+// Main loop
 let start = performance.now();
+let lastTime = start;
 
 function drawScene() {
     const now = performance.now();
-    const angle = (now - start) * 0.001; // angle in radians
+    const dt = (now - lastTime) / 1000;
+    lastTime = now;
 
-    const fov = Math.PI / 4;
-    const aspect = canvas.width / canvas.height;
-    const near = 0.1;
-    const far = 100;
+    updateCameraPosition(dt);
+    const cameraPosition = getCameraPosition();
 
-     // glMatrix version:
-    const projection = mat4.create();
-    mat4.perspective(projection, fov, aspect, near, far);
+    const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
+    //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
 
-    const modelViewTriangle = mat4.create();
-    mat4.translate(modelViewTriangle, modelViewTriangle, [0, 0.5, -3]);
-    mat4.rotateY(modelViewTriangle, modelViewTriangle, angle)
+
+    const lookDirection = [
+        Math.cos(pitch) * Math.sin(yaw),
+        Math.sin(pitch),
+        -Math.cos(pitch) * Math.cos(yaw),
+    ];
+
+    const rayTarget = [
+        cameraPosition[0] + lookDirection[0],
+        cameraPosition[1] + lookDirection[1],
+        cameraPosition[2] + lookDirection[2],
+    ]
+
+    const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
+
+    debug.innerText = `
+    Camera Position: (${cameraPosition.map(n => n.toFixed(2)).join(",")})
+    Camera Target:   (${rayTarget.map(n => n.toFixed(2)).join(",")})
     
-    const modelViewFloor = mat4.create();
-    mat4.translate(modelViewFloor, modelViewFloor, [0, 0, -3]);
+    Pitch: [${pitch.toFixed(2)}]   
+    Yaw: [${yaw.toFixed(2)}]
+    `;
 
-    //const projection = createPerspectiveMatrix(fov, aspect, near, far);
-    //const modelViewRotating = createModelViewMatrix(angle);
-    //const modelViewStatic = createStaticModelViewMatrix();
+    const angle = (now - start) * 0.001;
 
-    // const modelViewRotating = modelViewTriangle;
-    // const modelViewStatic = modelViewFloor;
+    // Triangle transform
+    const modelTriangle = mat4.create();
+    mat4.translate(modelTriangle, modelTriangle, [0, 0.5, 6]);
+    mat4.rotateY(modelTriangle, modelTriangle, angle);
 
-    // Set viewport and clear
+    // Floor transform
+    const modelFloor = mat4.create(); // Identity is fine
+
     gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0.0, 0.0, 0.0, 1.0);
-    gl.clear(gl.COLOR_BUFFER_BIT);    
+    gl.clearColor(0, 0, 0, 1);
+    gl.clear(gl.COLOR_BUFFER_BIT);
 
-    // projection is same for both
-    gl.uniformMatrix4fv(projectionLoc, false, projection);
+    gl.uniformMatrix4fv(uViewLoc, false, viewMatrix);
+    gl.uniformMatrix4fv(uProjLoc, false, projectionMatrix);
 
-    // rotating triangle
-    gl.uniformMatrix4fv(modelViewLoc, false, modelViewTriangle);
+    gl.uniformMatrix4fv(uModelLoc, false, modelTriangle);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 
-    // static floor
-    gl.uniformMatrix4fv(modelViewLoc, false, modelViewFloor);
+    gl.uniformMatrix4fv(uModelLoc, false, modelFloor);
     gl.drawArrays(gl.TRIANGLES, 3, 6);
 
     requestAnimationFrame(drawScene);
-
 }
 
 drawScene();
