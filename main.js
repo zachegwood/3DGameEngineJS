@@ -4,10 +4,21 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 const canvas = document.getElementById("glcanvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+
+window.addEventListener("resize", () => {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+    gl.viewport(0, 0, canvas.width, canvas.height);
+});
+
+
 const gl = canvas.getContext("webgl");
 if (!gl) throw new Error("WebGL not supported");
 
 const debug = document.getElementById("cam_debug");
+
+const CAMERA_SPEED = 2.0;
+const MOUSE_SENSITIVITY = 0.002;
 
 // Mouse tracking
 let mouseX = 0;
@@ -31,14 +42,15 @@ canvas.addEventListener("click", () => {
 canvas.addEventListener('mousemove', e => {
     if (document.pointerLockElement !== canvas) return; // dont move cam unless pointer is locked
 
-    const sensitivity = 0.002; // twerk as needed
-    yaw += e.movementX * sensitivity; // "-" makes it reversed look controls
-    pitch -= e.movementY * sensitivity; // "-" makes it reversed look controls
+    yaw += e.movementX * MOUSE_SENSITIVITY; // "-" makes it reversed look controls
+    pitch -= e.movementY * MOUSE_SENSITIVITY; // "-" makes it reversed look controls
 
     const maxPitch = Math.PI / 2 - 0.01;
     pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
 
-    yaw = yaw % (Math.PI * 2); // clamp yaw
+    // Clamp Yaw
+    if (yaw < 0) yaw += Math.PI * 2;
+    if (yaw > Math.PI * 2) yaw -= Math.PI * 2
 
 
 //     const sensitivity = 0.01; // twerk as needed
@@ -151,45 +163,47 @@ gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
 //#region Camera
 // Camera movement
 let cameraX = 0;
-let cameraZ = 0;
+let cameraZ = 3; // positioned behind player
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
 window.addEventListener("keyup", e => keys[e.key] = false);
 
 function updateCameraPosition(dt) {
-    const speed = 2;
 
     const moveForward = [
         Math.sin(yaw),
         0,
         Math.cos(yaw)
     ];
-    const right = [
+    const moveRight = [
         Math.cos(yaw),
         0,
         -Math.sin(yaw)
     ];
 
+    vec3.normalize(moveForward, moveForward);
+    vec3.normalize(moveRight, moveRight);
+
     if (keys["a"]) { 
-        cameraX -= right[0] * speed * dt;
-        cameraZ -= right[2] * speed * dt;
+        cameraX -= moveRight[0] * CAMERA_SPEED * dt;
+        cameraZ -= moveRight[2] * CAMERA_SPEED * dt;
     }
     if (keys["d"]) { 
-        cameraX += right[0] * speed * dt;
-        cameraZ += right[2] * speed * dt;
+        cameraX += moveRight[0] * CAMERA_SPEED * dt;
+        cameraZ += moveRight[2] * CAMERA_SPEED * dt;
     }   
     if (keys["w"]) { 
-        cameraX -= moveForward[0] * speed * dt;
-        cameraZ -= moveForward[2] * speed * dt;
+        cameraX -= moveForward[0] * CAMERA_SPEED * dt;
+        cameraZ -= moveForward[2] * CAMERA_SPEED * dt;
     }   
     if (keys["s"]) { 
-        cameraX += moveForward[0] * speed * dt;
-        cameraZ += moveForward[2] * speed * dt;
+        cameraX += moveForward[0] * CAMERA_SPEED * dt;
+        cameraZ += moveForward[2] * CAMERA_SPEED * dt;
     }   
 }
 
 function getCameraPosition() {
-    return [cameraX, 0, 3 + cameraZ]; // cam is offset by 3 backwards
+    return [cameraX, 0, cameraZ]; // cam is offset by 3 backwards
 }
 
 function getMouseWorldRayTarget(projectionMatrix, cameraPosition) {
@@ -220,10 +234,17 @@ function getMouseWorldRayTarget(projectionMatrix, cameraPosition) {
 
 
 // Main loop
+gl.enable(gl.DEPTH_TEST);
+// gl.enable(gl.CULL_FACE);
+// gl.cullFace(gl.BACK);
+
 let start = performance.now();
 let lastTime = start;
 
 function drawScene() {
+
+    gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
     lastTime = now;
@@ -269,7 +290,6 @@ function drawScene() {
 
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clearColor(0, 0, 0, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
 
     gl.uniformMatrix4fv(uViewLoc, false, viewMatrix);
     gl.uniformMatrix4fv(uProjLoc, false, projectionMatrix);
