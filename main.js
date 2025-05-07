@@ -19,6 +19,7 @@ const debug = document.getElementById("cam_debug");
 
 const CAMERA_SPEED = 2.0;
 const MOUSE_SENSITIVITY = 0.002;
+const TILE_SIZE = 1;
 
 // Mouse tracking
 let mouseX = 0;
@@ -111,6 +112,35 @@ const fs_solidColor = `
 
 
 
+//#region Grid Debug
+
+function createGrid(gl, size = 10, gridSquareSize = TILE_SIZE) {
+    const lines = [];
+    const half = size / 2;
+    const divisions = size / gridSquareSize; // Calculate num of tiles based on grid size and tile size
+    const step = gridSquareSize; // distance between each line
+
+    for (let i = 0; i <= divisions; i++) {
+        const pos = i * step -half;
+
+        // Horizontal lines (parallel to the Z axis)
+        lines.push(-half, -0.2, pos, half, -0.2, pos); // Horizontal lines (along Z)
+
+        // Vertical lines (parallel to the X axis)
+        lines.push(pos, -0.2, -half, pos, -0.2, half); // Vertical lines (along X)
+    }
+
+    const buffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lines), gl.STATIC_DRAW);
+
+    return {
+        buffer,
+        vertexCount: lines.length / 3
+    };
+}
+
+const grid = createGrid(gl, 25, TILE_SIZE);
 
 
 
@@ -189,7 +219,8 @@ class Mesh {
     }
 
     // Helper functions
-    translate(x, y, z) { mat4.fromTranslation(this.modelMatrix, [x, y, z]); }
+    scale(x, y, z) { mat4.scale(this.modelMatrix, this.modelMatrix, [x, y, z]); }
+    translate(x, y, z) { mat4.translate(this.modelMatrix, this.modelMatrix, [x, y, z]); }
     rotateX(angle) { mat4.rotateX(this.modelMatrix, this.modelMatrix, angle); }
     rotateY(angle) { mat4.rotateY(this.modelMatrix, this.modelMatrix, angle); }
     rotateZ(angle) { mat4.rotateZ(this.modelMatrix, this.modelMatrix, angle); }
@@ -230,26 +261,41 @@ function createTriangle(gl) {
     return new Mesh(gl, verts, 3);
 }
 
-function createSquare(gl) {
+function createSquare(gl, size = TILE_SIZE) {
     const verts = [
-        -1.0, -0.5, -1.0, // bottom left
-        1.0, -0.5, -1.0, // bottom right
-       -1.0, -0.5,  1.0, // top left
+        -size, -0.5 * size, -size,  // bottom left
+         size, -0.5 * size, -size,  // bottom right
+        -size, -0.5 * size,  size,  // top left
 
-       -1.0, -0.5,  1.0, // top left
-        1.0, -0.5, -1.0,  //bottom right
-        1.0, -0.5,  1.0 // top right
+        -size, -0.5 * size,  size,  // top left
+         size, -0.5 * size, -size,  // bottom right
+         size, -0.5 * size,  size   // top right
     ];
 
+    //const uvScale = 10; // how many times the texture should repeat
+
+    // const uvScale = TILE_SIZE/2;
+    // const uvs = [
+    //     0.0, 0.0,
+    //     uvScale, 0.0,
+    //     0.0, uvScale,
+
+    //     0.0, uvScale,
+    //     uvScale, 0.0,
+    //     uvScale, uvScale
+    // ]
+
+    // Adjust the UV coordinates based on the size of the square
+    const uvScale = size;  // size for texture repetition
     const uvs = [
         0.0, 0.0,
-        1.0, 0.0,
-        0.0, 1.0,
+        uvScale, 0.0,
+        0.0, uvScale,
 
-        0.0, 1.0,
-        1.0, 0.0,
-        1.0, 1.0
-    ]
+        0.0, uvScale,
+        uvScale, 0.0,
+        uvScale, uvScale
+    ];
 
     return new Mesh(gl, verts, 6, uvs);
 }
@@ -281,6 +327,8 @@ function loadTexture(gl, url) {
         gl.bindTexture(gl.TEXTURE_2D, texture);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
                         gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.generateMipmap(gl.TEXTURE_2D);
     };
     image.src = url;
@@ -297,11 +345,13 @@ const programSolidColor = createProgram(gl, vs_solidColor, fs_solidColor);
 const shaderSolidColor = new Shader(gl, programSolidColor);
 
 
+//#region Create Shapes
+
 const triangle = createTriangle(gl);
 triangle.translate(0,0,0);
 
-const square = createSquare(gl);
-square.translate(0, 0, -3);
+const square = createSquare(gl, 1);
+square.translate(0, 0, 0);
 
 const triangle2 = createTriangle(gl);
 triangle2.translate(0, 0.5, 6);
@@ -346,14 +396,14 @@ window.addEventListener("keyup", e => keys[e.key] = false);
 function updateCameraPosition(dt) {
 
     const moveForward = [
-        Math.sin(yaw),
+        -Math.sin(yaw),
         0,
         Math.cos(yaw)
     ];
     const moveRight = [
         Math.cos(yaw),
         0,
-        -Math.sin(yaw)
+        Math.sin(yaw)
     ];
 
     vec3.normalize(moveForward, moveForward);
@@ -456,16 +506,20 @@ function render() {
     Yaw: [${yaw.toFixed(2)}]
     `;
 
+
+    
     
 
     // Update transforms
     mat4.identity(triangle.modelMatrix); // reset each frame
     triangle.translate(0, 0.5, 0);
-    triangle.rotateY(dt * Math.PI);
+    triangle.rotateY(angle);
 
     mat4.identity(square.modelMatrix); // reset each frame
-    square.translate(0,0,0);
-    square.rotateY(angle);
+    square.scale(TILE_SIZE, 1.0, TILE_SIZE);
+    square.translate(0,0,3);    
+    //square.rotateY(angle);
+    
 
 
 
@@ -487,6 +541,16 @@ function render() {
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.projection, false, projectionMatrix);
     gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 1.0, 0.0, 1.0); // Green color
 
+    // Bind the grid buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, grid.buffer);
+    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+    // Identity model matrix for the grid
+    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
+
+    // Draw grid (lines)
+    gl.drawArrays(gl.LINES, 0, grid.vertexCount);
 
 
     // Draw Meshes
