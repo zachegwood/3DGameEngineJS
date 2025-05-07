@@ -77,54 +77,261 @@ canvas.addEventListener('mousemove', e => {
 //     virtualCursor[1] += dx * sensitivity;
 // });
 
+//#region Shaders
+
 // Vertex shader
 const vertexSrc = `
 attribute vec3 a_position;
+attribute vec2 uv;
+
 uniform mat4 uModel;
 uniform mat4 uView;
 uniform mat4 uProjection;
+
+varying vec2 v_uv; // Passing UVs to the fragment shader
+
 void main() {
     gl_Position = uProjection * uView * uModel * vec4(a_position, 1.0);
+    v_uv = uv; // Pass UV to fragment shader
 }
 `;
 
 // Fragment shader
 const fragmentSrc = `
 precision mediump float;
+
+uniform sampler2D textureSampler; // Texture Sampler
+
+varying vec2 v_uv; // Receiving the UVs
+
 void main() {
-    gl_FragColor = vec4(1.0, 0.4, 0.2, 1.0); // orange
+    gl_FragColor = texture2D(textureSampler, v_uv); // Sample texture at the given UV
 }
 `;
+//
 
-// Shader utilities
-function compileShader(type, source) {
-    const shader = gl.createShader(type);
-    gl.shaderSource(shader, source);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(shader));
-        gl.deleteShader(shader);
-        return null;
+//#region CreateProgram
+// Compile and link shader program
+function createProgram(gl, vsSource, fsSource) {
+
+    function compile(type, source) {
+        const shader = gl.createShader(type);
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+            throw new Error(gl.getShaderInfoLog(shader));
+        }
+        return shader;
     }
-    return shader;
-}
 
-function createProgram(vsSource, fsSource) {
-    const vs = compileShader(gl.VERTEX_SHADER, vsSource);
-    const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+    const vs = compile(gl.VERTEX_SHADER, vsSource);
+    const fs = compile(gl.FRAGMENT_SHADER, fsSource);
+
     const program = gl.createProgram();
     gl.attachShader(program, vs);
     gl.attachShader(program, fs);
     gl.linkProgram(program);
+
     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-        console.error(gl.getProgramInfoLog(program));
-        return null;
+        throw new Error(gl.getProgramInfoLog(program));
     }
+
     return program;
+
 }
 
-const program = createProgram(vertexSrc, fragmentSrc);
-gl.useProgram(program);
+//#region Shader Class
+// Class: Shader program + attribute/uniform locations
+class Shader {
+    constructor(gl, program) {
+        this.gl = gl;
+        this.program = program;
+        this.attribLocations = {
+            position: gl.getAttribLocation(program, "a_position"),
+            uv: gl.getAttribLocation(program, "uv"), 
+        };
+        this.uniformLocations = {
+            model: gl.getUniformLocation(program, "uModel"),
+            view: gl.getUniformLocation(program, "uView"),
+            projection: gl.getUniformLocation(program, "uProjection"),
+        };
+    }
+
+    use() {
+        this.gl.useProgram(this.program);
+    }
+}
+
+//#region Mesh Class
+// Class: Holds a vertex buffer and model transform
+class Mesh {
+    constructor(gl, vertices, vertexCount, uvs = null) {
+        this.gl = gl;
+        this.vertexCount = vertexCount;
+
+        this.buffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+
+        // UV buffer (optional)
+        if (uvs) {
+            this.uvBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
+        }
+
+        this.modelMatrix = mat4.create();
+    }
+
+    // Helper functions
+    translate(x, y, z) { mat4.fromTranslation(this.modelMatrix, [x, y, z]); }
+    rotateX(angle) { mat4.rotateX(this.modelMatrix, this.modelMatrix, angle); }
+    rotateY(angle) { mat4.rotateY(this.modelMatrix, this.modelMatrix, angle); }
+    rotateZ(angle) { mat4.rotateZ(this.modelMatrix, this.modelMatrix, angle); }
+
+    draw(shader) {
+        const gl = this.gl;
+
+        shader.use();
+
+        // Bind the vertex position buffer
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.enableVertexAttribArray(shader.attribLocations.position);
+        gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+        // Bind UV buffer if it exists
+        if (this.uvBuffer) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
+            gl.enableVertexAttribArray(shader.attribLocations.uv);
+            gl.vertexAttribPointer(shader.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
+        }
+
+        // Pass the model matrix to the shader
+        gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
+
+        // Draw the mesh
+        gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);       
+    }
+}
+
+//#region Shapes Factory
+// Factory: Make a triangle mesh
+function createTriangle(gl) {
+    const verts = [
+         0.0,  0.5, 0.0,
+        -0.5, -0.5, 0.0,
+         0.5, -0.5, 0.0
+    ];
+    return new Mesh(gl, verts, 3);
+}
+
+function createSquare(gl) {
+    const verts = [
+        -1.0, -0.5, -1.0, // bottom left
+        1.0, -0.5, -1.0, // bottom right
+       -1.0, -0.5,  1.0, // top left
+
+       -1.0, -0.5,  1.0, // top left
+        1.0, -0.5, -1.0,  //bottom right
+        1.0, -0.5,  1.0 // top right
+    ];
+
+    const uvs = [
+        0.0, 0.0,
+        1.0, 0.0,
+        0.0, 1.0,
+
+        0.0, 1.0,
+        1.0, 0.0,
+        1.0, 1.0
+    ]
+
+    return new Mesh(gl, verts, 6, uvs);
+}
+
+function createSquareSize(gl, size) {
+    const verts = [
+        -size, -0.5*size, -size,
+        size, -0.5*size, -size,
+       -size, -0.5*size,  size,
+       -size, -0.5*size,  size,
+       size, -0.5*size, -size,
+       size, -0.5*size,  size
+    ];
+    return new Mesh(gl, verts, 6);
+}
+
+
+
+
+// // Shader utilities
+// function compileShader(type, source) {
+//     const shader = gl.createShader(type);
+//     gl.shaderSource(shader, source);
+//     gl.compileShader(shader);
+//     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+//         console.error(gl.getShaderInfoLog(shader));
+//         gl.deleteShader(shader);
+//         return null;
+//     }
+//     return shader;
+// }
+
+// function createProgramOld(vsSource, fsSource) {
+//     const vs = compileShader(gl.VERTEX_SHADER, vsSource);
+//     const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
+//     const program = gl.createProgram();
+//     gl.attachShader(program, vs);
+//     gl.attachShader(program, fs);
+//     gl.linkProgram(program);
+//     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+//         console.error(gl.getProgramInfoLog(program));
+//         return null;
+//     }
+//     return program;
+// }
+
+// const program = createProgramOld(vertexSrc, fragmentSrc);
+// gl.useProgram(program);
+
+//#region Load Texture
+function loadTexture(gl, url) {
+    const texture = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+
+    // Temporary 1px texture while loading
+    const pixel = new Uint8Array([255, 255, 255, 255]); // white
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, 1, 1, 0,
+                    gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+
+    const image = new Image();
+    image.onload = function () {
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA,
+                        gl.RGBA, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+    };
+
+    image.src = url;
+
+    return texture;
+}
+
+const texture = loadTexture(gl, "testTile.png");
+
+const program = createProgram(gl, vertexSrc, fragmentSrc);
+const shader = new Shader(gl, program);
+
+const triangle = createTriangle(gl);
+triangle.translate(0,0,0);
+
+const square = createSquare(gl);
+square.translate(0, 0, -3);
+
+const triangle2 = createTriangle(gl);
+triangle2.translate(0, 0.5, 6);
+
+
 
 // Uniform locations
 const uModelLoc = gl.getUniformLocation(program, "uModel");
@@ -153,9 +360,9 @@ const buffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-const positionLoc = gl.getAttribLocation(program, "a_position");
-gl.enableVertexAttribArray(positionLoc);
-gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
+// const positionLoc = gl.getAttribLocation(program, "a_position");
+// gl.enableVertexAttribArray(positionLoc);
+// gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
 
 
 
@@ -241,20 +448,23 @@ gl.enable(gl.DEPTH_TEST);
 let start = performance.now();
 let lastTime = start;
 
-function drawScene() {
+//#region Render Loop
+function render() {
 
+    gl.clearColor(.01, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const now = performance.now();
     const dt = (now - lastTime) / 1000;
     lastTime = now;
 
+    const angle = (now - start) * 0.001; // deterministic time step
+
     updateCameraPosition(dt);
     const cameraPosition = getCameraPosition();
 
     const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
     //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
-
 
     const lookDirection = [
         Math.cos(pitch) * Math.sin(yaw),
@@ -278,29 +488,32 @@ function drawScene() {
     Yaw: [${yaw.toFixed(2)}]
     `;
 
-    const angle = (now - start) * 0.001;
+    
 
-    // Triangle transform
-    const modelTriangle = mat4.create();
-    mat4.translate(modelTriangle, modelTriangle, [0, 0.5, 6]);
-    mat4.rotateY(modelTriangle, modelTriangle, angle);
+    // Update transforms
+    mat4.identity(triangle.modelMatrix); // reset each frame
+    triangle.translate(0, 0.5, 0);
+    triangle.rotateY(dt * Math.PI);
 
-    // Floor transform
-    const modelFloor = mat4.create(); // Identity is fine
+    mat4.identity(square.modelMatrix); // reset each frame
+    square.translate(0,0,0);
+    square.rotateY(angle);
 
-    gl.viewport(0, 0, canvas.width, canvas.height);
-    gl.clearColor(0, 0, 0, 1);
+    // Set view and projection
+    shader.use();
+    gl.uniformMatrix4fv(shader.uniformLocations.view, false, viewMatrix);
+    gl.uniformMatrix4fv(shader.uniformLocations.projection, false, projectionMatrix);
 
-    gl.uniformMatrix4fv(uViewLoc, false, viewMatrix);
-    gl.uniformMatrix4fv(uProjLoc, false, projectionMatrix);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture);
+    gl.uniform1i(gl.getUniformLocation(shader.program, "textureSampler"), 0);
 
-    gl.uniformMatrix4fv(uModelLoc, false, modelTriangle);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    // Draw Meshes
+    triangle.draw(shader);
+    square.draw(shader);
+    triangle2.draw(shader);
 
-    gl.uniformMatrix4fv(uModelLoc, false, modelFloor);
-    gl.drawArrays(gl.TRIANGLES, 3, 6);
-
-    requestAnimationFrame(drawScene);
+    requestAnimationFrame(render);
 }
 
-drawScene();
+render();
