@@ -52,52 +52,30 @@ canvas.addEventListener('mousemove', e => {
     if (yaw < 0) yaw += Math.PI * 2;
     if (yaw > Math.PI * 2) yaw -= Math.PI * 2
 
-
-//     const sensitivity = 0.01; // twerk as needed
-//     virtualCursor[0] += e.movementX * sensitivity;
-//     virtualCursor[1] += e.movementY * sensitivity;
-
-//     let roundedCursor = [virtualCursor[0].toFixed(2), virtualCursor[1].toFixed(2)];
-
-//     console.log(`${roundedCursor}`);
 });
 
-// canvas.addEventListener('mousemove', e => {
-//     const rect = canvas.getBoundingClientRect();
-//     mouseX = e.clientX - rect.left;
-//     mouseY = e.clientY - rect.top;
-
-//     const dx = e.clientX - lastMouseX;
-//     const dy = e.clientY - lastMouseY;
-//     lastMouseX = e.clientX;
-//     lastMouseY = e.clientY;
-
-//     const sensitivity = 0.01; // twerk as needed
-//     virtualCursor[0] += dx * sensitivity;
-//     virtualCursor[1] += dx * sensitivity;
-// });
 
 //#region Shaders
 
 // Vertex shader
-const vertexSrc = `
+const vs_textureUV = `
 attribute vec3 a_position;
 attribute vec2 uv;
 
-uniform mat4 uModel;
-uniform mat4 uView;
-uniform mat4 uProjection;
+uniform mat4 u_model;
+uniform mat4 u_view;
+uniform mat4 u_projection;
 
 varying vec2 v_uv; // Passing UVs to the fragment shader
 
 void main() {
-    gl_Position = uProjection * uView * uModel * vec4(a_position, 1.0);
+    gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
     v_uv = uv; // Pass UV to fragment shader
 }
 `;
 
 // Fragment shader
-const fragmentSrc = `
+const fs_textureUV = `
 precision mediump float;
 
 uniform sampler2D textureSampler; // Texture Sampler
@@ -108,7 +86,34 @@ void main() {
     gl_FragColor = texture2D(textureSampler, v_uv); // Sample texture at the given UV
 }
 `;
-//
+
+const vs_solidColor = `
+    attribute vec3 a_position;
+
+    uniform mat4 u_model;
+    uniform mat4 u_view;
+    uniform mat4 u_projection;
+
+    void main() {
+        gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
+    }
+`;
+
+const fs_solidColor = `
+    precision mediump float;
+
+    uniform vec4 u_color;
+
+    void main() {
+        gl_FragColor = u_color;
+    }
+`;
+
+
+
+
+
+
 
 //#region CreateProgram
 // Compile and link shader program
@@ -151,9 +156,9 @@ class Shader {
             uv: gl.getAttribLocation(program, "uv"), 
         };
         this.uniformLocations = {
-            model: gl.getUniformLocation(program, "uModel"),
-            view: gl.getUniformLocation(program, "uView"),
-            projection: gl.getUniformLocation(program, "uProjection"),
+            model: gl.getUniformLocation(program, "u_model"),
+            view: gl.getUniformLocation(program, "u_view"),
+            projection: gl.getUniformLocation(program, "u_projection"),
         };
     }
 
@@ -261,39 +266,6 @@ function createSquareSize(gl, size) {
     return new Mesh(gl, verts, 6);
 }
 
-
-
-
-// // Shader utilities
-// function compileShader(type, source) {
-//     const shader = gl.createShader(type);
-//     gl.shaderSource(shader, source);
-//     gl.compileShader(shader);
-//     if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-//         console.error(gl.getShaderInfoLog(shader));
-//         gl.deleteShader(shader);
-//         return null;
-//     }
-//     return shader;
-// }
-
-// function createProgramOld(vsSource, fsSource) {
-//     const vs = compileShader(gl.VERTEX_SHADER, vsSource);
-//     const fs = compileShader(gl.FRAGMENT_SHADER, fsSource);
-//     const program = gl.createProgram();
-//     gl.attachShader(program, vs);
-//     gl.attachShader(program, fs);
-//     gl.linkProgram(program);
-//     if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
-//         console.error(gl.getProgramInfoLog(program));
-//         return null;
-//     }
-//     return program;
-// }
-
-// const program = createProgramOld(vertexSrc, fragmentSrc);
-// gl.useProgram(program);
-
 //#region Load Texture
 function loadTexture(gl, url) {
     const texture = gl.createTexture();
@@ -311,7 +283,6 @@ function loadTexture(gl, url) {
                         gl.RGBA, gl.UNSIGNED_BYTE, image);
         gl.generateMipmap(gl.TEXTURE_2D);
     };
-
     image.src = url;
 
     return texture;
@@ -319,8 +290,12 @@ function loadTexture(gl, url) {
 
 const texture = loadTexture(gl, "testTile.png");
 
-const program = createProgram(gl, vertexSrc, fragmentSrc);
-const shader = new Shader(gl, program);
+const programTextureUV = createProgram(gl, vs_textureUV, fs_textureUV);
+const shaderTextureUV = new Shader(gl, programTextureUV);
+
+const programSolidColor = createProgram(gl, vs_solidColor, fs_solidColor);
+const shaderSolidColor = new Shader(gl, programSolidColor);
+
 
 const triangle = createTriangle(gl);
 triangle.translate(0,0,0);
@@ -334,9 +309,9 @@ triangle2.translate(0, 0.5, 6);
 
 
 // Uniform locations
-const uModelLoc = gl.getUniformLocation(program, "uModel");
-const uViewLoc = gl.getUniformLocation(program, "uView");
-const uProjLoc = gl.getUniformLocation(program, "uProjection");
+const uModelLoc = gl.getUniformLocation(programTextureUV, "u_model");
+const uViewLoc = gl.getUniformLocation(programTextureUV, "u_view");
+const uProjLoc = gl.getUniformLocation(programTextureUV, "u_projection");
 
 //#region Vertices
 
@@ -359,13 +334,6 @@ const vertices = new Float32Array([
 const buffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
 gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
-
-// const positionLoc = gl.getAttribLocation(program, "a_position");
-// gl.enableVertexAttribArray(positionLoc);
-// gl.vertexAttribPointer(positionLoc, 3, gl.FLOAT, false, 0, 0);
-
-
-
 
 //#region Camera
 // Camera movement
@@ -499,19 +467,31 @@ function render() {
     square.translate(0,0,0);
     square.rotateY(angle);
 
-    // Set view and projection
-    shader.use();
-    gl.uniformMatrix4fv(shader.uniformLocations.view, false, viewMatrix);
-    gl.uniformMatrix4fv(shader.uniformLocations.projection, false, projectionMatrix);
 
+
+    // Set view and projection matrices for all objects
+    shaderTextureUV.use();
+    gl.uniformMatrix4fv(shaderTextureUV.uniformLocations.view, false, viewMatrix);
+    gl.uniformMatrix4fv(shaderTextureUV.uniformLocations.projection, false, projectionMatrix);    
+
+    // Set texture / UV shader
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(gl.getUniformLocation(shader.program, "textureSampler"), 0);
+    gl.uniform1i(gl.getUniformLocation(shaderTextureUV.program, "textureSampler"), 0);
+
+    square.draw(shaderTextureUV);
+
+    // Solid color
+    shaderSolidColor.use();
+    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.view, false, viewMatrix);
+    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.projection, false, projectionMatrix);
+    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 1.0, 0.0, 1.0); // Green color
+
+
 
     // Draw Meshes
-    triangle.draw(shader);
-    square.draw(shader);
-    triangle2.draw(shader);
+    triangle.draw(shaderSolidColor);    
+    triangle2.draw(shaderSolidColor);
 
     requestAnimationFrame(render);
 }
