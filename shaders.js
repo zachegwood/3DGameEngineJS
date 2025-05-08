@@ -7,12 +7,15 @@ export class Shader {
         this.program = program;
         this.attribLocations = {
             position: gl.getAttribLocation(program, "a_position"),
+            normal: gl.getAttribLocation(program, "a_normal"),
             uv: gl.getAttribLocation(program, "uv"), 
         };
         this.uniformLocations = {
             model: gl.getUniformLocation(program, "u_model"),
             view: gl.getUniformLocation(program, "u_view"),
             projection: gl.getUniformLocation(program, "u_projection"),
+            color: gl.getUniformLocation(program, "u_color"),
+            lightDirection: gl.getUniformLocation(program, "u_lightDirection"),
         };
     }
 
@@ -55,8 +58,14 @@ export function createProgram(gl, vsSource, fsSource) {
 
 //#region Shaders
 
+
+
+
+
+
 export const shaders = {
 
+    //#region UV Shader
     // Vertex shader
     vs_textureUV: `
     attribute vec3 a_position;
@@ -87,6 +96,8 @@ export const shaders = {
     }
     `,
 
+    //#region Solid Shader
+
     vs_solidColor: `
         attribute vec3 a_position;
 
@@ -107,6 +118,50 @@ export const shaders = {
         void main() {
             gl_FragColor = u_color;
         }
+    `,
+
+    vs_lighting: `
+        precision mediump float;
+
+        attribute vec3 a_position;
+        attribute vec3 a_normal;
+
+        uniform mat4 u_model;
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+
+        varying vec3 v_normal;
+        varying vec3 v_worldPosition;
+
+        void main() {
+            // Transform the position to world space
+            vec4 worldPosition = u_model * vec4(a_position, 1.0);
+            v_worldPosition = worldPosition.xyz;
+
+            // Transform and normalize the normal (no need for manual inverse/transpose here)
+            v_normal = normalize(mat3(u_model) * a_normal);  // Simple normal transformation
+
+            // Final Position
+            gl_Position = u_projection * u_view * worldPosition;
+        }
+    `,
+
+    fs_lighting: `
+        precision mediump float;
+
+        uniform vec3 u_lightDirection; // should be normalized
+        uniform vec4 u_color;
+
+        varying vec3 v_normal;
+        varying vec3 v_worldPosition;
+
+        void main () {
+            vec3 normal = normalize(v_normal);
+            float lightFactor = max(dot(normal, -u_lightDirection), 0.0);
+
+            vec3 baseColor = u_color.rgb * lightFactor;
+            gl_FragColor = vec4(baseColor, u_color.a);
+        }    
     `,
 
 }

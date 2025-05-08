@@ -64,8 +64,6 @@ export function getRayTarget() {
         cameraZ + lookDirection[2],
     ]
 
-    console.log(getCameraPosition[0]);
-
     return rayTarget;
 }
 

@@ -1,12 +1,17 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
+
+const TILE_SIZE = 1;
+
+
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
-export class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null) {
+class Mesh {
+    constructor(gl, vertices, vertexCount, uvs = null, normals = null) {
         this.gl = gl;
         this.vertexCount = vertexCount;
 
+        // Position buffer
         this.buffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
@@ -16,6 +21,13 @@ export class Mesh {
             this.uvBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(uvs), gl.STATIC_DRAW);
+        }
+
+        // Normal buffer (optional)
+        if (normals) {
+            this.normalBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
         }
 
         this.modelMatrix = mat4.create();
@@ -33,17 +45,26 @@ export class Mesh {
 
         shader.use();
 
-        // Bind the vertex position buffer
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-        gl.enableVertexAttribArray(shader.attribLocations.position);
-        gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+        if (shader.attribLocations.position !== -1) {
 
-        // Bind UV buffer if it exists
-        if (this.uvBuffer) {
+            // Bind the vertex position buffer
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+            gl.enableVertexAttribArray(shader.attribLocations.position);
+            gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+        }
+
+        if (shader.attribLocations.uv !== -1 && this.uvBuffer) {
+
             gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
             gl.enableVertexAttribArray(shader.attribLocations.uv);
             gl.vertexAttribPointer(shader.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
-        }
+        } 
+
+        if (shader.attribLocations.normal !== -1 && this.normalBuffer) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
+            gl.enableVertexAttribArray(shader.attribLocations.normal);
+            gl.vertexAttribPointer(shader.attribLocations.normal, 3, gl.FLOAT, false, 0, 0);
+        } 
 
         // Pass the model matrix to the shader
         gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
@@ -53,15 +74,21 @@ export class Mesh {
     }
 }
 
-//#region Shapes Factory
+//#region 2D Shapes
 // Factory: Make a triangle mesh
-export function createTriangle(gl) {
+export function createTriangle(gl, size = TILE_SIZE / 2) {
     const verts = [
          0.0,  0.5, 0.0,
         -0.5, -0.5, 0.0,
          0.5, -0.5, 0.0
     ];
-    return new Mesh(gl, verts, 3);
+    const uvs = [
+        0.5, 1.0,   // top
+        0.0, 0.0,   // bottom left
+        1.0, 0.0    // bottom right
+    ];
+
+    return new Mesh(gl, verts, 3, uvs);
 }
 
 export function createSquare(gl, size = TILE_SIZE / 2) {
@@ -74,19 +101,6 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
          size, 0, -size,  // bottom right
          size, 0,  size   // top right
     ];
-
-    //const uvScale = 10; // how many times the texture should repeat
-
-    // const uvScale = TILE_SIZE/2;
-    // const uvs = [
-    //     0.0, 0.0,
-    //     uvScale, 0.0,
-    //     0.0, uvScale,
-
-    //     0.0, uvScale,
-    //     uvScale, 0.0,
-    //     uvScale, uvScale
-    // ]
 
     // Adjust the UV coordinates based on the size of the square
     const uvScale = size;  // size for texture repetition
@@ -103,17 +117,88 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
     return new Mesh(gl, verts, 6, uvs);
 }
 
-export function createSquareSize(gl, size) {
-    const verts = [
-        -size, -0.5*size, -size,
-        size, -0.5*size, -size,
-       -size, -0.5*size,  size,
-       -size, -0.5*size,  size,
-       size, -0.5*size, -size,
-       size, -0.5*size,  size
+//#region 3D Shapes
+
+export function createCube(gl, size = 0.5) {
+    const s = size;
+
+    // 6 faces * 2 triangles per face * 3 vertices per triangle = 36 vertices
+    const positions = [
+        // Front (+Z)
+        -s, -s,  s,   s, -s,  s,   s,  s,  s,
+        -s, -s,  s,   s,  s,  s,  -s,  s,  s,
+
+        // Back (-Z)
+         s, -s, -s,  -s, -s, -s,  -s,  s, -s,
+         s, -s, -s,  -s,  s, -s,   s,  s, -s,
+
+        // Top (+Y)
+        -s,  s,  s,   s,  s,  s,   s,  s, -s,
+        -s,  s,  s,   s,  s, -s,  -s,  s, -s,
+
+        // Bottom (-Y)
+        -s, -s, -s,   s, -s, -s,   s, -s,  s,
+        -s, -s, -s,   s, -s,  s,  -s, -s,  s,
+
+        // Right (+X)
+         s, -s,  s,   s, -s, -s,   s,  s, -s,
+         s, -s,  s,   s,  s, -s,   s,  s,  s,
+
+        // Left (-X)
+        -s, -s, -s,  -s, -s,  s,  -s,  s,  s,
+        -s, -s, -s,  -s,  s,  s,  -s,  s, -s,
     ];
-    return new Mesh(gl, verts, 6);
+
+    const uvs = [
+        // Repeated per face (6 faces)
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+
+        0, 0, 1, 0, 1, 1,
+        0, 0, 1, 1, 0, 1,
+    ];
+
+    const normals = [
+        // Front (+Z)
+        0, 0, 1,   0, 0, 1,   0, 0, 1,
+        0, 0, 1,   0, 0, 1,   0, 0, 1,
+
+        // Back (-Z)
+        0, 0, -1,  0, 0, -1,  0, 0, -1,
+        0, 0, -1,  0, 0, -1,  0, 0, -1,
+
+        // Top (+Y)
+        0, 1, 0,   0, 1, 0,   0, 1, 0,
+        0, 1, 0,   0, 1, 0,   0, 1, 0,
+
+        // Bottom (-Y)
+        0, -1, 0,  0, -1, 0,  0, -1, 0,
+        0, -1, 0,  0, -1, 0,  0, -1, 0,
+
+        // Right (+X)
+        1, 0, 0,   1, 0, 0,   1, 0, 0,
+        1, 0, 0,   1, 0, 0,   1, 0, 0,
+
+        // Left (-X)
+        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
+        -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
+    ];
+
+    return new Mesh(gl, positions, 36, uvs, normals);
 }
+
 
 //#region Load Texture
 export function loadTexture(gl, url) {
