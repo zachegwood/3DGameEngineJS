@@ -114,33 +114,74 @@ const fs_solidColor = `
 
 //#region Grid Debug
 
-function createGrid(gl, size = 10, gridSquareSize = TILE_SIZE) {
+function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
     const lines = [];
-    const half = size / 2;
-    const divisions = size / gridSquareSize; // Calculate num of tiles based on grid size and tile size
+    const centerLines = [];
     const step = gridSquareSize; // distance between each line
+    const height = 0; // Y pos
+    const fallOffRadius = halfCount/0.81;
+    const radiusSquared = fallOffRadius * fallOffRadius;
 
-    for (let i = 0; i <= divisions; i++) {
-        const pos = i * step -half;
+    for (let i = -halfCount; i <= halfCount; i++) {
+        const pos = i * step;
 
-        // Horizontal lines (parallel to the Z axis)
-        lines.push(-half, -0.2, pos, half, -0.2, pos); // Horizontal lines (along Z)
+        // center lines. Add to diff array so we can color them differently
+        if (pos === 0) {
+            centerLines.push(-halfCount * step *2, height, pos, halfCount * step * 2, height, pos); // Horizontal line (along Z)
+            centerLines.push(pos, height, -halfCount * step * 2, pos, height, halfCount * step * 2); // Vertical line (along X)
+            continue;
+        }
 
-        // Vertical lines (parallel to the X axis)
-        lines.push(pos, -0.2, -half, pos, -0.2, half); // Vertical lines (along X)
+        // Horizontal lines
+        const hStart = [-halfCount * step, height, pos];
+        const hEnd = [halfCount * step, height, pos];
+
+        // Vertical lines
+        const vStart = [pos, height, -halfCount * step];
+        const vEnd = [pos, height, halfCount * step];
+
+        const hStartInRange = hStart[0] ** 2 + hStart[2] ** 2 <= radiusSquared;
+        const hEndInRange = hEnd[0] ** 2 + hEnd[2] ** 2 <= radiusSquared;
+        const vStartInRange = vStart[0] ** 2 + vStart[2] ** 2 <= radiusSquared;
+        const vEndInRange = vEnd[0] ** 2 + vEnd[2] ** 2 <= radiusSquared;
+
+        if (hStartInRange || hEndInRange) {
+            lines.push(...hStart, ...hEnd);
+        }
+        if (vStartInRange || vEndInRange) {
+            lines.push(...vStart, ...vEnd);
+        }
+
+        // // Horizontal lines (parallel to the Z axis)
+        // lines.push(-halfCount * step, height, pos, halfCount * step, height, pos); // Horizontal lines (along Z)
+
+        // // Vertical lines (parallel to the X axis)
+        // lines.push(pos, height, -halfCount * step, pos, height, halfCount * step); // Vertical lines (along X)
     }
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(lines), gl.STATIC_DRAW);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...lines, ...centerLines]), gl.STATIC_DRAW);
 
     return {
         buffer,
-        vertexCount: lines.length / 3
+        vertexCount: (lines.length + centerLines.length) / 3,
+        centerLines: centerLines // Return the center lines as well
     };
 }
 
-const grid = createGrid(gl, 25, TILE_SIZE);
+const grid = createGrid(gl, 15, TILE_SIZE);
+
+//#region Debug Ray 
+
+const originRay = [
+    0, 0, 0, // origin
+    0, 10, 0 // 10 units straight up
+];
+
+const rayBuffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(originRay), gl.STATIC_DRAW);
 
 
 
@@ -261,15 +302,15 @@ function createTriangle(gl) {
     return new Mesh(gl, verts, 3);
 }
 
-function createSquare(gl, size = TILE_SIZE) {
+function createSquare(gl, size = TILE_SIZE / 2) {
     const verts = [
-        -size, -0.5 * size, -size,  // bottom left
-         size, -0.5 * size, -size,  // bottom right
-        -size, -0.5 * size,  size,  // top left
+        -size, 0, -size,  // bottom left
+         size, 0, -size,  // bottom right
+        -size, 0,  size,  // top left
 
-        -size, -0.5 * size,  size,  // top left
-         size, -0.5 * size, -size,  // bottom right
-         size, -0.5 * size,  size   // top right
+        -size, 0,  size,  // top left
+         size, 0, -size,  // bottom right
+         size, 0,  size   // top right
     ];
 
     //const uvScale = 10; // how many times the texture should repeat
@@ -388,6 +429,7 @@ gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 //#region Camera
 // Camera movement
 let cameraX = 0;
+let cameraY = 1; 
 let cameraZ = 3; // positioned behind player
 const keys = {};
 window.addEventListener("keydown", e => keys[e.key] = true);
@@ -428,7 +470,7 @@ function updateCameraPosition(dt) {
 }
 
 function getCameraPosition() {
-    return [cameraX, 0, cameraZ]; // cam is offset by 3 backwards
+    return [cameraX, cameraY, cameraZ]; // cam is offset by 3 backwards
 }
 
 function getMouseWorldRayTarget(projectionMatrix, cameraPosition) {
@@ -539,6 +581,8 @@ function render() {
     shaderSolidColor.use();
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.view, false, viewMatrix);
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.projection, false, projectionMatrix);
+
+    // Set color to Green
     gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 1.0, 0.0, 1.0); // Green color
 
     // Bind the grid buffer
@@ -550,8 +594,26 @@ function render() {
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
 
     // Draw grid (lines)
-    gl.drawArrays(gl.LINES, 0, grid.vertexCount);
+    gl.drawArrays(gl.LINES, 0, grid.vertexCount - grid.centerLines.length / 3); // all lines except last ones
 
+    // Set color to 
+    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 1.0, 1.0, 0.0, 1.0); //  color
+    
+
+    // Draw grid (center lines)
+    gl.drawArrays(gl.LINES, grid.vertexCount - grid.centerLines.length  / 3, grid.centerLines.length / 3); // last lines (center)
+
+    // Change debug color
+    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 1.0, 0.0, 0.0, 1.0);
+
+    // Draw Origin Ray
+    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
+    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
+
+    // Change debug color
+    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 0.0, 1.0, 1.0);
 
     // Draw Meshes
     triangle.draw(shaderSolidColor);    
