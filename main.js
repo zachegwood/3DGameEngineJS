@@ -44,7 +44,43 @@ const rayBuffer = gl.createBuffer();
 gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
 gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(originRay), gl.STATIC_DRAW);
 
+function DrawGrid(viewMatrix, projectionMatrix) {
+// Solid color
+    shaderSolidColor.use();
+    shaderSolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 0.0, 1.0]);
 
+    // Bind the grid buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, grid.buffer);
+    if (shaderSolidColor.attribLocations.position !== -1) {
+        gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+        gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+    }
+
+    // Identity model matrix for the grid
+    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
+
+    // Draw grid (lines)
+    gl.drawArrays(gl.LINES, 0, grid.vertexCount - grid.centerLines.length / 3); // all lines except last ones
+
+    // // Set color to yellow?
+    shaderSolidColor.setColor(1.0, 1.0, 0.0, 1.0);
+    
+    // Draw grid (center lines)
+    gl.drawArrays(gl.LINES, grid.vertexCount - grid.centerLines.length  / 3, grid.centerLines.length / 3); // last lines (center)
+
+    // Reset to identity before drawing ray
+    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
+
+    // Change debug color -- red
+    shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
+
+    // Draw Origin Ray
+    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
+    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
+
+}
 
 
 //#region CreateProgram
@@ -100,6 +136,9 @@ cube.translate(-2.0, 0.0, -2.0);
 cube.scale(1.0, 0.5, 1.0);
 
 
+
+
+
 // let yaw = 0; // rotation around Y (left/right)
 // let pitch = 0; // rotation around X (up/down)
 
@@ -142,7 +181,7 @@ function render() {
     Yaw: [${yaw.toFixed(2)}]
     `;
 
-
+DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuffs
     
     
 
@@ -157,57 +196,20 @@ function render() {
     //square.rotateY(angle);
 
 
-
     
 
 
 
     // Set view and projection matrices for all objects
     shaderTextureUV.use();
-    gl.uniformMatrix4fv(shaderTextureUV.uniformLocations.view, false, viewMatrix);
-    gl.uniformMatrix4fv(shaderTextureUV.uniformLocations.projection, false, projectionMatrix);    
-
-    // Set texture / UV shader
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture);
-    gl.uniform1i(gl.getUniformLocation(shaderTextureUV.program, "textureSampler"), 0);
+    shaderTextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);   
 
     square.draw(shaderTextureUV);
 
-    // Solid color
-    shaderSolidColor.use();
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.view, false, viewMatrix);
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.projection, false, projectionMatrix);
-
-    // Set color to Green
-    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 1.0, 0.0, 1.0); // Green color
-
-    // Bind the grid buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, grid.buffer);
-    if (shaderSolidColor.attribLocations.position !== -1) {
-        gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-        gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
-    }
-
-    // Identity model matrix for the grid
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
-
-    // Draw grid (lines)
-    gl.drawArrays(gl.LINES, 0, grid.vertexCount - grid.centerLines.length / 3); // all lines except last ones
-
-    // Set color to ...yellow?
-    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 1.0, 1.0, 0.0, 1.0); //  color
     
-    // Draw grid (center lines)
-    gl.drawArrays(gl.LINES, grid.vertexCount - grid.centerLines.length  / 3, grid.centerLines.length / 3); // last lines (center)
-
-
     // Lighting Shader
-    shaderLighting.use();
-    
-    gl.uniformMatrix4fv(shaderLighting.uniformLocations.view, false, viewMatrix);
-    gl.uniformMatrix4fv(shaderLighting.uniformLocations.projection, false, projectionMatrix);
-    gl.uniform4f(shaderLighting.uniformLocations.color, 0.8, 0.8, 0.8, 1.0);
+    shaderLighting.use();  
+    shaderLighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
     gl.uniform3f(shaderLighting.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
 
 
@@ -218,27 +220,19 @@ function render() {
 
     cube.draw(shaderLighting);
 
+    
+
+    
     shaderSolidColor.use();
-
-    // Reset to identity before drawing ray
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
-
-    // Change debug color -- red
-    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 1.0, 0.0, 0.0, 1.0);
-
-
-
-    // Draw Origin Ray
-    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
-    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
-
-    // Change debug color -- blue
-    gl.uniform4f(gl.getUniformLocation(shaderSolidColor.program, "u_color"), 0.0, 0.0, 1.0, 1.0);
+    shaderSolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
 
     // Draw Meshes
     triangle.draw(shaderSolidColor);    
+
+    shaderTextureUV.use();    
+    shaderTextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
+    
+    // draw mesh 
     triangle2.draw(shaderTextureUV);
 
     requestAnimationFrame(render);

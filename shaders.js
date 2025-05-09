@@ -16,11 +16,28 @@ export class Shader {
             projection: gl.getUniformLocation(program, "u_projection"),
             color: gl.getUniformLocation(program, "u_color"),
             lightDirection: gl.getUniformLocation(program, "u_lightDirection"),
+            textureSampler: gl.getUniformLocation(program, "textureSampler"),
         };
     }
 
     use() {
         this.gl.useProgram(this.program);
+    }
+
+    setColor(r, g, b, a) {
+        this.gl.uniform4f(this.uniformLocations.color, r, g, b, a);
+    }
+
+    setUniforms(view, projection, model, color, texture = null) {
+        if (view) this.gl.uniformMatrix4fv(this.uniformLocations.view, false, view);
+        if (projection) this.gl.uniformMatrix4fv(this.uniformLocations.projection, false, projection); 
+        if (model) this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
+        if (color) this.gl.uniform4fv(this.uniformLocations.color, color);
+        if (texture !== undefined) { 
+            this.gl.activeTexture(this.gl.TEXTURE0);
+            this.gl.bindTexture(this.gl.TEXTURE_2D, texture);
+            this.gl.uniform1i(this.uniformLocations.textureSampler, 0);
+        }
     }
 }
 

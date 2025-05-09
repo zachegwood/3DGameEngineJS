@@ -43,7 +43,7 @@ class Mesh {
     draw(shader) {
         const gl = this.gl;
 
-        shader.use();
+        //shader.use();
 
         if (shader.attribLocations.position !== -1) {
 
@@ -54,7 +54,6 @@ class Mesh {
         }
 
         if (shader.attribLocations.uv !== -1 && this.uvBuffer) {
-
             gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
             gl.enableVertexAttribArray(shader.attribLocations.uv);
             gl.vertexAttribPointer(shader.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
