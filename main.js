@@ -4,6 +4,9 @@ import { Shader, createProgram, shaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, createCube} from './meshShapes.js'
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, yaw, pitch, getRayTarget } from './camera.js'
 
+import { Player } from './player.js';
+
+
 // Setup canvas
 const canvas = document.getElementById("glcanvas");
 canvas.width = window.innerWidth;
@@ -31,7 +34,7 @@ const TILE_SIZE = 1;
 
 
 
-//#region Debug  
+//#region Debug Grid
 
 const grid = createGrid(gl, 15, TILE_SIZE);
 
@@ -132,10 +135,11 @@ for (let i = 0; i < columnCount; i++) {
 }
 
 const cube = createCube(gl, 0.5);
-cube.translate(-2.0, 0.0, -2.0);
-cube.scale(1.0, 0.5, 1.0);
+// cube.translate(-2.0, 0.0, -2.0);
+// cube.scale(1.0, 0.5, 1.0);
 
-
+const playerOne = new Player(cube);
+console.log(`players mesh is ${playerOne.mesh}`);
 
 
 
@@ -143,27 +147,68 @@ cube.scale(1.0, 0.5, 1.0);
 // let pitch = 0; // rotation around X (up/down)
 
 
-// Main loop
+//  loop
 gl.enable(gl.DEPTH_TEST);
 // gl.enable(gl.CULL_FACE);
 // gl.cullFace(gl.BACK);
 
 let start = performance.now();
 let lastTime = start;
+const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second
+let accumulator = 0;
+
+//#region Game Loop
+
+function gameLoop(timestamp) {
+
+    if (!lastTime) lastTime = timestamp;
+    const deltaTimeMs = timestamp - lastTime;
+    const dt = deltaTimeMs * 0.01; // dt is in seconds.
+    const elapsedTime = performance.now() - start;
+    lastTime = timestamp;
+    accumulator += dt;
+
+    // Fixed time step updates
+    while (accumulator >= FIXED_TIMESTEP) {
+        updateCameraPosition(FIXED_TIMESTEP / 1000); // pass delta in seconds
+        accumulator -= FIXED_TIMESTEP;
+    }
+
+
+
+    playerOne.update(dt);
+
+    // Render
+    render(elapsedTime); 
+
+
+
+
+    
+
+
+
+
+
+
+
+
+    // Loop
+    requestAnimationFrame(gameLoop);
+}
+
+requestAnimationFrame(gameLoop);
+
 
 //#region Render Loop
-function render() {
+function render(elapsedTime) {
 
     gl.clearColor(.01, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-    const now = performance.now();
-    const dt = (now - lastTime) / 1000;
-    lastTime = now;
+    const angle = elapsedTime * 0.001; // deterministic time step
 
-    const angle = (now - start) * 0.001; // deterministic time step
-
-    updateCameraPosition(dt);
+   
     const cameraPosition = getCameraPosition();
 
     const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
@@ -181,19 +226,21 @@ function render() {
     Yaw: [${yaw.toFixed(2)}]
     `;
 
-DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuffs
+    DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuffs
     
     
+    
+
 
     // Update transforms
     mat4.identity(triangle.modelMatrix); // reset each frame
     triangle.translate(0, 0.5, 0);
     triangle.rotateY(angle);
 
-    mat4.identity(square.modelMatrix); // reset each frame
-    //square.scale(1.0, 1.0, 1.0);
-    square.translate(0,0,0);    
-    //square.rotateY(angle);
+    // mat4.identity(square.modelMatrix); // reset each frame
+    // //square.scale(1.0, 1.0, 1.0);
+    // square.translate(0,0,0);    
+    // //square.rotateY(angle);
 
 
     
@@ -218,7 +265,6 @@ DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuf
         columnsArray[i].draw(shaderLighting);
     }
 
-    cube.draw(shaderLighting);
 
     
 
@@ -229,13 +275,19 @@ DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuf
     // Draw Meshes
     triangle.draw(shaderSolidColor);    
 
+        //cube.draw(shaderLighting);
+    playerOne.draw(gl, shaderSolidColor, viewMatrix, projectionMatrix);
+
     shaderTextureUV.use();    
     shaderTextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
     
     // draw mesh 
     triangle2.draw(shaderTextureUV);
 
-    requestAnimationFrame(render);
 }
 
-render();
+
+
+
+
+

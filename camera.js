@@ -24,9 +24,11 @@ let cameraX = 0;
 let cameraY = 1; 
 let cameraZ = 3; // positioned behind player
 
-const keys = {};
-window.addEventListener("keydown", e => keys[e.key] = true);
-window.addEventListener("keyup", e => keys[e.key] = false);
+export let forwardMovementVector = vec3.create();
+export let rightMovementVector = vec3.create();
+export let forwardLookVector = vec3.create();
+
+
 
 // Lock cursor to brower window when clicked
 canvas.addEventListener("click", () => {
@@ -52,16 +54,17 @@ canvas.addEventListener('mousemove', e => {
 //#region Get Ray Target
 export function getRayTarget() {
 
-    const lookDirection = [
-        Math.cos(pitch) * Math.sin(yaw),
-        Math.sin(pitch),
-        -Math.cos(pitch) * Math.cos(yaw),
-    ];
+    
+    const x = Math.cos(pitch) * Math.sin(yaw);
+    const y = Math.sin(pitch);
+    const z = -Math.cos(pitch) * Math.cos(yaw);    
+
+    vec3.set(forwardLookVector, x, y, z); // set cam var for passing later
 
     const rayTarget = [
-        cameraX + lookDirection[0],
-        cameraY + lookDirection[1],
-        cameraZ + lookDirection[2],
+        cameraX + x,
+        cameraY + y,
+        cameraZ + z,
     ]
 
     return rayTarget;
@@ -70,36 +73,37 @@ export function getRayTarget() {
 //#region  Update Cam Pos
 export function updateCameraPosition(dt) {
 
-    const moveForward = [
-        -Math.sin(yaw),
-        0,
-        Math.cos(yaw)
-    ];
-    const moveRight = [
-        Math.cos(yaw),
-        0,
-        Math.sin(yaw)
-    ];
+    const Fx = -Math.sin(yaw);
+    const Fy = 0;
+    const Fz = Math.cos(yaw);
 
-    vec3.normalize(moveForward, moveForward);
-    vec3.normalize(moveRight, moveRight);
+    vec3.set(forwardMovementVector, Fx, Fy, Fz); // this is also cam var for passing to other scripts 
+    vec3.normalize(forwardMovementVector, forwardMovementVector);
 
-    if (keys["a"]) { 
-        cameraX -= moveRight[0] * CAMERA_SPEED * dt;
-        cameraZ -= moveRight[2] * CAMERA_SPEED * dt;
-    }
-    if (keys["d"]) { 
-        cameraX += moveRight[0] * CAMERA_SPEED * dt;
-        cameraZ += moveRight[2] * CAMERA_SPEED * dt;
-    }   
-    if (keys["w"]) { 
-        cameraX -= moveForward[0] * CAMERA_SPEED * dt;
-        cameraZ -= moveForward[2] * CAMERA_SPEED * dt;
-    }   
-    if (keys["s"]) { 
-        cameraX += moveForward[0] * CAMERA_SPEED * dt;
-        cameraZ += moveForward[2] * CAMERA_SPEED * dt;
-    }   
+    const Rx = Math.cos(yaw);
+    const Ry = 0;
+    const Rz = Math.sin(yaw);
+
+    //vec3.normalize(moveForward, moveForward);
+    vec3.set(rightMovementVector, Rx, Ry, Rz);
+    vec3.normalize(rightMovementVector, rightMovementVector);
+
+    // if (keys["a"]) { 
+    //     cameraX -= moveRight[0] * CAMERA_SPEED * dt;
+    //     cameraZ -= moveRight[2] * CAMERA_SPEED * dt;
+    // }
+    // if (keys["d"]) { 
+    //     cameraX += moveRight[0] * CAMERA_SPEED * dt;
+    //     cameraZ += moveRight[2] * CAMERA_SPEED * dt;
+    // }   
+    // if (keys["w"]) { 
+    //     cameraX -= moveForward[0] * CAMERA_SPEED * dt;
+    //     cameraZ -= moveForward[2] * CAMERA_SPEED * dt;
+    // }   
+    // if (keys["s"]) { 
+    //     cameraX += moveForward[0] * CAMERA_SPEED * dt;
+    //     cameraZ += moveForward[2] * CAMERA_SPEED * dt;
+    // }   
 }
 
 export function getCameraPosition() {
