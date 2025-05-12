@@ -1,16 +1,20 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { createGrid } from './debug.js';
+import { createGrid, DrawGrid } from './debug.js';
 import { Shader, createProgram, shaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, createCube} from './meshShapes.js'
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, yaw, pitch, getRayTarget } from './camera.js'
 
 import { Player } from './player.js';
 
+//#region GL and Canvas
 
 // Setup canvas
 const canvas = document.getElementById("glcanvas");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
+
+const gl = canvas.getContext("webgl");
+if (!gl) throw new Error("WebGL not supported");
 
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
@@ -18,13 +22,9 @@ window.addEventListener("resize", () => {
     gl.viewport(0, 0, canvas.width, canvas.height);
 });
 
-const gl = canvas.getContext("webgl");
-if (!gl) throw new Error("WebGL not supported");
-
 const debugElement = document.getElementById("cam_debug");
 
 
-const TILE_SIZE = 1;
 
 
 
@@ -34,56 +34,7 @@ const TILE_SIZE = 1;
 
 
 
-//#region Debug Grid
 
-const grid = createGrid(gl, 15, TILE_SIZE);
-
-const originRay = [
-    0, 0, 0, // origin
-    0, 10, 0 // 10 units straight up
-];
-
-const rayBuffer = gl.createBuffer();
-gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(originRay), gl.STATIC_DRAW);
-
-function DrawGrid(viewMatrix, projectionMatrix) {
-// Solid color
-    shaderSolidColor.use();
-    shaderSolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 0.0, 1.0]);
-
-    // Bind the grid buffer
-    gl.bindBuffer(gl.ARRAY_BUFFER, grid.buffer);
-    if (shaderSolidColor.attribLocations.position !== -1) {
-        gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-        gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
-    }
-
-    // Identity model matrix for the grid
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
-
-    // Draw grid (lines)
-    gl.drawArrays(gl.LINES, 0, grid.vertexCount - grid.centerLines.length / 3); // all lines except last ones
-
-    // // Set color to yellow?
-    shaderSolidColor.setColor(1.0, 1.0, 0.0, 1.0);
-    
-    // Draw grid (center lines)
-    gl.drawArrays(gl.LINES, grid.vertexCount - grid.centerLines.length  / 3, grid.centerLines.length / 3); // last lines (center)
-
-    // Reset to identity before drawing ray
-    gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
-
-    // Change debug color -- red
-    shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
-
-    // Draw Origin Ray
-    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
-    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
-
-}
 
 
 //#region CreateProgram
@@ -226,7 +177,7 @@ function render(elapsedTime) {
     Yaw: [${yaw.toFixed(2)}]
     `;
 
-    DrawGrid(viewMatrix, projectionMatrix); // debug grid draw methods. all GPU stuffs
+    DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor); // debug grid draw methods. all GPU stuffs
     
     
     
