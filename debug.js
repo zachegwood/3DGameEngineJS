@@ -42,12 +42,6 @@ export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
         if (vStartInRange || vEndInRange) {
             lines.push(...vStart, ...vEnd);
         }
-
-        // // Horizontal lines (parallel to the Z axis)
-        // lines.push(-halfCount * step, height, pos, halfCount * step, height, pos); // Horizontal lines (along Z)
-
-        // // Vertical lines (parallel to the X axis)
-        // lines.push(pos, height, -halfCount * step, pos, height, halfCount * step); // Vertical lines (along X)
     }    
 
     const buffer = gl.createBuffer();

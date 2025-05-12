@@ -3,7 +3,8 @@ import { getMovementVector } from "./controls.js"; // also provides movement vec
 import { forwardMovementVector, rightMovementVector } from './camera.js';
 
 
-const SPEED = 1;
+const SPEED = 3;
+const PLAYER_HEIGHT = 1; // size of mesh
 
 
 export class Player {
@@ -12,6 +13,9 @@ export class Player {
         this.velocity = vec3.create();
         this.mesh = mesh;
         this.modelMatrix = mat4.create();
+
+        // offset Y position by half size of cube, so we're ON the floor
+        this.position[1] = PLAYER_HEIGHT/2;
     }
 
     update(dt) {
@@ -35,9 +39,9 @@ export class Player {
         vec3.scale(movement, movement, SPEED * dt);
 
         vec3.add(this.position, this.position, movement);
-            console.log(" Position is : " + this.position);
-    console.log(" MovementVector is : " + getMovementVector());
-    console.log("dt is: " + dt);
+        // console.log(" Position is : " + this.position);
+        // console.log(" MovementVector is : " + getMovementVector());
+        // console.log("dt is: " + dt);
 
         //mat4.fromTranslation(this.modelMatrix, this.position);
 
@@ -47,7 +51,7 @@ export class Player {
 
 
 
-        console.log(this.modelMatrix);
+        //console.log(this.modelMatrix);
 
     }
 

@@ -43,8 +43,6 @@ class Mesh {
     draw(shader) {
         const gl = this.gl;
 
-        //shader.use();
-
         if (shader.attribLocations.position !== -1) {
 
             // Bind the vertex position buffer

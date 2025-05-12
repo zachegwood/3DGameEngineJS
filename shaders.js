@@ -73,7 +73,32 @@ export function createProgram(gl, vsSource, fsSource) {
 }
 
 
-//#region Shaders
+//#region Create Shaders
+// Passes an object of shader programs to Main.js. Access like myShaders.SolidColor
+export function CreateShaders(gl) {
+    
+    const programTextureUV = createProgram(gl, shaders.vs_textureUV, shaders.fs_textureUV);
+    const TextureUV = new Shader(gl, programTextureUV);
+
+    const programSolidColor = createProgram(gl, shaders.vs_solidColor, shaders.fs_solidColor);
+    const SolidColor = new Shader(gl, programSolidColor);
+
+    const programLighting = createProgram(gl, shaders.vs_lighting, shaders.fs_lighting);
+    const Lighting = new Shader(gl, programLighting);
+
+    return {
+        TextureUV,
+        SolidColor,
+        Lighting,
+    }
+}
+
+
+
+
+
+
+//#region Shader Code
 
 
 
@@ -82,7 +107,7 @@ export function createProgram(gl, vsSource, fsSource) {
 
 export const shaders = {
 
-    //#region UV Shader
+    //#region UV Texture
     // Vertex shader
     vs_textureUV: `
     attribute vec3 a_position;
@@ -113,7 +138,7 @@ export const shaders = {
     }
     `,
 
-    //#region Solid Shader
+    //#region Solid Color
 
     vs_solidColor: `
         attribute vec3 a_position;
@@ -137,6 +162,7 @@ export const shaders = {
         }
     `,
 
+    //#region Lighting
     vs_lighting: `
         precision mediump float;
 

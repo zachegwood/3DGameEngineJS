@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { createGrid, DrawGrid } from './debug.js';
-import { Shader, createProgram, shaders } from './shaders.js';
+import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, createCube} from './meshShapes.js'
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, yaw, pitch, getRayTarget } from './camera.js'
 
@@ -24,31 +24,14 @@ window.addEventListener("resize", () => {
 
 const debugElement = document.getElementById("cam_debug");
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-//#region CreateProgram
-
 const texture = loadTexture(gl, "Art/testTile.png");
 
-const programTextureUV = createProgram(gl, shaders.vs_textureUV, shaders.fs_textureUV);
-const shaderTextureUV = new Shader(gl, programTextureUV);
+// object that holds refs to all shaders. Created in shaders.js
+const myShaders = CreateShaders(gl);
 
-const programSolidColor = createProgram(gl, shaders.vs_solidColor, shaders.fs_solidColor);
-const shaderSolidColor = new Shader(gl, programSolidColor);
 
-const programLighting = createProgram(gl, shaders.vs_lighting, shaders.fs_lighting);
-const shaderLighting = new Shader(gl, programLighting);
+
+
 
 
 //#region Create Shapes
@@ -98,14 +81,14 @@ console.log(`players mesh is ${playerOne.mesh}`);
 // let pitch = 0; // rotation around X (up/down)
 
 
-//  loop
+
 gl.enable(gl.DEPTH_TEST);
 // gl.enable(gl.CULL_FACE);
 // gl.cullFace(gl.BACK);
 
 let start = performance.now();
 let lastTime = start;
-const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second
+const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second. 16.666... ms
 let accumulator = 0;
 
 //#region Game Loop
@@ -113,36 +96,27 @@ let accumulator = 0;
 function gameLoop(timestamp) {
 
     if (!lastTime) lastTime = timestamp;
-    const deltaTimeMs = timestamp - lastTime;
-    const dt = deltaTimeMs * 0.01; // dt is in seconds.
-    const elapsedTime = performance.now() - start;
-    lastTime = timestamp;
-    accumulator += dt;
 
-    // Fixed time step updates
+    const deltaTimeMs = timestamp - lastTime;
+    lastTime = timestamp;
+    accumulator += deltaTimeMs;
+
+
+
+
+    // Player Update
+    playerOne.update(deltaTimeMs / 1000) // in seconds
+
+        // Fixed time step updates
     while (accumulator >= FIXED_TIMESTEP) {
-        updateCameraPosition(FIXED_TIMESTEP / 1000); // pass delta in seconds
+        updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
         accumulator -= FIXED_TIMESTEP;
     }
 
-
-
-    playerOne.update(dt);
-
-    // Render
-    render(elapsedTime); 
-
-
-
-
+    //console.log(playerOne.position);
     
-
-
-
-
-
-
-
+    // Render loop
+    render(performance.now() - start);
 
     // Loop
     requestAnimationFrame(gameLoop);
@@ -158,7 +132,6 @@ function render(elapsedTime) {
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
     const angle = elapsedTime * 0.001; // deterministic time step
-
    
     const cameraPosition = getCameraPosition();
 
@@ -169,15 +142,15 @@ function render(elapsedTime) {
 
     const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
 
-    debugElement.innerText = `
-    Camera Position: (${cameraPosition.map(n => n.toFixed(2)).join(",")})
-    Camera Target:   (${rayTarget.map(n => n.toFixed(2)).join(",")})
+    // debugElement.innerText = `
+    // Camera Position: (${cameraPosition.map(n => n.toFixed(2)).join(",")})
+    // Camera Target:   (${rayTarget.map(n => n.toFixed(2)).join(",")})
     
-    Pitch: [${pitch.toFixed(2)}]   
-    Yaw: [${yaw.toFixed(2)}]
-    `;
+    // Pitch: [${pitch.toFixed(2)}]   
+    // Yaw: [${yaw.toFixed(2)}]
+    // `;
 
-    DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor); // debug grid draw methods. all GPU stuffs
+    DrawGrid(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // debug grid draw methods. all GPU stuffs
     
     
     
@@ -199,41 +172,42 @@ function render(elapsedTime) {
 
 
     // Set view and projection matrices for all objects
-    shaderTextureUV.use();
-    shaderTextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);   
+    myShaders.TextureUV.use();
+    myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);   
 
-    square.draw(shaderTextureUV);
+    square.draw(myShaders.TextureUV);
 
     
     // Lighting Shader
-    shaderLighting.use();  
-    shaderLighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
-    gl.uniform3f(shaderLighting.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
+    myShaders.Lighting.use();  
+    myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
+    gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
+
 
 
     for (let i = 0; i < columnsArray.length; i++) {
-        gl.uniformMatrix4fv(shaderLighting.uniformLocations.model, false, columnsArray[i].modelMatrix);
-        columnsArray[i].draw(shaderLighting);
+        gl.uniformMatrix4fv(myShaders.Lighting.uniformLocations.model, false, columnsArray[i].modelMatrix);
+        columnsArray[i].draw(myShaders.Lighting);
     }
 
 
     
 
     
-    shaderSolidColor.use();
-    shaderSolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
+    myShaders.SolidColor.use();
+    myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
 
     // Draw Meshes
-    triangle.draw(shaderSolidColor);    
+    triangle.draw(myShaders.SolidColor);    
 
-        //cube.draw(shaderLighting);
-    playerOne.draw(gl, shaderSolidColor, viewMatrix, projectionMatrix);
+            //cube.draw(shaderLighting);
+    playerOne.draw(gl, myShaders.Lighting, viewMatrix, projectionMatrix);
 
-    shaderTextureUV.use();    
-    shaderTextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
+    myShaders.TextureUV.use();    
+    myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
     
     // draw mesh 
-    triangle2.draw(shaderTextureUV);
+    triangle2.draw(myShaders.TextureUV);
 
 }
 
