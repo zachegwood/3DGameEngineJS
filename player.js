@@ -59,7 +59,7 @@ export class Player {
 
         shader.use();
 
-        shader.setUniforms(viewMatrix, projectionMatrix, null, [1.0, 0.0, 0.0, 1.0]);
+        shader.setUniforms(viewMatrix, projectionMatrix, null, [1.0, 0.6, 1.4, 1.0]);
         //gl.uniform3f(shader.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
 
         this.mesh.draw(shader);

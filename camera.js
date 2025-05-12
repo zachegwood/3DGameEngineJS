@@ -11,10 +11,6 @@ const MOUSE_SENSITIVITY = 0.002;
 let mouseX = 0;
 let mouseY = 0;
 
-// let virtualCursor = [0,0]; // X/Y on smoe world plane, e.g. z=0
-// let lastMouseX = 0;
-// let lastMouseY = 0;
-
 export let yaw = 0; // rotation around Y (left/right)
 export let pitch = 0; // rotation around X (up/down)
 
@@ -28,10 +24,7 @@ const MAX_FOLLOW_DIST = 10.0;
 let followTarget = null;
 let followDistance = 5;  // positioned behind player
 
-// Camera movement
-let cameraX = 0;
-let cameraY = 1; 
-let cameraZ = followDistance; // positioned behind player
+let cameraPosition = vec3.fromValues(0, 1, followDistance); 
 
 export let forwardMovementVector = vec3.create();
 export let rightMovementVector = vec3.create();
@@ -41,7 +34,6 @@ export let forwardLookVector = vec3.create();
 
 
 //#region Event Listeners
-
 
 // Lock cursor to brower window when clicked
 canvas.addEventListener("click", () => {
@@ -72,24 +64,21 @@ addEventListener("wheel", (e) => {
 });
 
 
-
-
+// =====================================================================
+                // THE CODE
+// =====================================================================
 
 //#region Get Ray Target
 export function getRayTarget() {
 
-    
-    const x = Math.cos(pitch) * Math.sin(yaw);
-    const y = Math.sin(pitch);
-    const z = -Math.cos(pitch) * Math.cos(yaw);    
+    const lookDir = vec3.set(forwardLookVector, 
+        Math.cos(pitch) * Math.sin(yaw),
+        Math.sin(pitch),
+        -Math.cos(pitch) * Math.cos(yaw)
+    );
 
-    vec3.set(forwardLookVector, x, y, z); // set cam var for passing later
-
-    const rayTarget = [
-        cameraX + x,
-        cameraY + y,
-        cameraZ + z,
-    ]
+    const rayTarget = vec3.create();
+    vec3.add(rayTarget, cameraPosition, lookDir)
 
     return rayTarget;
 }
@@ -100,24 +89,21 @@ export function updateCameraPosition(dt, targetPos) {
     // Forward Vector
 
     const Fx = -Math.sin(yaw);
-    const Fy = 0;
     const Fz = Math.cos(yaw);
 
-    vec3.set(forwardMovementVector, Fx, Fy, Fz); // this is also cam var for passing to other scripts 
+    vec3.set(forwardMovementVector, Fx, 0, Fz); // this is also cam var for passing to other scripts 
     vec3.normalize(forwardMovementVector, forwardMovementVector);
 
     // Right Vector
 
     const Rx = Math.cos(yaw);
-    const Ry = 0;
     const Rz = Math.sin(yaw);
 
-    vec3.set(rightMovementVector, Rx, Ry, Rz);
+    vec3.set(rightMovementVector, Rx, 0, Rz);
     vec3.normalize(rightMovementVector, rightMovementVector);
 
-    // Orbit target
+    // Orbit offset
 
-    // lock up/down look
     if (pitch > MIN_PITCH) pitch = MIN_PITCH;
     if (pitch < MAX_PITCH) pitch = MAX_PITCH;
 
@@ -128,15 +114,11 @@ export function updateCameraPosition(dt, targetPos) {
     );
     vec3.scale(offset, offset, -followDistance); // subtract follow distance
 
-    // Set camera pos relative to target
-    cameraX = targetPos[0] + offset[0];
-    cameraY = targetPos[1] + offset[1];
-    cameraZ = targetPos[2] + offset[2];
-
+    vec3.add(cameraPosition, targetPos, offset);
 }
 
 export function getCameraPosition() {
-    return [cameraX, cameraY, cameraZ]; // cam is offset by 3 backwards
+    return cameraPosition;
 }
 
 //#region World Raycast
@@ -147,7 +129,8 @@ export function getMouseWorldRayTarget(projectionMatrix, cameraPosition) {
     const clipNear = vec4.fromValues(ndcX, ndcY, -1.0, 1.0);
     const clipFar = vec4.fromValues(ndcX, ndcY, 1.0, 1.0);
 
-    const forward = [cameraPosition[0], cameraPosition[1], cameraPosition[2] - 1];
+    const forward = vec3.clone(cameraPosition);
+    forward[2] -= 1;
     const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, forward, [0, 1, 0]);
 
     const invProj = mat4.invert(mat4.create(), projectionMatrix);

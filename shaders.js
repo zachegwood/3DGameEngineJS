@@ -200,7 +200,9 @@ export const shaders = {
 
         void main () {
             vec3 normal = normalize(v_normal);
+            float ambient = 0.2; 
             float lightFactor = max(dot(normal, -u_lightDirection), 0.0);
+            lightFactor = ambient + (1.0 - ambient) * lightFactor;
 
             vec3 baseColor = u_color.rgb * lightFactor;
             gl_FragColor = vec4(baseColor, u_color.a);

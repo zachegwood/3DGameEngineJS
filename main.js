@@ -181,7 +181,7 @@ function render(elapsedTime) {
     // Lighting Shader
     myShaders.Lighting.use();  
     myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
-    gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
+    gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -0.8, 0.8); // Example direction
 
 
 

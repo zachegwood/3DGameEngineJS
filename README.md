@@ -1,3 +1,15 @@
+### Future Improvements
+
+Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
+
+: 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
+
+
+
+
+
+
+
 # Table of Contents
 
 [Main](#mainjs)
