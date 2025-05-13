@@ -42,14 +42,8 @@ const myShaders = CreateShaders(gl);
 // triangle.translate(0,0,0);
 
 const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
-const square = new Entity(createSquare(gl, 1), [0,0,0]);
-const triangle2 = new Entity(createTriangle(gl,1), [-2, 0.5, -3]);
-
-// const square = createSquare(gl, 4); // square size 4. uv will repeat.
-// square.translate(0, 0, 0);
-
-// const triangle2 = createTriangle(gl, 2);
-// triangle2.translate(0, 0.5, 6);
+const square = new Entity(createSquare(gl, 2), [0,0,0]);
+const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
 
 const columnsArray = [];
 const columnCount = 16;
@@ -58,18 +52,14 @@ let zDepth = 0;
 
 for (let i = 0; i < columnCount; i++) {    
 
-    //const colSquare = createSquare(gl, 1.0);
-    //colSquare.translate((xSide * 10), 0, zDepth);
-
     let randHeight = Math.random() * (15-2) + 2; // random height between 2 and 15
 
-    //const colCube = createCube(gl, 0.5);
     const colCube = new Entity(createCube(gl, 0.5));
-    colCube.translate((xSide * 10), randHeight/2, zDepth);
-    //colCube.scale(1.0, randHeight, 1.0);
-    columnsArray.push(colCube);
 
-    //console.log(colSquare.modelMatrix);
+    colCube.translate((xSide * 10), randHeight/2, zDepth);
+    colCube.scale(1.0, randHeight, 1.0);
+
+    columnsArray.push(colCube);
 
     xSide *= -1; // flip sides
     if (i % 2 !== 0) zDepth -= 10; // move back a row every other loop    
@@ -109,9 +99,7 @@ console.log("Is nested array:", Array.isArray(verts[0]));
 const mesh = new SimpleMesh(gl, verts);
 
 
-const cube = createCube(gl, 0.5);
-// cube.translate(-2.0, 0.0, -2.0);
-// cube.scale(1.0, 0.5, 1.0);
+//const cube = new Entity(createCube(gl, 0.5));
 
 const playerOne = new Player(mesh);
 
@@ -144,9 +132,6 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     accumulator += deltaTimeMs;
 
-
-
-
     // Player Update
     playerOne.update(deltaTimeMs / 1000) // in seconds
 
@@ -155,8 +140,6 @@ function gameLoop(timestamp) {
         updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
         accumulator -= FIXED_TIMESTEP;
     }
-
-    //console.log(playerOne.position);
     
     // Render loop
     render(performance.now() - start);
@@ -230,7 +213,13 @@ function render(elapsedTime) {
     myShaders.SolidColor.use();
     myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue
         
+    triangle.draw(myShaders.SolidColor);    
 
+    //mesh.draw(myShaders.SolidColor);
+
+    myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
+
+    playerOne.draw(myShaders.SolidColor);
 
 
         // Lighting Shader
@@ -248,13 +237,13 @@ function render(elapsedTime) {
     
 
     
-     myShaders.SolidColor.use();
-     myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
+    //  myShaders.SolidColor.use();
+    //  myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
 
-    // //mesh.draw(myShaders.SolidColor);
+    
 
     // // Draw Meshes
-    triangle.draw(myShaders.SolidColor);    
+
 
     //         //cube.draw(shaderLighting);
     // playerOne.draw(gl, myShaders.SolidColor, viewMatrix, projectionMatrix);

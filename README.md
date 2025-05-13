@@ -10,6 +10,20 @@ Change to a custom glTF to binary import format for Blender files. Preprocess gl
 
 
 
+
+NEW CHANGE:
+
+new way to create a shape. Create it as an Entity, which takes a new mesh as its constructor. Ex:
+
+const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
+
+When creating a new shape, you also have to put it in the draw() method of main or it won't appear
+
+
+
+
+
+
 # Table of Contents
 
 [Main](#mainjs)

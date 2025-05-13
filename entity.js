@@ -6,17 +6,17 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 
 
 export class Entity {
-    constructor(mesh, position = [0, 0, 0], scale = [1, 1, 1]) {
+    constructor(mesh, position = [0, 0, 0], scaleVector = [1, 1, 1]) {
         this.mesh = mesh;
         this.position = vec3.clone(position);
-        this.scale = vec3.clone(scale);
+        this.scaleVector = vec3.clone(scaleVector);
         this.modelMatrix = mat4.create();
         this.updateMatrix(); // calls the function below
     }
 
     updateMatrix() {
         mat4.fromTranslation(this.modelMatrix, this.position);
-        mat4.scale(this.modelMatrix, this.modelMatrix, this.scale);
+        mat4.scale(this.modelMatrix, this.modelMatrix, this.scaleVector);
     }
 
     draw(shader) {
@@ -26,7 +26,7 @@ export class Entity {
 
         // Helper functions
     scale(x, y, z) { mat4.scale(this.modelMatrix, this.modelMatrix, [x, y, z]); }
-    translate(x, y, z) { mat4.translate(this.modelMatrix, this.modelMatrix, [x, y, z]); }
+    translate(x, y, z) { mat4.translate(this.modelMatrix, this.modelMatrix, [x, y, z]);}
     rotateX(angle) { mat4.rotateX(this.modelMatrix, this.modelMatrix, angle); }
     rotateY(angle) { mat4.rotateY(this.modelMatrix, this.modelMatrix, angle); }
     rotateZ(angle) { mat4.rotateZ(this.modelMatrix, this.modelMatrix, angle); }

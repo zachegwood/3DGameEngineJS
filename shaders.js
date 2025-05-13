@@ -43,6 +43,7 @@ export class Shader {
     setModelMatrix(model) {
         this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
     }
+
 }
 
 //#region Program

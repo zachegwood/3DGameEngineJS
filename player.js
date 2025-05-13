@@ -19,11 +19,8 @@ export class Player {
     }
 
     update(dt) {
-        //console.log(`inside player update`);
 
         const inputVec = getMovementVector(); // ex [1.0, 0.0, 0.7]
-
-       // if (vec3.length(inputVec) === 0) return; // No movement. Return.
 
         const movement = vec3.create();
 
@@ -39,29 +36,13 @@ export class Player {
         vec3.scale(movement, movement, SPEED * dt);
 
         vec3.add(this.position, this.position, movement);
-        // console.log(" Position is : " + this.position);
-        // console.log(" MovementVector is : " + getMovementVector());
-        // console.log("dt is: " + dt);
 
-        //mat4.fromTranslation(this.modelMatrix, this.position);
-
-       //this.position[0] += 0.1;  // Just move in the X direction for testing
-    mat4.fromTranslation(this.modelMatrix, this.position);
-    // mat4.copy(this.mesh.modelMatrix, this.modelMatrix);
-
-
-
-        //console.log(this.modelMatrix);
+        mat4.fromTranslation(this.modelMatrix, this.position);
 
     }
 
-    draw(gl, shader, viewMatrix, projectionMatrix) {
-
-        shader.use();
-
-        shader.setUniforms(viewMatrix, projectionMatrix, this.modelMatrix, [1.0, 0.6, 1.4, 1.0]);
-        //gl.uniform3f(shader.uniformLocations.lightDirection, -1.0, -1.0, 0.5); // Example direction
-
+    draw(shader) {
+        shader.setModelMatrix(this.modelMatrix);
         this.mesh.draw(shader);
     }
 }
