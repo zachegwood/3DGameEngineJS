@@ -30,15 +30,10 @@ class Mesh {
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
         }
 
-        this.modelMatrix = mat4.create();
+        //this.modelMatrix = mat4.create();
     }
 
-    // Helper functions
-    scale(x, y, z) { mat4.scale(this.modelMatrix, this.modelMatrix, [x, y, z]); }
-    translate(x, y, z) { mat4.translate(this.modelMatrix, this.modelMatrix, [x, y, z]); }
-    rotateX(angle) { mat4.rotateX(this.modelMatrix, this.modelMatrix, angle); }
-    rotateY(angle) { mat4.rotateY(this.modelMatrix, this.modelMatrix, angle); }
-    rotateZ(angle) { mat4.rotateZ(this.modelMatrix, this.modelMatrix, angle); }
+
 
     draw(shader) {
         const gl = this.gl;
@@ -64,7 +59,7 @@ class Mesh {
         } 
 
         // Pass the model matrix to the shader
-        gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
+        //gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
 
         // Draw the mesh
         gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);       
@@ -219,4 +214,12 @@ export function loadTexture(gl, url) {
     image.src = url;
 
     return texture;
+}
+
+//#region Load Model from Blender
+export async function loadModel(url) {
+
+    const response = await fetch(url);
+    const data = await response.json(); // an array of [x, y, z]
+    return data;
 }

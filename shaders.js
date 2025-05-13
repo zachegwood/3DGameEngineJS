@@ -39,6 +39,10 @@ export class Shader {
             this.gl.uniform1i(this.uniformLocations.textureSampler, 0);
         }
     }
+
+    setModelMatrix(model) {
+        this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
+    }
 }
 
 //#region Program

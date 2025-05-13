@@ -26,6 +26,8 @@ Change to a custom glTF to binary import format for Blender files. Preprocess gl
 
 [Debug](#debugjs)
 
+[Blender](#blender)
+
 
 
 
@@ -83,6 +85,8 @@ Shape factory. Defines vertex matrices of shapes, which defines positions, uvs, 
 
 Includes LoadTexture function
 
+Includes LoadModel function, which imports JSON that was exported from Blender
+
 
 
 ## Shaders.js
@@ -102,3 +106,33 @@ Runs Debug Gridlines and Origin Raycast
 
 
 
+## Blender
+
+Paste the following code in the "Scripting" tab inside Blender.
+
+This will export the model's vertecies into a JSON file in the same directory as the .blend file.
+
+<code>
+import bpy
+import bmesh
+import json
+import os
+
+obj = bpy.context.active_object
+mesh = obj.data
+
+# Create BMesh to access mesh data
+bm = bmesh.new()
+bm.from_mesh(mesh)
+bm.verts.ensure_lookup_table()
+
+vertices = []
+for v in bm.verts:
+    vertices.append([v.co.x, v.co.y, v.co.z])
+
+output_path = os.path.join(bpy.path.abspath("//"), "sphere_vertices.json")
+with open(output_path, "w") as f:
+    json.dump(vertices, f)
+
+print("Exported to", output_path)
+</code>
