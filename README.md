@@ -122,11 +122,12 @@ Runs Debug Gridlines and Origin Raycast
 
 ## Blender
 
-Paste the following code in the "Scripting" tab inside Blender.
+Paste the following code in the "Scripting" tab inside Blender. Tested with version 4.4.3
 
 This will export the model's vertecies into a JSON file in the same directory as the .blend file.
 
 <code>
+
 import bpy
 import bmesh
 import json
@@ -135,18 +136,41 @@ import os
 obj = bpy.context.active_object
 mesh = obj.data
 
-# Create BMesh to access mesh data
+# Ensure mesh is triangulated
 bm = bmesh.new()
 bm.from_mesh(mesh)
+bmesh.ops.triangulate(bm, faces=bm.faces[:])  # Triangulate in-place
 bm.verts.ensure_lookup_table()
 
 vertices = []
-for v in bm.verts:
-    vertices.append([v.co.x, v.co.y, v.co.z])
+for face in bm.faces:
+    for loop in face.loops:
+        vert = loop.vert
+        
+        #normal = loop.vert.normal      # auto-smooths
+        normal = face.normal            # no smoothing
+        
+        uv_layer = bm.loops.layers.uv.active
+        uv = loop[uv_layer].uv if mesh.uv_layers.active else (0.0, 0.0)
 
-output_path = os.path.join(bpy.path.abspath("//"), "sphere_vertices.json")
+        # Transform Blender coords [x, y, z] → WebGL coords [x, z, -y]
+        co = vert.co
+        x, y, z = co.x, co.y, co.z
+        nx, ny, nz = normal.x, normal.y, normal.z
+
+        vertex = {
+            "position": [x, z, -y],
+            "normal":   [nx, nz, -ny],
+            "uv":       [uv.x, 1 - uv.y],  # Flip V to match WebGL
+        }
+        vertices.append(vertex)
+
+bm.free()
+
+output_path = os.path.join(bpy.path.abspath("//"), "model_export.json")
 with open(output_path, "w") as f:
-    json.dump(vertices, f)
+    json.dump(vertices, f, indent=2)
 
 print("Exported to", output_path)
+
 </code>

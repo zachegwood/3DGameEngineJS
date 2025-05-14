@@ -38,31 +38,41 @@ class Mesh {
     draw(shader) {
         const gl = this.gl;
 
+        const enabled = []; // track which attributes we use, so we can disable them at the end
+
         if (shader.attribLocations.position !== -1) {
 
             // Bind the vertex position buffer
             gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
             gl.enableVertexAttribArray(shader.attribLocations.position);
             gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.position);
         }
 
         if (shader.attribLocations.uv !== -1 && this.uvBuffer) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.uvBuffer);
             gl.enableVertexAttribArray(shader.attribLocations.uv);
             gl.vertexAttribPointer(shader.attribLocations.uv, 2, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.uv);
         } 
 
         if (shader.attribLocations.normal !== -1 && this.normalBuffer) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.normalBuffer);
             gl.enableVertexAttribArray(shader.attribLocations.normal);
             gl.vertexAttribPointer(shader.attribLocations.normal, 3, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.normal);
         } 
 
         // Pass the model matrix to the shader
         //gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
 
         // Draw the mesh
-        gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);       
+        gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);      
+        
+        // Clean up: disable used attributes
+        for (const loc of enabled) {
+            gl.disableVertexAttribArray(loc);
+        }
     }
 }
 
@@ -216,10 +226,34 @@ export function loadTexture(gl, url) {
     return texture;
 }
 
-//#region Load Model from Blender
-export async function loadModel(url) {
+//#region Process Blender
+export async function loadModel(gl, url) {
 
+    // Load from JSON
     const response = await fetch(url);
     const data = await response.json(); // an array of [x, y, z]
-    return data;
+    //return data;
+
+    // Process JSON
+    const positions = [];
+    const normals = [];
+    const uvs = [];
+
+    for (const v of data) {
+        positions.push(...v.position);
+        normals.push(...v.normal);
+        uvs.push(...v.uv);
+    }
+
+    const count = positions.length / 3; // # of vertecies
+
+    // return {
+    //     positions,
+    //     normals,
+    //     uvs,
+    //     count
+    // };
+
+    return new Mesh(gl, positions, count, uvs, normals);
 }
+

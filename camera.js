@@ -14,8 +14,8 @@ let mouseY = 0;
 export let yaw = 0; // rotation around Y (left/right)
 export let pitch = 0; // rotation around X (up/down)
 
-const MIN_PITCH = -0.2;
-const MAX_PITCH = -0.7;
+const MIN_PITCH = -0.7;
+const MAX_PITCH = -0.2;
 const MIN_FOLLOW_DIST = 3.0;
 const MAX_FOLLOW_DIST = 10.0;
 
@@ -48,11 +48,12 @@ canvas.addEventListener('mousemove', e => {
     pitch -= e.movementY * MOUSE_SENSITIVITY; // "-" makes it reversed look controls
 
     const maxPitch = Math.PI / 2 - 0.01;
-    pitch = Math.max(-maxPitch, Math.min(maxPitch, pitch));
+    pitch = Math.max(MIN_PITCH, Math.min(MAX_PITCH, pitch));
 
     // Clamp Yaw
-    if (yaw < 0) yaw += Math.PI * 2;
-    if (yaw > Math.PI * 2) yaw -= Math.PI * 2
+    yaw = yaw % (2 * Math.PI);
+    if (yaw < 0) yaw += 2 * Math.PI;
+
 
 });
 
@@ -69,7 +70,7 @@ addEventListener("wheel", (e) => {
 // =====================================================================
 
 //#region Get Ray Target
-export function getRayTarget() {
+export function getLookRayTarget() {
 
     const lookDir = vec3.set(forwardLookVector, 
         Math.cos(pitch) * Math.sin(yaw),
@@ -103,10 +104,6 @@ export function updateCameraPosition(dt, targetPos) {
     vec3.normalize(rightMovementVector, rightMovementVector);
 
     // Orbit offset
-
-    if (pitch > MIN_PITCH) pitch = MIN_PITCH;
-    if (pitch < MAX_PITCH) pitch = MAX_PITCH;
-
     const offset = vec3.fromValues(
         Math.cos(pitch) * Math.sin(yaw),
         Math.sin(pitch),

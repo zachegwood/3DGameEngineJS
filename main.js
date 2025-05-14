@@ -2,7 +2,7 @@ import { mat4,} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js'
 import { DrawGrid } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js'
-import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getRayTarget } from './camera.js'
+import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js'
 
 import { Entity } from './entity.js'
 
@@ -38,9 +38,6 @@ const myShaders = CreateShaders(gl);
 
 //#region Create Shapes
 
-// const triangle = createTriangle(gl, 1);
-// triangle.translate(0,0,0);
-
 const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
 const square = new Entity(createSquare(gl, 2), [0,0,0]);
 const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
@@ -66,50 +63,8 @@ for (let i = 0; i < columnCount; i++) {
 }
 
 
-
-class SimpleMesh {
-    constructor(gl, vertices) {
-        const flatVerts = vertices.flat();
-        this.vertexCount = flatVerts.length / 3; // 8640 / 3 = 2880
-
-        this.vbo = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(flatVerts), gl.STATIC_DRAW);
-    }
-
-    draw(shader) {
-        const gl = shader.gl;
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.vbo);
-        const posLoc = shader.attribLocations.position;
-        gl.enableVertexAttribArray(posLoc);
-        gl.vertexAttribPointer(posLoc, 3, gl.FLOAT, false, 0, 0);
-        gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);
-    }
-}
-
-
-
-// Load model JSON from exported Blender
-const verts = await loadModel("/Art/sphere_triangles.json");
-
-console.log("Loaded model vertex count:", verts.length);
-console.log("First vertex:", verts[0]);
-console.log("Is nested array:", Array.isArray(verts[0]));
-
-const mesh = new SimpleMesh(gl, verts);
-
-
-//const cube = new Entity(createCube(gl, 0.5));
-
-const playerOne = new Player(mesh);
-
-// const playerOne = new Player(cube);
-// console.log(`players mesh is ${playerOne.mesh}`);
-
-
-
-// let yaw = 0; // rotation around Y (left/right)
-// let pitch = 0; // rotation around X (up/down)
+const blenderModel = await loadModel(gl, "/Art/model_export.json");
+const playerOne = new Player(blenderModel);
 
 
 
@@ -164,7 +119,7 @@ function render(elapsedTime) {
     const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
     //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
 
-    let rayTarget = getRayTarget();
+    let rayTarget = getLookRayTarget();
 
     const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
 
@@ -180,6 +135,12 @@ function render(elapsedTime) {
     
     
     
+
+    //#region Draw Shapes
+
+    // ========================= DRAW GAME OBJECTS HERE =================== //
+
+
 
 
     // Update transforms
@@ -208,6 +169,7 @@ function render(elapsedTime) {
      square.draw(myShaders.TextureUV);
      triangle2.draw(myShaders.TextureUV);
 
+   
     
 
     myShaders.SolidColor.use();
@@ -219,7 +181,7 @@ function render(elapsedTime) {
 
     myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
 
-    playerOne.draw(myShaders.SolidColor);
+    
 
 
         // Lighting Shader
@@ -233,7 +195,7 @@ function render(elapsedTime) {
         columnsArray[i].draw(myShaders.Lighting);
     }
 
-
+    playerOne.draw(myShaders.Lighting);
     
 
     
