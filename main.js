@@ -39,7 +39,7 @@ const myShaders = CreateShaders(gl);
 
 //#region Create Shapes
 
-const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
+const triangle = new Entity(createTriangle(gl, 1), [0,1,0]);
 const square = new Entity(createSquare(gl, 2), [0,0,0]);
 const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
 const square2 = new Entity(createSquare(gl, 3), [0, 0, 5.0])
@@ -74,12 +74,12 @@ const playerOne = new Player(blenderModel);
 
 const lights = [
     
-    // new Light([1, 2, 5], [1, 1, 0], 1.0),
-    // new Light([-1, 2, 5], [1, 0, 0], 1.0),
-    // new Light([9, 2, 0], [0.5, 1, 1], 0.5),
-    //  new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
-    //  new Light([9, 2, -10], [0.5, 1, 1], 1.0),
-    //  new Light([-9, 2, -10], [0.5, 1, 1], 1.0),
+    new Light([1, 2, 5], [1, 1, 0], 1.0),
+    new Light([-1, 2, 5], [1, 0, 0], 1.0),
+    new Light([9, 2, 0], [0.5, 1, 1], 0.5),
+     new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
+     new Light([9, 2, -10], [0.5, 1, 1], 1.0),
+     new Light([-9, 2, -10], [0.5, 1, 1], 1.0),
      new Light([9, 2, -20], [0.5, 1, 1], 1.0),
      new Light([-9, 2, -20], [0.5, 1, 1], 2.0),
      new Light([9, 2, -30], [0.5, 1, 1], 2.0),
@@ -175,9 +175,10 @@ function render(elapsedTime) {
 
 
     // Update transforms
-    mat4.identity(triangle.modelMatrix); // reset each frame
-    triangle.translate(0, 0.5, 0);
-    triangle.rotateY(angle);
+    //mat4.identity(triangle.modelMatrix); // reset each frame
+    //triangle.translate(0, 0.5, 0);
+    //triangle.rotateY(angle);
+    triangle.rotateY(0.05);
 
     // mat4.identity(square.modelMatrix); // reset each frame
     // //square.scale(1.0, 1.0, 1.0);
@@ -193,25 +194,26 @@ function render(elapsedTime) {
     
 
 
-                                // // Set view and projection matrices for all objects
-                                //  myShaders.TextureUV.use();
-                                //  myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
-                                //  square.draw(myShaders.TextureUV);
-                                //  triangle2.draw(myShaders.TextureUV); 
-                                // myShaders.SolidColor.use();
-                                // myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue        
-                                // triangle.draw(myShaders.SolidColor);    
-                                // myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
+                                // Set view and projection matrices for all objects
+                                myShaders.TextureUV.use();
+                                myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
+                                square.draw(myShaders.TextureUV);
+                                triangle2.draw(myShaders.TextureUV); 
+
+                                myShaders.SolidColor.use();
+                                myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue        
+                                triangle.draw(myShaders.SolidColor);    
+                                myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
 
     
 
 //#region LIGHT TEST
 
         // Lighting Shader
-    //myShaders.Lighting.use();  
+    myShaders.Lighting.use();  
     //myShaders.Lighting.setLights(lights);
     //myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
-   // myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix);
+    myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix);
     //gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -0.8, 0.8); // Example direction
     
 

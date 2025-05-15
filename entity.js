@@ -36,21 +36,14 @@ export class Entity {
 
     }
 
-    draw(shader, viewMatrix, projectionMatrix, allLights) {
-        shader.use();  
-        shader.setUniforms(viewMatrix, projectionMatrix);
+    draw(shader, view, projection, allLights) {
+        //shader.use();  
+        //shader.setUniforms(view, projection);
         shader.setModelMatrix(this.modelMatrix);
-
-        // if (this.id === "colCube_8") {
-        //     console.log(this.id);
-        //     this.mesh.draw(shader, [allLights[4], allLights[5], ]);
-        //     return;
-        // }
 
         if (allLights) {
             this.closeLights = this.getClosestLights(allLights);
             this.mesh.draw(shader, this.closeLights);
-            //console.log('Drawing entity with lights:', this.closeLights.map(l => l.position));
 
         } else {
             this.mesh.draw(shader);

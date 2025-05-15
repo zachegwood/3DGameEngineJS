@@ -14,7 +14,7 @@ const ROTATE_SPEED = 10; // radians per second
 
 export class Player extends Entity {
     constructor(mesh) {
-        const startPos = vec3.fromValues(0, PLAYER_HEIGHT/2, -25);
+        const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
         super(mesh, startPos);
         this.position = startPos;
         this.velocity = vec3.create();
