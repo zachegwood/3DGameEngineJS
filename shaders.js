@@ -50,7 +50,7 @@ export class Shader {
         this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
     }
 
-    setLights(lights) {
+    setLights(lights) {      
 
         const maxLights = 4;
         const lightPositions = [];
@@ -211,7 +211,7 @@ export const shaders = {
         uniform mat4 u_view;
         uniform mat4 u_projection;
 
-        varying vec3 v_lightPosition; // Optional, only needed if transforming th elight
+        varying vec3 v_lightPosition; // Optional, only needed if transforming the light
         uniform vec3 u_lightPosition; // only needed if passing transformed light position
 
         varying vec3 v_normal;

@@ -35,7 +35,7 @@ class Mesh {
 
 
 
-    draw(shader) {
+    draw(shader, closeLights) {
         const gl = this.gl;
 
         const enabled = []; // track which attributes we use, so we can disable them at the end
@@ -62,6 +62,8 @@ class Mesh {
             gl.vertexAttribPointer(shader.attribLocations.normal, 3, gl.FLOAT, false, 0, 0);
             enabled.push(shader.attribLocations.normal);
         } 
+
+        if (closeLights) shader.setLights(closeLights);
 
         // Pass the model matrix to the shader
         //gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);

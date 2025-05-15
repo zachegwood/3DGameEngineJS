@@ -1,6 +1,10 @@
 import { vec3, mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { getMovementVector } from "./controls.js"; // also provides movement vector
 import { forwardMovementVector, rightMovementVector } from './camera.js';
+import { Entity } from './entity.js'
+
+
+// Player inherits from Entity for Draw()
 
 
 const SPEED = 3;
@@ -8,17 +12,19 @@ const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 
 
-export class Player {
+export class Player extends Entity {
     constructor(mesh) {
-        this.position = vec3.create();
+        const startPos = vec3.fromValues(0, PLAYER_HEIGHT/2, -25);
+        super(mesh, startPos);
+        this.position = startPos;
         this.velocity = vec3.create();
         this.mesh = mesh;
         this.modelMatrix = mat4.create();
         this.facingAngle = 0;
-        this.currentAngle = 0; // visible rotation used for interpolation
+        this.currentAngle = 0; // visible rotation used for interpolation        
 
         // offset Y position by half size of cube, so we're ON the floor
-        this.position[1] = PLAYER_HEIGHT/2;
+        
     }
 
     update(dt) {
@@ -69,10 +75,7 @@ export class Player {
         return diff;
     }
 
-    draw(shader) {
-        shader.setModelMatrix(this.modelMatrix);
-        this.mesh.draw(shader);
-    }
+    
 }
 
 

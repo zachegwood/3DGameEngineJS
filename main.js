@@ -43,6 +43,7 @@ const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
 const square = new Entity(createSquare(gl, 2), [0,0,0]);
 const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
 const square2 = new Entity(createSquare(gl, 3), [0, 0, 5.0])
+const square3 = new Entity(createSquare(gl, 10), [0, 0, -12])
 
 const columnsArray = [];
 const columnCount = 16;
@@ -54,6 +55,8 @@ for (let i = 0; i < columnCount; i++) {
     let randHeight = Math.random() * (15-2) + 2; // random height between 2 and 15
 
     const colCube = new Entity(createCube(gl, 0.5));
+
+    colCube.id = `colCube_${i}`;
 
     colCube.translate((xSide * 10), randHeight/2, zDepth);
     colCube.scale(1.0, randHeight, 1.0);
@@ -70,10 +73,21 @@ const playerOne = new Player(blenderModel);
 
 
 const lights = [
-    new Light([1, 2, 5], [1, 1, 0], 1.0),
-    new Light([-1, 2, 5], [1, 0, 0], 1.0),
-    new Light([9, 2, 0], [0.5, 1, 1], 1.0),
-    new Light([-9, 2, 0], [0.5, 1, 1], 1.0)
+    
+    // new Light([1, 2, 5], [1, 1, 0], 1.0),
+    // new Light([-1, 2, 5], [1, 0, 0], 1.0),
+    // new Light([9, 2, 0], [0.5, 1, 1], 0.5),
+    //  new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
+    //  new Light([9, 2, -10], [0.5, 1, 1], 1.0),
+    //  new Light([-9, 2, -10], [0.5, 1, 1], 1.0),
+     new Light([9, 2, -20], [0.5, 1, 1], 1.0),
+     new Light([-9, 2, -20], [0.5, 1, 1], 2.0),
+     new Light([9, 2, -30], [0.5, 1, 1], 2.0),
+     new Light([-9, 2, -30], [0.5, 1, 1], 2.0),
+     new Light([9, 2, -40], [0.5, 1, 1], 2.0),
+     new Light([-9, 2, -40], [0.5, 1, 1], 2.0),
+     new Light([9, 2, -50], [0.5, 1, 1], 2.0),
+     new Light([-9, 2, -50], [0.5, 1, 1], 2.0),
 ]
 
 // // Create a light
@@ -179,44 +193,37 @@ function render(elapsedTime) {
     
 
 
-    // // Set view and projection matrices for all objects
-     myShaders.TextureUV.use();
-     myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);   
-
-     square.draw(myShaders.TextureUV);
-     triangle2.draw(myShaders.TextureUV);
-
-   
-    
-
-    myShaders.SolidColor.use();
-    myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue
-        
-    triangle.draw(myShaders.SolidColor);    
-
-    //mesh.draw(myShaders.SolidColor);
-
-    myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
+                                // // Set view and projection matrices for all objects
+                                //  myShaders.TextureUV.use();
+                                //  myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
+                                //  square.draw(myShaders.TextureUV);
+                                //  triangle2.draw(myShaders.TextureUV); 
+                                // myShaders.SolidColor.use();
+                                // myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue        
+                                // triangle.draw(myShaders.SolidColor);    
+                                // myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
 
     
 
+//#region LIGHT TEST
 
         // Lighting Shader
-    myShaders.Lighting.use();  
-    myShaders.Lighting.setLights(lights);
-    myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
-    myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix);
+    //myShaders.Lighting.use();  
+    //myShaders.Lighting.setLights(lights);
+    //myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
+   // myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix);
     //gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -0.8, 0.8); // Example direction
     
 
     for (let i = 0; i < columnsArray.length; i++) {
-        gl.uniformMatrix4fv(myShaders.Lighting.uniformLocations.model, false, columnsArray[i].modelMatrix);
-        columnsArray[i].draw(myShaders.Lighting);
+        //gl.uniformMatrix4fv(myShaders.Lighting.uniformLocations.model, false, columnsArray[i].modelMatrix);
+
+        columnsArray[i].draw(myShaders.Lighting, viewMatrix, projectionMatrix, lights);
     }
 
-    playerOne.draw(myShaders.Lighting);
-    square2.draw(myShaders.Lighting);
-
+    playerOne.draw(myShaders.Lighting, viewMatrix, projectionMatrix, lights);
+    square2.draw(myShaders.Lighting, viewMatrix, projectionMatrix, lights);
+    square3.draw(myShaders.Lighting, viewMatrix, projectionMatrix, lights);
     
     //  myShaders.SolidColor.use();
     //  myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 0.0, 1.0, 1.0]); // blue
