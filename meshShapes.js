@@ -116,7 +116,13 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
         uvScale, uvScale
     ];
 
-    return new Mesh(gl, verts, 6, uvs);
+    // All normals point straight up (0, 1, 0) for a flat horizontal surface
+    const normals = [
+        0, 1, 0,  0, 1, 0,  0, 1, 0,
+        0, 1, 0,  0, 1, 0,  0, 1, 0
+    ]
+
+    return new Mesh(gl, verts, 6, uvs,  normals);
 }
 
 //#region 3D Shapes

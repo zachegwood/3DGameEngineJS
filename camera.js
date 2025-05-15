@@ -12,7 +12,7 @@ let mouseX = 0;
 let mouseY = 0;
 
 export let yaw = 0; // rotation around Y (left/right)
-export let pitch = 0; // rotation around X (up/down)
+export let pitch = -0.3; // rotation around X (up/down)
 
 const MIN_PITCH = -0.7;
 const MAX_PITCH = -0.2;
@@ -22,7 +22,7 @@ const MAX_FOLLOW_DIST = 10.0;
 // let cursorTarget = 0;
 
 let followTarget = null;
-let followDistance = 5;  // positioned behind player
+let followDistance = 8;  // positioned behind player
 
 let cameraPosition = vec3.fromValues(0, 1, followDistance); 
 

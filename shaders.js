@@ -17,6 +17,12 @@ export class Shader {
             color: gl.getUniformLocation(program, "u_color"),
             lightDirection: gl.getUniformLocation(program, "u_lightDirection"),
             textureSampler: gl.getUniformLocation(program, "textureSampler"),
+
+            // Point Light vars
+            u_lightCount: gl.getUniformLocation(this.program, 'u_lightCount'),
+            u_lightPositions: gl.getUniformLocation(program, "u_lightPositions"),
+            u_lightColors: gl.getUniformLocation(program, "u_lightColors"),
+            u_lightIntensities: gl.getUniformLocation(program, "u_lightIntensities"),
         };
     }
 
@@ -42,6 +48,33 @@ export class Shader {
 
     setModelMatrix(model) {
         this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
+    }
+
+    setLights(lights) {
+
+        const maxLights = 4;
+        const lightPositions = [];
+        const lightColors = [];
+        const lightIntensities = [];
+
+        for (let i = 0; i < maxLights; i++) {
+            if (i < lights.length) {
+                const l = lights[i];
+                lightPositions.push(...l.position);
+                lightColors.push(...l.color);
+                lightIntensities.push(l.intensity);
+            } else {
+                // Fill unused slots with zeroes
+                lightPositions.push(0,0,0);
+                lightColors.push(0,0,0);
+                lightIntensities.push(0,0,0);
+            }
+        }
+
+        this.gl.uniform1i(this.uniformLocations.u_lightCount, Math.min(lights.length, maxLights));
+        this.gl.uniform3fv(this.uniformLocations.u_lightPositions, new Float32Array(lightPositions));
+        this.gl.uniform3fv(this.uniformLocations.u_lightColors, new Float32Array(lightColors));
+        this.gl.uniform1fv(this.uniformLocations.u_lightIntensities, new Float32Array(lightIntensities));
     }
 
 }
@@ -178,6 +211,9 @@ export const shaders = {
         uniform mat4 u_view;
         uniform mat4 u_projection;
 
+        varying vec3 v_lightPosition; // Optional, only needed if transforming th elight
+        uniform vec3 u_lightPosition; // only needed if passing transformed light position
+
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
 
@@ -185,6 +221,9 @@ export const shaders = {
             // Transform the position to world space
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
             v_worldPosition = worldPosition.xyz;
+
+            // Transform light position to world space (if necessary)
+            v_lightPosition = (u_model * vec4(u_lightPosition, 1.0)).xyz;
 
             // Transform and normalize the normal (no need for manual inverse/transpose here)
             v_normal = normalize(mat3(u_model) * a_normal);  // Simple normal transformation
@@ -197,20 +236,45 @@ export const shaders = {
     fs_lighting: `
         precision mediump float;
 
-        uniform vec3 u_lightDirection; // should be normalized
-        uniform vec4 u_color;
+        #define MAX_LIGHTS 4
+
+        uniform int u_lightCount;
+        uniform vec3 u_lightPositions[MAX_LIGHTS];   // world-space position of light
+        uniform vec3 u_lightColors[MAX_LIGHTS];      // RBG of light
+        uniform float u_lightIntensities[MAX_LIGHTS]; // Light intensity
+        uniform vec4 u_color;           // Material base color
 
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
 
         void main () {
             vec3 normal = normalize(v_normal);
-            float ambient = 0.2; 
-            float lightFactor = max(dot(normal, -u_lightDirection), 0.0);
-            lightFactor = ambient + (1.0 - ambient) * lightFactor;
+            vec3 color = vec3(0.0);
 
-            vec3 baseColor = u_color.rgb * lightFactor;
-            gl_FragColor = vec4(baseColor, u_color.a);
+            for (int i = 0; i < MAX_LIGHTS; i++) {
+                if (i >= u_lightCount) break;
+
+                vec3 lightDir = normalize(u_lightPositions[i] - v_worldPosition);
+
+                // Attenuation based on distance (optional, but more realistic)
+                float distance = length(u_lightPositions[i] - v_worldPosition);
+                float attenuation = 1.0 / (distance * distance);                
+
+                // Diffuse shading
+                float diffuse = max(dot(normal, lightDir), 0.0);
+                vec3 lightColor = u_lightColors[i] * diffuse * u_lightIntensities[i] * attenuation;
+
+                // Add ambient term (optional)
+                float ambient = 0.2;
+
+                color += lightColor;
+            }            
+
+            // Clamp the final color so it doesn't blow out
+            gl_FragColor = vec4(color, 1.0);
+
+           // debug -- visualize normals 
+           // gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0); // Visualize normal direction
         }    
     `,
 

@@ -3,6 +3,7 @@ import { DrawGrid } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js'
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js'
+import { Light } from './lights.js'
 
 import { Entity } from './entity.js'
 
@@ -41,6 +42,7 @@ const myShaders = CreateShaders(gl);
 const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
 const square = new Entity(createSquare(gl, 2), [0,0,0]);
 const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
+const square2 = new Entity(createSquare(gl, 3), [0, 0, 5.0])
 
 const columnsArray = [];
 const columnCount = 16;
@@ -65,6 +67,21 @@ for (let i = 0; i < columnCount; i++) {
 
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
 const playerOne = new Player(blenderModel);
+
+
+const lights = [
+    new Light([1, 2, 5], [1, 1, 0], 1.0),
+    new Light([-1, 2, 5], [1, 0, 0], 1.0),
+    new Light([9, 2, 0], [0.5, 1, 1], 1.0),
+    new Light([-9, 2, 0], [0.5, 1, 1], 1.0)
+]
+
+// // Create a light
+// const pointLight = new Light(
+//     [0.0, 2.0, 5.0],    // Position above the mesh
+//     [0.0, 1.0, 1.0],    // White color
+//     1.0                 // Full intensity
+// );
 
 
 
@@ -186,9 +203,11 @@ function render(elapsedTime) {
 
         // Lighting Shader
     myShaders.Lighting.use();  
+    myShaders.Lighting.setLights(lights);
     myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix, null, [0.8, 0.8, 0.8, 1.0], null);
-    gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -0.8, 0.8); // Example direction
-
+    myShaders.Lighting.setUniforms(viewMatrix, projectionMatrix);
+    //gl.uniform3f(myShaders.Lighting.uniformLocations.lightDirection, -1.0, -0.8, 0.8); // Example direction
+    
 
     for (let i = 0; i < columnsArray.length; i++) {
         gl.uniformMatrix4fv(myShaders.Lighting.uniformLocations.model, false, columnsArray[i].modelMatrix);
@@ -196,7 +215,7 @@ function render(elapsedTime) {
     }
 
     playerOne.draw(myShaders.Lighting);
-    
+    square2.draw(myShaders.Lighting);
 
     
     //  myShaders.SolidColor.use();
