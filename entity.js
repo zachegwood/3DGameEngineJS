@@ -6,16 +6,26 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 
 
 export class Entity {
-    constructor(mesh, position = [0, 0, 0], scaleVector = [1, 1, 1], shaderInfo = []) {
+    constructor({
+        mesh, 
+        position = [0, 0, 0], 
+        rotation = [0, 0, 0],
+        scaleVector = [1, 1, 1], 
+        shader,
+        color,
+        texture,
+        material
+    }) {
         this.mesh = mesh;
-        this.shader = shaderInfo.shader;
-        this.color = shaderInfo.color;
-        this.texture = shaderInfo.texture;
-        this.material = shaderInfo.material;
+        this.shader = shader;
+        this.color = color;
+        this.texture = texture;
+        this.material = material;
 
         this.position = vec3.clone(position);
+        this.rotation = rotation // Euler rotation in radians: [x, y, z]
         this.scaleVector = vec3.clone(scaleVector);
-        this.rotation = [0, 0, 0] // Euler rotation in radians: [x, y, z]
+        
         this.modelMatrix = mat4.create();        
         this.closestLights = null; // use function below, called from MAIN
         this.updateMatrix(); // calls the function below
