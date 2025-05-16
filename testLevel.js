@@ -32,6 +32,7 @@ export function buildLevel(gl, myShaders) {
         mesh: createTriangle(gl, 1), 
         position: [-2, 0.5, -3], 
         shader: myShaders.TextureUV,
+        texture: texture,
     });
     const square2 = new Entity(
     {
@@ -108,6 +109,10 @@ export function buildLevel(gl, myShaders) {
     const lightsGroup = new SceneNode();
     lights.forEach(l => lightsGroup.add(l));
     scene.add(lightsGroup);
+
+    // vars to let me access these things from main
+    scene.testTriangle = triangle;
+    scene.testLights = lights;
 
     // // Create a light
     // const pointLight = new Light(

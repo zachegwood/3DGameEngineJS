@@ -110,10 +110,10 @@ function render(elapsedTime) {
 
     DrawGrid(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // debug grid draw methods. all GPU stuffs
 
-    scene.triangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
+    scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
     // Draw all game objects
-    scene.draw(gl, viewMatrix, projectionMatrix, lights);
+    scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights);
  
 }
 
