@@ -6,8 +6,13 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 
 
 export class Entity {
-    constructor(mesh, position = [0, 0, 0], scaleVector = [1, 1, 1]) {
+    constructor(mesh, position = [0, 0, 0], scaleVector = [1, 1, 1], shaderInfo = []) {
         this.mesh = mesh;
+        this.shader = shaderInfo.shader;
+        this.color = shaderInfo.color;
+        this.texture = shaderInfo.texture;
+        this.material = shaderInfo.material;
+
         this.position = vec3.clone(position);
         this.scaleVector = vec3.clone(scaleVector);
         this.rotation = [0, 0, 0] // Euler rotation in radians: [x, y, z]
@@ -36,17 +41,34 @@ export class Entity {
 
     }
 
-    draw(shader, view, projection, allLights) {
-        //shader.use();  
-        //shader.setUniforms(view, projection);
-        shader.setModelMatrix(this.modelMatrix);
+    // draw(shader, view, projection, allLights) {
+    //     //shader.use();  
+    //     //shader.setUniforms(view, projection);
+    //     shader.setModelMatrix(this.modelMatrix);
+    // if (allLights) {
+    //         this.closeLights = this.getClosestLights(allLights);
+    //         this.mesh.draw(shader, this.closeLights);
 
+    //     } else {
+    //         this.mesh.draw(shader);
+    //     }        
+
+    draw(gl, view, projection, allLights) {
+
+        if (!this.shader) return;
+
+        this.shader.use();  
+        this.shader.setUniforms(view, projection, this.modelMatrix, this.color, this.texture);
+        // this.shader.setColor(this.color);
+        // this.shader.setTexture(this.texture);
+        // this.shader.setModelMatrix(this.modelMatrix);
+        
         if (allLights) {
             this.closeLights = this.getClosestLights(allLights);
-            this.mesh.draw(shader, this.closeLights);
+            this.mesh.draw(this.shader, this.closeLights);
 
         } else {
-            this.mesh.draw(shader);
+            this.mesh.draw(this.shader);
         }        
     
     }

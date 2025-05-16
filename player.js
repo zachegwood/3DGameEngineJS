@@ -13,7 +13,7 @@ const ROTATE_SPEED = 10; // radians per second
 
 
 export class Player extends Entity {
-    constructor(mesh) {
+    constructor(mesh, shaderInfo = {}) {
         const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
         super(mesh, startPos);
         this.position = startPos;
@@ -21,7 +21,12 @@ export class Player extends Entity {
         this.mesh = mesh;
         this.modelMatrix = mat4.create();
         this.facingAngle = 0;
-        this.currentAngle = 0; // visible rotation used for interpolation        
+        this.currentAngle = 0; // visible rotation used for interpolation     
+        
+        this.shader = shaderInfo.shader;
+        this.color = shaderInfo.color;
+        this.texture = shaderInfo.texture;
+        this.material = shaderInfo.material;
 
         // offset Y position by half size of cube, so we're ON the floor
         

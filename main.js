@@ -1,13 +1,13 @@
 import { mat4,} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { DrawGrid } from './debug.js';
 import { CreateShaders } from './shaders.js';
-import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js'
-import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js'
-import { Light } from './lights.js'
+import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
+import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js';
 
-import { Entity } from './entity.js'
-
+import { Light } from './lights.js';
+import { Entity } from './entity.js';
 import { Player } from './player.js';
+import { SceneNode } from './scene.js';
 
 //#region GL and Canvas
 
@@ -33,17 +33,44 @@ const texture = loadTexture(gl, "Art/testTile.png");
 const myShaders = CreateShaders(gl);
 
 
-
-
+// The scene that will hold all entities (game objects)
+const scene = new SceneNode();
 
 
 //#region Create Shapes
 
-const triangle = new Entity(createTriangle(gl, 1), [0,1,0]);
-const square = new Entity(createSquare(gl, 2), [0,0,0]);
-const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3]);
-const square2 = new Entity(createSquare(gl, 3), [0, 0, 5.0])
-const square3 = new Entity(createSquare(gl, 10), [0, 0, -12])
+
+
+const triangle = new Entity(createTriangle(gl, 1), [0,1,0], [1, 1, 1], {
+    shader: myShaders.SolidColor,
+    color: [1.0, 1.0, 1.0, 1.0],
+});
+const square = new Entity(createSquare(gl, 2), [0,0,0], [1, 1, 1], 
+{
+    shader: myShaders.TextureUV,
+    texture: texture,
+});
+const triangle2 = new Entity(createTriangle(gl, 1), [-2, 0.5, -3], [1, 1, 1],{
+    shader: myShaders.TextureUV,
+    texture: texture,
+});
+const square2 = new Entity(createSquare(gl, 3), [0, 0, 5.0], [1, 1, 1],{
+    shader: myShaders.Lighting
+});
+const square3 = new Entity(createSquare(gl, 10), [0, 0, -12], [1, 1, 1],{
+    shader: myShaders.Lighting
+});
+
+                            // triangle.draw(myShaders.SolidColor);    
+                            //     myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
+
+console.log(triangle.color);
+
+scene.add(triangle);
+scene.add(square);
+scene.add(triangle2);
+scene.add(square2);
+scene.add(square3);
 
 const columnsArray = [];
 const columnCount = 16;
@@ -54,7 +81,9 @@ for (let i = 0; i < columnCount; i++) {
 
     let randHeight = Math.random() * (15-2) + 2; // random height between 2 and 15
 
-    const colCube = new Entity(createCube(gl, 0.5));
+    const colCube = new Entity(createCube(gl, 0.5), [0, 0, 0], [1, 1, 1] ,{
+    shader: myShaders.Lighting
+});
 
     colCube.id = `colCube_${i}`;
 
@@ -67,9 +96,14 @@ for (let i = 0; i < columnCount; i++) {
     if (i % 2 !== 0) zDepth -= 10; // move back a row every other loop    
 }
 
+const colGroup = new SceneNode();
+columnsArray.forEach(c => colGroup.add(c));
+scene.add(colGroup);
 
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
-const playerOne = new Player(blenderModel);
+const playerOne = new Player(blenderModel, {shader: myShaders.Lighting});
+
+scene.add(playerOne);
 
 
 const lights = [
@@ -77,18 +111,22 @@ const lights = [
     new Light([1, 2, 5], [1, 1, 0], 1.0),
     new Light([-1, 2, 5], [1, 0, 0], 1.0),
     new Light([9, 2, 0], [0.5, 1, 1], 0.5),
-     new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
-     new Light([9, 2, -10], [0.5, 1, 1], 1.0),
-     new Light([-9, 2, -10], [0.5, 1, 1], 1.0),
-     new Light([9, 2, -20], [0.5, 1, 1], 1.0),
-     new Light([-9, 2, -20], [0.5, 1, 1], 2.0),
-     new Light([9, 2, -30], [0.5, 1, 1], 2.0),
-     new Light([-9, 2, -30], [0.5, 1, 1], 2.0),
-     new Light([9, 2, -40], [0.5, 1, 1], 2.0),
-     new Light([-9, 2, -40], [0.5, 1, 1], 2.0),
-     new Light([9, 2, -50], [0.5, 1, 1], 2.0),
-     new Light([-9, 2, -50], [0.5, 1, 1], 2.0),
+    new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
+    new Light([9, 2, -10], [0.5, 1, 1], 1.0),
+    new Light([-9, 2, -10], [0.5, 1, 1], 1.0),
+    new Light([9, 2, -20], [0.5, 1, 1], 1.0),
+    new Light([-9, 2, -20], [0.5, 1, 1], 2.0),
+    new Light([9, 2, -30], [0.5, 1, 1], 2.0),
+    new Light([-9, 2, -30], [0.5, 1, 1], 2.0),
+    new Light([9, 2, -40], [0.5, 1, 1], 2.0),
+    new Light([-9, 2, -40], [0.5, 1, 1], 2.0),
+    new Light([9, 2, -50], [0.5, 1, 1], 2.0),
+    new Light([-9, 2, -50], [0.5, 1, 1], 2.0),
 ]
+
+const lightsGroup = new SceneNode;
+lights.forEach(l => lightsGroup.add(l));
+scene.add(lightsGroup);
 
 // // Create a light
 // const pointLight = new Light(
@@ -118,8 +156,11 @@ function gameLoop(timestamp) {
     lastTime = timestamp;
     accumulator += deltaTimeMs;
 
-    // Player Update
-    playerOne.update(deltaTimeMs / 1000) // in seconds
+    // // Player Update
+    // playerOne.update(deltaTimeMs / 1000) // in seconds
+
+    // All entities in scene, run UPDATE on all children
+    scene.update(deltaTimeMs / 1000); // in seconds
 
         // Fixed time step updates
     while (accumulator >= FIXED_TIMESTEP) {
@@ -195,16 +236,20 @@ function render(elapsedTime) {
 
 
                                 // Set view and projection matrices for all objects
-                                myShaders.TextureUV.use();
-                                myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
-                                square.draw(myShaders.TextureUV);
-                                triangle2.draw(myShaders.TextureUV); 
+                                // myShaders.TextureUV.use();
+                                // myShaders.TextureUV.setUniforms(viewMatrix, projectionMatrix, null, null, texture);  
+                                //square.draw(myShaders.TextureUV);
+                                // triangle2.draw(myShaders.TextureUV); 
 
-                                myShaders.SolidColor.use();
-                                myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue        
-                                triangle.draw(myShaders.SolidColor);    
-                                myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
+                                // myShaders.SolidColor.use();
+                                // myShaders.SolidColor.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 1.0, 1.0]); // blue        
+                                // triangle.draw(myShaders.SolidColor);    
+                                // myShaders.SolidColor.setColor(1.0, 0.5, 1.0, 1.0);
 
+                                scene.draw(gl, viewMatrix, projectionMatrix, lights);
+                                return;
+
+                                //triangle.draw();
     
 
 //#region LIGHT TEST
