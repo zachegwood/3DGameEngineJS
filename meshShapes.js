@@ -1,4 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { drawWireFrameCube, wireFrameCube } from './collisions.js';
 
 
 const TILE_SIZE = 1;
@@ -7,10 +8,15 @@ const TILE_SIZE = 1;
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
 class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null, normals = null, size = 1) {
+    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null) {
         this.gl = gl;
         this.vertexCount = vertexCount;
-        this.size = size;
+
+        // AABB Colliison Setup. aabb is sent from below in meshShapes.js, where shapes are defined ("CreateTriangle", etc)
+        if (aabb) { 
+            this.aabb = aabb;
+            this.collider = wireFrameCube(aabb.min, aabb.max);
+        }
 
         // Position buffer
         this.buffer = gl.createBuffer();
@@ -76,6 +82,9 @@ class Mesh {
         for (const loc of enabled) {
             gl.disableVertexAttribArray(loc);
         }
+
+        // Draw the collider
+        if (this.aabb) drawWireFrameCube(this.gl, shader, this.collider);
     }
 }
 
@@ -83,17 +92,21 @@ class Mesh {
 // Factory: Make a triangle mesh
 export function createTriangle(gl, size = TILE_SIZE / 2) {
     const verts = [
-         0.0,  0.5, 0.0,
-        -0.5, -0.5, 0.0,
-         0.5, -0.5, 0.0
+         0.0,  size, 0.0,
+        -size, -size, 0.0,
+         size, -size, 0.0
     ];
     const uvs = [
         0.5, 1.0,   // top
         0.0, 0.0,   // bottom left
         1.0, 0.0    // bottom right
     ];
+    const aabb = {
+        min: [-size, -size, 0],
+        max: [ size,  size, 0]
+    }
 
-    return new Mesh(gl, verts, 3, uvs);
+    return new Mesh(gl, verts, 3, uvs, null, aabb);
 }
 
 export function createSquare(gl, size = TILE_SIZE / 2) {
@@ -125,7 +138,12 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
         0, 1, 0,  0, 1, 0,  0, 1, 0
     ]
 
-    return new Mesh(gl, verts, 6, uvs,  normals);
+        const aabb = {
+        min: [-size, 0, -size],
+        max: [ size, 0,  size]
+    }
+
+    return new Mesh(gl, verts, 6, uvs,  normals, aabb);
 }
 
 //#region 3D Shapes
@@ -207,7 +225,12 @@ export function createCube(gl, size = 0.5) {
         -1, 0, 0,  -1, 0, 0,  -1, 0, 0,
     ];
 
-    return new Mesh(gl, positions, 36, uvs, normals);
+    const aabb = {
+        min: [-s, -s, -s],
+        max: [ s,  s,  s]
+    }
+
+    return new Mesh(gl, positions, 36, uvs, normals, aabb);
 }
 
 

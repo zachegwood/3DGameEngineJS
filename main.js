@@ -157,8 +157,8 @@ function render(elapsedTime) {
 
 // Wireframe Cube around...(currently nothing, just vectors). 
 // Move this to testLevel.js later
-    const wireCube = wireFrameCube([0,2,0], [2,4,2]);
-    drawWireFrameCube(gl, myShaders.SolidColor, viewMatrix, projectionMatrix, wireCube);
+    // const wireCube = wireFrameCube([0,2,0], [2,4,2]);
+    // drawWireFrameCube(gl, myShaders.SolidColor, wireCube);
 
 
 

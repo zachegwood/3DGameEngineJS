@@ -9,7 +9,7 @@ export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
     const lines = [];
     const centerLines = [];
     const step = gridSquareSize; // distance between each line
-    const height = 0; // Y pos
+    const height = 0.1; // Y pos
     const fallOffRadius = halfCount/0.81;
     const radiusSquared = fallOffRadius * fallOffRadius;
 

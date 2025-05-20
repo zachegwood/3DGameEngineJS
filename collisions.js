@@ -87,14 +87,15 @@ export function wireFrameCube(min, max) {
   };
 }
 
-export function drawWireFrameCube(gl, shader, viewMatrix, projectionMatrix, wireFrameCubeData) {
+export function drawWireFrameCube(gl, shader, wireFrameCubeData) {
 
     const wireframe = wireFrameCubeData;
     const wireModel = mat4.create();
     const wireShader = shader;
     wireShader.use();
     wireShader.setColor(1,1,1,1);    
-    wireShader.setUniforms(viewMatrix, projectionMatrix, wireModel); 
+    wireShader.setModelMatrix(wireModel);
+    //wireShader.setUniforms(viewMatrix, projectionMatrix, wireModel); 
 
     const positionBuffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
