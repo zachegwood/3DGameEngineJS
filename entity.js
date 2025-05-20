@@ -4,6 +4,8 @@
 
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, wireFrameCube } from './collisions.js';
+import { myShaders } from './main.js'
+import { debugSettings } from './debug.js';
 
 
 export class Entity {
@@ -111,11 +113,11 @@ export class Entity {
             this.mesh.draw(this.shader);
         }        
 
-        if (this.mesh.collider) {
+        if (this.mesh.collider && debugSettings.COLLIDERS === true) {
                     // Draw the collider
 
-            drawWireFrameCube(this.mesh.gl, this.mesh.shader, this.mesh.collider, this.collBuffers, this.modelMatrix);  
-            console.log(`drawing collider for ${this.id}`)
+            drawWireFrameCube(this.mesh.gl, myShaders.SolidColor, this.mesh.collider, this.collBuffers, this.modelMatrix);  
+            //console.log(`drawing collider for ${this.id}`)
         };
 
     

@@ -2,6 +2,11 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 
 const TILE_SIZE = 1;
 
+export const debugSettings = {
+    GRID: false,
+    COLLIDERS: true,
+}
+
 let rayBuffer = null;
 let grid = null;
 

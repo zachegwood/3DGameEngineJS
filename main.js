@@ -1,5 +1,5 @@
 import { mat4,} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { DrawGrid } from './debug.js';
+import { DrawGrid, debugSettings } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js';
@@ -29,12 +29,36 @@ window.addEventListener("resize", () => {
     gl.viewport(0, 0, canvas.width, canvas.height);
 });
 
+const debugToggleGrid = document.getElementById("debug_toggle_grid");
+const debugToggleColliders = document.getElementById("debug_toggle_colliders");
+
 const debugElement = document.getElementById("cam_debug");
+
+debugToggleColliders.addEventListener("click", () => {
+    debugToggleColliders.classList.toggle("debug_enabled");
+    console.log("toggling debug colliders");
+    debugSettings.COLLIDERS = !debugSettings.COLLIDERS;
+});
+debugToggleGrid.addEventListener("click", () => {
+    debugToggleGrid.classList.toggle("debug_enabled");
+    console.log("toggling debug grid");
+    debugSettings.GRID = !debugSettings.GRID;
+});
+
+if (debugSettings.COLLIDERS === true) {
+    debugToggleColliders.classList.add("debug_enabled");
+}
+
+if (debugSettings.GRID === true) {
+    debugToggleGrid.classList.add("debug_enabled");
+}
+
+
 
 
 
 // object that holds refs to all shaders. Created in shaders.js
-const myShaders = CreateShaders(gl);
+export const myShaders = CreateShaders(gl);
 
 // add all game objects to scene
 const scene = buildLevel(gl, myShaders);
@@ -77,9 +101,15 @@ let lastTime = start;
 const FIXED_TIMESTEP = 1000 / 60; // 60 updates per second. 16.666... ms
 let accumulator = 0;
 
+let frameCount;
+let frameTimer = 0;
+let lastFrameTimer = 0;
+
 //#region Game Loop
 
 function gameLoop(timestamp) {
+
+    
 
     if (!lastTime) lastTime = timestamp;
 
@@ -120,6 +150,19 @@ requestAnimationFrame(gameLoop);
 //#region Render Loop
 function render(elapsedTime) {
 
+    frameCount++;
+    frameTimer = performance.now() - lastFrameTimer;
+
+    if (frameTimer > 1000) {
+
+        debugElement.textContent = `FPS: ${frameCount}`;
+
+        frameTimer = 0;
+        frameCount = 0;
+        lastFrameTimer = performance.now();
+    }
+        
+
     gl.clearColor(.01, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -142,7 +185,8 @@ function render(elapsedTime) {
     // Yaw: [${yaw.toFixed(2)}]
     // `;
 
-    DrawGrid(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // debug grid draw methods. all GPU stuffs
+    if (debugSettings.GRID === true)
+        DrawGrid(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // debug grid draw methods. all GPU stuffs
 
     scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
