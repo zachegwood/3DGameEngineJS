@@ -11,7 +11,7 @@ import { SceneNode } from './scene.js';
 
 import { buildLevel } from './testLevel.js';
 
-import { levelBoxes, wireFrameCube } from './collisions.js';
+import { drawWireFrameCube, wireFrameCube } from './collisions.js';
 
 //#region GL and Canvas
 
@@ -38,9 +38,33 @@ const myShaders = CreateShaders(gl);
 
 // add all game objects to scene
 const scene = buildLevel(gl, myShaders);
+scene.id = `TestLevelParentScene`;
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
 const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting} );
+playerOne.id = "player_one";
 scene.add(playerOne);
+
+printSceneNodeNames(scene);
+
+
+// Print Scene Nodes' Names so I can track them
+function printSceneNodeNames(node, depth = 0) {
+    const indent = ' '.repeat(depth); // for clearer structure
+    const parentName = node.parent ? node.parent.id : 'none';
+
+    if (node.children && node.children.length > 0) {
+        console.log(`${indent}I'm a parent. My name is ${node.id}. I have ${node.children.length} children. My parent is ${parentName}`);
+        for (let child of node.children) {
+            printSceneNodeNames(child, depth + 1);
+        }
+    } else {
+        console.log(`${indent}I'm not a parent. My name is ${node.id}. My parent is ${parentName}`);
+    }
+}
+
+
+
+
 
 
 
@@ -85,6 +109,14 @@ function gameLoop(timestamp) {
 requestAnimationFrame(gameLoop);
 
 
+
+
+
+
+
+
+
+
 //#region Render Loop
 function render(elapsedTime) {
 
@@ -122,30 +154,16 @@ function render(elapsedTime) {
 
 
 
-    
+
+// Wireframe Cube around...(currently nothing, just vectors). 
+// Move this to testLevel.js later
+    const wireCube = wireFrameCube([0,2,0], [2,4,2]);
+    drawWireFrameCube(gl, myShaders.SolidColor, viewMatrix, projectionMatrix, wireCube);
 
 
-    const wireframe = wireFrameCube([2, 2, 2], [4, 4, 4]);
-    const wireShader = myShaders.SolidColor;
-    wireShader.use();
-    wireShader.setColor(1,1,1,1);
-    wireShader.setUniforms(viewMatrix, projectionMatrix, null);
-    gl.uniformMatrix4fv(wireShader.uniformLocations.model, false, mat4.create());
-    
 
 
-    const positionBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireframe.positions), gl.STATIC_DRAW);
 
-    gl.enableVertexAttribArray(wireShader.attribLocations.position);
-    gl.vertexAttribPointer(wireShader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
-
-    const indexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframe.indices), gl.STATIC_DRAW);
- 
-    gl.drawElements(gl.LINES, wireframe.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 

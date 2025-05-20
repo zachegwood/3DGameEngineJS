@@ -7,9 +7,10 @@ const TILE_SIZE = 1;
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
 class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null, normals = null) {
+    constructor(gl, vertices, vertexCount, uvs = null, normals = null, size = 1) {
         this.gl = gl;
         this.vertexCount = vertexCount;
+        this.size = size;
 
         // Position buffer
         this.buffer = gl.createBuffer();

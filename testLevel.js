@@ -8,6 +8,7 @@ import { createSquare, createTriangle, loadTexture, loadModel, createCube} from 
 export function buildLevel(gl, myShaders) {
         // The scene that will hold all entities (game objects)
     const scene = new SceneNode();
+    scene.id = `levelSceneParentNode`;
 
     const texture = loadTexture(gl, "Art/testTile.png");
 
@@ -20,12 +21,14 @@ export function buildLevel(gl, myShaders) {
         position: [0, 1, 0],
         shader: myShaders.SolidColor,
         color: [1.0, 1.0, 1.0, 1.0],
+        id: `triangle_1`,
     });
     const square = new Entity(
     {
         mesh: createSquare(gl, 2), 
         shader: myShaders.TextureUV,
         texture: texture,
+        id: `square_1`,
     });
     const triangle2 = new Entity(
     {
@@ -33,6 +36,7 @@ export function buildLevel(gl, myShaders) {
         position: [-2, 0.5, -3], 
         shader: myShaders.TextureUV,
         texture: texture,
+        id: `triangle_2`,
     });
     const square2 = new Entity(
     {
@@ -40,12 +44,14 @@ export function buildLevel(gl, myShaders) {
         position: [0, 0, 5.0], 
         shader: myShaders.Lighting,
         texture: texture,
+        id: `triangle_2`,
     });
     const square3 = new Entity(
     {
         mesh: createSquare(gl, 10), 
         position: [0, 0, -12], 
-        shader: myShaders.Lighting
+        shader: myShaders.Lighting,
+        id: `triangle_3`,
     });
 
     scene.add(triangle);
@@ -54,10 +60,15 @@ export function buildLevel(gl, myShaders) {
     scene.add(square2);
     scene.add(square3);
 
-    const columnsArray = [];
+    //const columnsArray = [];
     const columnCount = 16;
     let xSide = 1;
     let zDepth = 0;
+
+    const colGroup = new SceneNode();
+    colGroup.id = "columnGroupSceneNode";
+    //columnsArray.forEach(c => colGroup.add(c));
+    scene.add(colGroup);
 
     for (let i = 0; i < columnCount; i++) {    
 
@@ -74,15 +85,15 @@ export function buildLevel(gl, myShaders) {
         colCube.translate((xSide * 10), randHeight/2, zDepth);
         colCube.scale(1.0, randHeight, 1.0);
 
-        columnsArray.push(colCube);
+        //columnsArray.push(colCube);
+
+        colGroup.add(colCube);
 
         xSide *= -1; // flip sides
         if (i % 2 !== 0) zDepth -= 10; // move back a row every other loop    
     }
 
-    const colGroup = new SceneNode();
-    columnsArray.forEach(c => colGroup.add(c));
-    scene.add(colGroup);
+
 
 
 
@@ -107,14 +118,18 @@ export function buildLevel(gl, myShaders) {
     ]
 
     const lightsGroup = new SceneNode();
-    lights.forEach(l => lightsGroup.add(l));
+    lightsGroup.id = `LightsGroupSceneNode`;
+    lights.forEach(
+        (l, index) => { lightsGroup.add(l); 
+        l.id = `light_${index}`;
+    });    
     scene.add(lightsGroup);
 
     // vars to let me access these things from main
     scene.testTriangle = triangle;
     scene.testLights = lights;
 
-    // // Create a light
+    // // How to Create a light
     // const pointLight = new Light(
     //     [0.0, 2.0, 5.0],    // Position above the mesh
     //     [0.0, 1.0, 1.0],    // White color

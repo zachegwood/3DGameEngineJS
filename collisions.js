@@ -3,9 +3,9 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
 
-function createAABB(min, max) {
-    return { min, max }; // vec3
-}
+// function createAABB(min, max) {
+//     return { min, max }; // vec3
+// }
 
 // in main:
 // const playerBox = createAABB([0, 0, 0], [1, 2, 1]); // a 1x2x1 player
@@ -35,10 +35,10 @@ function updatePlayerAABB(position, size) {
 }
 
 // example boxes colliders in array
-export const levelBoxes = [
-    createAABB([5, 0, 5], [7, 2, 7]),       // cube block
-    createAABB([-1, -1, -1], [10, 0, 10]),  // ground plane
-];
+// export const levelBoxes = [
+//     createAABB([5, 0, 5], [7, 2, 7]),       // cube block
+//     createAABB([-1, -1, -1], [10, 0, 10]),  // ground plane
+// ];
 
 
 function tryMovePlayer(playerPos, velocity, size, levelBoxes) {
@@ -87,6 +87,29 @@ export function wireFrameCube(min, max) {
   };
 }
 
+export function drawWireFrameCube(gl, shader, viewMatrix, projectionMatrix, wireFrameCubeData) {
+
+    const wireframe = wireFrameCubeData;
+    const wireModel = mat4.create();
+    const wireShader = shader;
+    wireShader.use();
+    wireShader.setColor(1,1,1,1);    
+    wireShader.setUniforms(viewMatrix, projectionMatrix, wireModel); 
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireframe.positions), gl.STATIC_DRAW);
+
+    gl.enableVertexAttribArray(wireShader.attribLocations.position);
+    gl.vertexAttribPointer(wireShader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframe.indices), gl.STATIC_DRAW);
+ 
+    gl.drawElements(gl.LINES, wireframe.indices.length, gl.UNSIGNED_SHORT, 0);
+
+}
 
 
 

@@ -9,6 +9,7 @@ export class SceneNode {
         this.children = [];
         this.localMatrix = mat4.create();
         this.worldMatrix = mat4.create();
+        this.id = `defaultSceneNode`;
     }
 
     add(child) {

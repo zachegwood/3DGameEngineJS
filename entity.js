@@ -14,7 +14,8 @@ export class Entity {
         shader,
         color,
         texture,
-        material
+        material,
+        id,
     }) {
         this.mesh = mesh;
         this.shader = shader;
@@ -29,6 +30,8 @@ export class Entity {
         this.modelMatrix = mat4.create();        
         this.closestLights = null; // use function below, called from MAIN
         this.updateMatrix(); // calls the function below
+
+        this.id = id;
     }
 
     updateMatrix() {
