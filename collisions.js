@@ -87,9 +87,9 @@ export function wireFrameCube(min, max) {
   };
 }
 
-export function drawWireFrameCube(gl, shader, wireFrameCubeData) {
+export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers) {
 
-    const wireframe = wireFrameCubeData;
+    const wireData = wireFrameCubeData;
     const wireModel = mat4.create();
     const wireShader = shader;
     wireShader.use();
@@ -97,18 +97,14 @@ export function drawWireFrameCube(gl, shader, wireFrameCubeData) {
     wireShader.setModelMatrix(wireModel);
     //wireShader.setUniforms(viewMatrix, projectionMatrix, wireModel); 
 
-    const positionBuffer = gl.createBuffer();
+    const positionBuffer = collBuffers.position;
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireframe.positions), gl.STATIC_DRAW);
-
     gl.enableVertexAttribArray(wireShader.attribLocations.position);
     gl.vertexAttribPointer(wireShader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
 
-    const indexBuffer = gl.createBuffer();
+    const indexBuffer = collBuffers.index;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframe.indices), gl.STATIC_DRAW);
- 
-    gl.drawElements(gl.LINES, wireframe.indices.length, gl.UNSIGNED_SHORT, 0);
+    gl.drawElements(gl.LINES, collBuffers.count, gl.UNSIGNED_SHORT, 0);
 
 }
 
