@@ -3,6 +3,7 @@
 // This is the proper way to translate/scale/etc a mesh.
 
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { drawWireFrameCube, wireFrameCube } from './collisions.js';
 
 
 export class Entity {
@@ -32,6 +33,10 @@ export class Entity {
         this.updateMatrix(); // calls the function below
 
         this.id = id;
+
+        if (this.mesh && this.id) this.mesh.myEntity = this.id; // name the mesh
+
+        this.updateCollider();
     }
 
     updateMatrix() {
@@ -52,6 +57,28 @@ export class Entity {
         mat4.multiply(this.modelMatrix, t, r);
         mat4.multiply(this.modelMatrix, this.modelMatrix, s);
 
+    }
+
+    updateCollider() { 
+
+        if (!this.mesh) return;
+        
+        const gl = this.mesh.gl; 
+        const positionBuffer = this.mesh.gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.mesh.collider.positions), gl.STATIC_DRAW);
+
+        const indexBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.mesh.collider.indices), gl.STATIC_DRAW);
+
+        this.collBuffers = {
+            position: positionBuffer,
+            index: indexBuffer,
+            count: this.mesh.collider.indices.length,
+        }
+
+        
     }
 
     // draw(shader, view, projection, allLights) {
@@ -83,6 +110,14 @@ export class Entity {
         } else {
             this.mesh.draw(this.shader);
         }        
+
+        if (this.mesh.collider) {
+                    // Draw the collider
+
+            drawWireFrameCube(this.mesh.gl, this.mesh.shader, this.mesh.collider, this.collBuffers, this.modelMatrix);  
+            console.log(`drawing collider for ${this.id}`)
+        };
+
     
     }
 

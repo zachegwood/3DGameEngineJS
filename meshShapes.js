@@ -12,24 +12,26 @@ class Mesh {
         this.gl = gl;
         this.vertexCount = vertexCount;
 
+        //this.myEntity is passed from the entity id
+
         // AABB Colliison Setup. aabb is sent from below in meshShapes.js, where shapes are defined ("CreateTriangle", etc)
         if (aabb) { 
             this.aabb = aabb; // just max and min
             this.collider = wireFrameCube(aabb.min, aabb.max); // returns indexes and vertecies
 
-            const positionBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.collider.positions), gl.STATIC_DRAW);
+            // const positionBuffer = gl.createBuffer();
+            // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.collider.positions), gl.STATIC_DRAW);
 
-            const indexBuffer = gl.createBuffer();
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.collider.indices), gl.STATIC_DRAW);
+            // const indexBuffer = gl.createBuffer();
+            // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+            // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.collider.indices), gl.STATIC_DRAW);
 
-            this.collBuffers = {
-                position: positionBuffer,
-                index: indexBuffer,
-                count: this.collider.indices.length,
-            }
+            // this.collBuffers = {
+            //     position: positionBuffer,
+            //     index: indexBuffer,
+            //     count: this.collider.indices.length,
+            // }
         }
 
         // Position buffer
@@ -57,6 +59,7 @@ class Mesh {
 
 
     draw(shader, closeLights) {
+        this.shader = shader;
         const gl = this.gl;
 
         const enabled = []; // track which attributes we use, so we can disable them at the end
@@ -97,8 +100,11 @@ class Mesh {
             gl.disableVertexAttribArray(loc);
         }
 
-        // Draw the collider
-        if (this.aabb) { drawWireFrameCube(this.gl, shader, this.collider, this.collBuffers);  console.log(`drawing collider for ${this.id}`)};
+        // // Draw the collider
+        // if (this.aabb) { 
+        //     drawWireFrameCube(this.gl, shader, this.collider, this.collBuffers);  
+        //     console.log(`drawing collider for ${this.myEntity}`)
+        // };
     }
 }
 

@@ -87,10 +87,10 @@ export function wireFrameCube(min, max) {
   };
 }
 
-export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers) {
+export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers, wireModel) {
 
     const wireData = wireFrameCubeData;
-    const wireModel = mat4.create();
+    //const wireModel = mat4.create();
     const wireShader = shader;
     wireShader.use();
     wireShader.setColor(1,1,1,1);    

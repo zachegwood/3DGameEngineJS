@@ -18,7 +18,7 @@ export function buildLevel(gl, myShaders) {
     const triangle = new Entity( 
     {
         mesh: createTriangle(gl, 1),
-        position: [0, 1, 0],
+        position: [4, 1, 4],
         shader: myShaders.SolidColor,
         color: [1.0, 1.0, 1.0, 1.0],
         id: `triangle_1`,
