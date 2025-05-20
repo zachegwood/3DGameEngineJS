@@ -11,6 +11,8 @@ import { SceneNode } from './scene.js';
 
 import { buildLevel } from './testLevel.js';
 
+import { levelBoxes, wireFrameCube } from './collisions.js';
+
 //#region GL and Canvas
 
 // Setup canvas
@@ -114,7 +116,36 @@ function render(elapsedTime) {
 
     // Draw all game objects
     scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights);
+
+
+
+
+
+
+    
+
+
+    const wireframe = wireFrameCube([2, 2, 2], [4, 4, 4]);
+    const wireShader = myShaders.SolidColor;
+    wireShader.use();
+    wireShader.setColor(1,1,1,1);
+    wireShader.setUniforms(viewMatrix, projectionMatrix, null);
+    gl.uniformMatrix4fv(wireShader.uniformLocations.model, false, mat4.create());
+    
+
+
+    const positionBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireframe.positions), gl.STATIC_DRAW);
+
+    gl.enableVertexAttribArray(wireShader.attribLocations.position);
+    gl.vertexAttribPointer(wireShader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+
+    const indexBuffer = gl.createBuffer();
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireframe.indices), gl.STATIC_DRAW);
  
+    gl.drawElements(gl.LINES, wireframe.indices.length, gl.UNSIGNED_SHORT, 0);
 }
 
 
