@@ -6,6 +6,7 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 import { drawWireFrameCube, wireFrameCube } from './collisions.js';
 import { myShaders } from './main.js'
 import { debugSettings } from './debug.js';
+import { getWorldAABB } from './collisions.js';
 
 
 export class Entity {
@@ -114,9 +115,27 @@ export class Entity {
         }        
 
         if (this.mesh.collider && debugSettings.COLLIDERS === true) {
-                    // Draw the collider
 
-            drawWireFrameCube(this.mesh.gl, myShaders.SolidColor, this.mesh.collider, this.collBuffers, this.modelMatrix);  
+            const worldAABB = getWorldAABB(this.mesh.aabb.min, this.mesh.aabb.max, this.modelMatrix);
+            const wireData = wireFrameCube(worldAABB.min, worldAABB.max);
+
+            // Upload new AABB collider geometry to the GPU
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.collBuffers.position);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireData.positions), gl.DYNAMIC_DRAW);
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.collBuffers.index);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireData.indices), gl.STATIC_DRAW);
+
+            drawWireFrameCube(
+                this.mesh.gl, 
+                myShaders.SolidColor, 
+                wireData, 
+                this.collBuffers, 
+                mat4.create() // identity matrix, since data is already in world space
+            );  
+
+            // if (this.id === "triangle_1") {
+            //     console.log(`triangle worldAABB min is ${worldAABB.min}`);
+            // }
             //console.log(`drawing collider for ${this.id}`)
         };
 

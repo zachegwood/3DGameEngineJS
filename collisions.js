@@ -59,32 +59,34 @@ function tryMovePlayer(playerPos, velocity, size, levelBoxes) {
     return nextPos // No collision, move
 }
 
+// Given a cube, find the corners in LOCAL SPACE
+function findCubeCorners(min, max) {
+    return [
+        [min[0], min[1], min[2]],
+        [max[0], min[1], min[2]],
+        [max[0], max[1], min[2]],
+        [min[0], max[1], min[2]],
+        [min[0], min[1], max[2]],
+        [max[0], min[1], max[2]],
+        [max[0], max[1], max[2]],
+        [min[0], max[1], max[2]],
+    ];
+}
+
 export function wireFrameCube(min, max) {
 
-  const [minX, minY, minZ] = min;
-  const [maxX, maxY, maxZ] = max;
+    const cubeVerts = findCubeCorners(min, max); // get localspace corners
 
-  const cubeVerts = [
-    [minX, minY, minZ], // 0
-    [maxX, minY, minZ], // 1
-    [maxX, maxY, minZ], // 2
-    [minX, maxY, minZ], // 3
-    [minX, minY, maxZ], // 4
-    [maxX, minY, maxZ], // 5
-    [maxX, maxY, maxZ], // 6
-    [minX, maxY, maxZ], // 7
-  ];
+    const wireframeIndices = [
+        0, 1, 1, 2, 2, 3, 3, 0, // bottom face
+        4, 5, 5, 6, 6, 7, 7, 4, // top face
+        0, 4, 1, 5, 2, 6, 3, 7  // vertical edges
+    ];
 
-  const wireframeIndices = [
-    0, 1, 1, 2, 2, 3, 3, 0, // bottom face
-    4, 5, 5, 6, 6, 7, 7, 4, // top face
-    0, 4, 1, 5, 2, 6, 3, 7  // vertical edges
-  ];
-
-  return {
-    positions: cubeVerts.flat(),
-    indices: wireframeIndices,
-  };
+    return {
+        positions: cubeVerts.flat(),
+        indices: wireframeIndices,
+    };
 }
 
 export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers, wireModel) {
@@ -108,5 +110,25 @@ export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers, wi
 
 }
 
+// Once the local cube has rotated, find the larger AABB that surrounds the rotated cube (AABB is not rotated)
+export function getWorldAABB(localMin, localMax, modelMatrix) {
+
+    const corners = findCubeCorners(localMin, localMax);
+
+    const transformed = corners.map(corner => {
+        const v = vec3.transformMat4(vec3.create(), corner, modelMatrix);
+        return v;
+    });
+
+    const min = vec3.clone(transformed[0]);
+    const max = vec3.clone(transformed[0]);
+
+    for (let i = 1; i < transformed.length; i++) {
+        vec3.min(min, min, transformed[i]);
+        vec3.max(max, max, transformed[i]);
+    }
+
+    return { min, max };
+}
 
 
