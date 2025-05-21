@@ -39,13 +39,9 @@ export class Entity {
 
         this.id = id;
 
-        if (this.mesh) {
+        if (this.mesh) {            
 
-            
-
-            this.aabb = this.mesh.aabb;
-
-            console.log(`${this.id} -< ${this.aabb}`);
+            this.aabb = this.mesh.aabb;            
  
             this.mesh.myEntity = this.id; // name the mesh
 
@@ -54,6 +50,7 @@ export class Entity {
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
             collisionSystem.add(this.worldAABB);
+            //console.log(`${this.id} -< adding collider: `, this.worldAABB);
         }
     }
 

@@ -3,7 +3,7 @@ import { getMovementVector } from "./controls.js"; // also provides movement vec
 import { forwardMovementVector, rightMovementVector } from './camera.js';
 import { Entity } from './entity.js'
 import { collisionSystem } from './main.js';
-import { getWorldAABB } from './collisions.js';
+import { aabbIntersects } from './collisions.js';
 
 
 // Player inherits from Entity for Draw()
@@ -22,51 +22,41 @@ export class Player extends Entity {
         color,
         texture,
         material,
-        id = "default_player",
+        id,
         aabb,
     }) {
         const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
-        super(mesh, startPos);
-        this.position = startPos;
-        this.velocity = vec3.create();
-        this.mesh = mesh;
-        this.modelMatrix = mat4.create();
+
+        // Call Entity constructor
+        super({
+            mesh, 
+            shader,
+            color,
+            texture,
+            material,
+            id,
+            aabb,
+            position: startPos,
+            scaleVector: [1, 1, 1],
+        });
+        
+        this.velocity = vec3.create();        
         this.facingAngle = 0;
         this.currentAngle = 0; // visible rotation used for interpolation     
-        
-        this.shader = shader;
-        this.color = color;
-        this.texture = texture;
-        this.material = material;
 
-        if (this.mesh && this.id) this.mesh.myEntity = this.id; // name the mesh
-
-        this.updateCollider();
-
-        //collisionSystem.add(this.collBuffers);
-
-                if (this.mesh) {
-        
-                    
-        
-                    this.aabb = this.mesh.aabb;
-        
-                    console.log(`${this.id} -< ${this.aabb}`);
-         
-                    this.mesh.myEntity = this.id; // name the mesh
-        
-                    this.updateCollider();
-        
-                    this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
-        
-                    collisionSystem.add(this.worldAABB);
-                }
-
-        // offset Y position by half size of cube, so we're ON the floor
         
     }
 
     update(dt) {
+
+        this.movePlayer(dt);
+
+        collisionSystem.checkAllCollisions(this.worldAABB);       
+        
+    }
+
+    movePlayer(dt) {
+
         const inputVec = getMovementVector(); // ex [1.0, 0.0, 0.7] Player Input
 
         const movement = vec3.create();
@@ -103,8 +93,7 @@ export class Player extends Entity {
         mat4.fromTranslation(translation, this.position);
 
         // combine rotation and translation
-        mat4.mul(this.modelMatrix, translation, rotation); // rotation * translation
-        
+        mat4.mul(this.modelMatrix, translation, rotation); // rotation * translationa
     }
 
     _shortestAngleDiff(current, target) {

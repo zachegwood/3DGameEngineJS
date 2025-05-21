@@ -10,7 +10,6 @@ export class CollisionSystem {
 
     add(collider) {
         this.colliders.push(collider);
-        console.log(`added ${collider}`)
     }
 
     remove(collider) {
@@ -20,8 +19,20 @@ export class CollisionSystem {
         }
     }
 
-    checkAllCollisions() {
+    checkAllCollisions(thisCollider) {
+
+        //console.log(`Checking collider: `, thisCollider);
+
         // loop through pairs of this.colliders and test collisions
+        const hits = null;
+
+        this.colliders.forEach(c => {
+            if (c === thisCollider) return; // skip self
+            if (aabbIntersects(c, thisCollider)) {
+                console.log("hit");
+            }
+        });
+        //return;
     }
 }
 

@@ -65,8 +65,7 @@ export const myShaders = CreateShaders(gl);
 const scene = buildLevel(gl, myShaders);
 scene.id = `TestLevelParentScene`;
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
-const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting} );
-playerOne.id = "player_one";
+const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting, id: "player_one"} );
 scene.add(playerOne);
 
 
@@ -131,8 +130,6 @@ function gameLoop(timestamp) {
         updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
         accumulator -= FIXED_TIMESTEP;
     }
-
-    collisionSystem.checkAllCollisions();
     
     // Render loop
     render(performance.now() - start);
