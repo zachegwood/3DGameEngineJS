@@ -20,6 +20,7 @@ export class Player extends Entity {
         color,
         texture,
         material,
+        id = "default_player",
     }) {
         const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
         super(mesh, startPos);
@@ -34,6 +35,10 @@ export class Player extends Entity {
         this.color = color;
         this.texture = texture;
         this.material = material;
+
+        if (this.mesh && this.id) this.mesh.myEntity = this.id; // name the mesh
+
+        this.updateCollider();
 
         // offset Y position by half size of cube, so we're ON the floor
         

@@ -116,6 +116,8 @@ export class Entity {
 
         if (this.mesh.collider && debugSettings.COLLIDERS === true) {
 
+            
+
             const worldAABB = getWorldAABB(this.mesh.aabb.min, this.mesh.aabb.max, this.modelMatrix);
             const wireData = wireFrameCube(worldAABB.min, worldAABB.max);
 
@@ -132,6 +134,11 @@ export class Entity {
                 this.collBuffers, 
                 mat4.create() // identity matrix, since data is already in world space
             );  
+
+            if (this.id === "player_one") {
+
+                console.log(worldAABB);
+            }
 
             // if (this.id === "triangle_1") {
             //     console.log(`triangle worldAABB min is ${worldAABB.min}`);

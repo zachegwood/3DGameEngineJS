@@ -291,21 +291,31 @@ export async function loadModel(gl, url) {
     const normals = [];
     const uvs = [];
 
+    // Initialize AABB min/max with extreme values
+    const aabb = {
+        min: vec3.fromValues(Infinity, Infinity, Infinity),
+        max: vec3.fromValues(-Infinity, -Infinity, -Infinity)
+    }
+
     for (const v of data) {
         positions.push(...v.position);
         normals.push(...v.normal);
         uvs.push(...v.uv);
+
+        // Update AABB
+        vec3.min(aabb.min, aabb.min, v.position);
+        vec3.max(aabb.max, aabb.max, v.position);
     }
 
     const count = positions.length / 3; // # of vertecies
 
-    // return {
-    //     positions,
-    //     normals,
-    //     uvs,
-    //     count
-    // };
-
-    return new Mesh(gl, positions, count, uvs, normals);
+    return new Mesh(
+        gl, 
+        positions, 
+        count, 
+        uvs, 
+        normals, 
+        aabb
+    );
 }
 
