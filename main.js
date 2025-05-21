@@ -11,7 +11,7 @@ import { SceneNode } from './scene.js';
 
 import { buildLevel } from './testLevel.js';
 
-import { drawWireFrameCube, wireFrameCube } from './collisions.js';
+import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
 
 //#region GL and Canvas
 
@@ -54,6 +54,7 @@ if (debugSettings.GRID === true) {
 }
 
 
+export const collisionSystem = new CollisionSystem();
 
 
 
@@ -68,7 +69,9 @@ const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting} )
 playerOne.id = "player_one";
 scene.add(playerOne);
 
-printSceneNodeNames(scene);
+
+
+//printSceneNodeNames(scene);
 
 
 // Print Scene Nodes' Names so I can track them
@@ -128,6 +131,8 @@ function gameLoop(timestamp) {
         updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
         accumulator -= FIXED_TIMESTEP;
     }
+
+    collisionSystem.checkAllCollisions();
     
     // Render loop
     render(performance.now() - start);

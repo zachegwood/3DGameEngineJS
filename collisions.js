@@ -3,14 +3,29 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
 
-// function createAABB(min, max) {
-//     return { min, max }; // vec3
-// }
+export class CollisionSystem {
+    constructor() {
+        this.colliders = [];
+    }
 
-// in main:
-// const playerBox = createAABB([0, 0, 0], [1, 2, 1]); // a 1x2x1 player
+    add(collider) {
+        this.colliders.push(collider);
+        console.log(`added ${collider}`)
+    }
 
-function aabbIntersects(a,b) {
+    remove(collider) {
+        const index = this.colliders.indexOf(collider); // if it exists
+        if (index !== -1) {
+            this.colliders.splice(index, 1);
+        }
+    }
+
+    checkAllCollisions() {
+        // loop through pairs of this.colliders and test collisions
+    }
+}
+
+export function aabbIntersects(a,b) {
     return (
         a.min[0] <= b.max[0] && a.max[0] >= b.min[0] && // X
         a.min[1] <= b.max[1] && a.max[1] >= b.min[1] && // Y
@@ -40,7 +55,7 @@ function updatePlayerAABB(position, size) {
 //     createAABB([-1, -1, -1], [10, 0, 10]),  // ground plane
 // ];
 
-
+//#region Try Move Player
 function tryMovePlayer(playerPos, velocity, size, levelBoxes) {
     const nextPos = [
         playerPos[0] + velocity[0],
@@ -73,7 +88,8 @@ function findCubeCorners(min, max) {
     ];
 }
 
-export function wireFrameCube(min, max) {
+//#region Find  Wire Cube
+export function findWireFrameCube(min, max) {
 
     const cubeVerts = findCubeCorners(min, max); // get localspace corners
 
@@ -89,20 +105,17 @@ export function wireFrameCube(min, max) {
     };
 }
 
-export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers, wireModel) {
+//#region Draw Wire Cube
+export function drawWireFrameCube(gl, shader, collBuffers, wireModel) {
 
-    const wireData = wireFrameCubeData;
-    //const wireModel = mat4.create();
-    const wireShader = shader;
-    wireShader.use();
-    wireShader.setColor(1,1,1,1);    
-    wireShader.setModelMatrix(wireModel);
-    //wireShader.setUniforms(viewMatrix, projectionMatrix, wireModel); 
+    shader.use();
+    shader.setColor(1,1,1,1);    
+    shader.setModelMatrix(wireModel);
 
     const positionBuffer = collBuffers.position;
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-    gl.enableVertexAttribArray(wireShader.attribLocations.position);
-    gl.vertexAttribPointer(wireShader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+    gl.enableVertexAttribArray(shader.attribLocations.position);
+    gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
 
     const indexBuffer = collBuffers.index;
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
@@ -110,6 +123,7 @@ export function drawWireFrameCube(gl, shader, wireFrameCubeData, collBuffers, wi
 
 }
 
+//#region World AABB
 // Once the local cube has rotated, find the larger AABB that surrounds the rotated cube (AABB is not rotated)
 export function getWorldAABB(localMin, localMax, modelMatrix) {
 

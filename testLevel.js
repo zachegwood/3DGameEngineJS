@@ -44,14 +44,14 @@ export function buildLevel(gl, myShaders) {
         position: [0, 0, 5.0], 
         shader: myShaders.Lighting,
         texture: texture,
-        id: `triangle_2`,
+        id: `square_2`,
     });
     const square3 = new Entity(
     {
         mesh: createSquare(gl, 10), 
         position: [0, 0, -12], 
         shader: myShaders.Lighting,
-        id: `triangle_3`,
+        id: `square_3`,
     });
 
     scene.add(triangle);
@@ -77,10 +77,9 @@ export function buildLevel(gl, myShaders) {
         const colCube = new Entity(
         {
             mesh: createCube(gl, 0.5),        
-            shader: myShaders.Lighting
+            shader: myShaders.Lighting,
+            id: `colCube_${i}`,
         });
-
-        colCube.id = `colCube_${i}`;
 
         colCube.translate((xSide * 10), randHeight/2, zDepth);
         colCube.scale(1.0, randHeight, 1.0);

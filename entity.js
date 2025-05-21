@@ -3,10 +3,11 @@
 // This is the proper way to translate/scale/etc a mesh.
 
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { drawWireFrameCube, wireFrameCube } from './collisions.js';
-import { myShaders } from './main.js'
+import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
+import { myShaders, collisionSystem } from './main.js'
 import { debugSettings } from './debug.js';
 import { getWorldAABB } from './collisions.js';
+
 
 
 export class Entity {
@@ -20,6 +21,7 @@ export class Entity {
         texture,
         material,
         id,
+        aabb, //min/max passed from Mesh during creation
     }) {
         this.mesh = mesh;
         this.shader = shader;
@@ -37,9 +39,22 @@ export class Entity {
 
         this.id = id;
 
-        if (this.mesh && this.id) this.mesh.myEntity = this.id; // name the mesh
+        if (this.mesh) {
 
-        this.updateCollider();
+            
+
+            this.aabb = this.mesh.aabb;
+
+            console.log(`${this.id} -< ${this.aabb}`);
+ 
+            this.mesh.myEntity = this.id; // name the mesh
+
+            this.updateCollider();
+
+            this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
+
+            collisionSystem.add(this.worldAABB);
+        }
     }
 
     updateMatrix() {
@@ -67,7 +82,7 @@ export class Entity {
         if (!this.mesh) return;
         
         const gl = this.mesh.gl; 
-        const positionBuffer = this.mesh.gl.createBuffer();
+        const positionBuffer = gl.createBuffer();
         gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.mesh.collider.positions), gl.STATIC_DRAW);
 
@@ -79,22 +94,8 @@ export class Entity {
             position: positionBuffer,
             index: indexBuffer,
             count: this.mesh.collider.indices.length,
-        }
-
-        
+        }        
     }
-
-    // draw(shader, view, projection, allLights) {
-    //     //shader.use();  
-    //     //shader.setUniforms(view, projection);
-    //     shader.setModelMatrix(this.modelMatrix);
-    // if (allLights) {
-    //         this.closeLights = this.getClosestLights(allLights);
-    //         this.mesh.draw(shader, this.closeLights);
-
-    //     } else {
-    //         this.mesh.draw(shader);
-    //     }        
 
     draw(gl, view, projection, allLights) {
 
@@ -102,9 +103,6 @@ export class Entity {
 
         this.shader.use();  
         this.shader.setUniforms(view, projection, this.modelMatrix, this.color, this.texture);
-        // this.shader.setColor(this.color);
-        // this.shader.setTexture(this.texture);
-        // this.shader.setModelMatrix(this.modelMatrix);
         
         if (allLights) {
             this.closeLights = this.getClosestLights(allLights);
@@ -114,39 +112,32 @@ export class Entity {
             this.mesh.draw(this.shader);
         }        
 
-        if (this.mesh.collider && debugSettings.COLLIDERS === true) {
+        if (this.mesh && this.aabb) {            
 
-            
+            this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
-            const worldAABB = getWorldAABB(this.mesh.aabb.min, this.mesh.aabb.max, this.modelMatrix);
-            const wireData = wireFrameCube(worldAABB.min, worldAABB.max);
-
-            // Upload new AABB collider geometry to the GPU
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.collBuffers.position);
-            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireData.positions), gl.DYNAMIC_DRAW);
-            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.collBuffers.index);
-            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireData.indices), gl.STATIC_DRAW);
-
-            drawWireFrameCube(
-                this.mesh.gl, 
-                myShaders.SolidColor, 
-                wireData, 
-                this.collBuffers, 
-                mat4.create() // identity matrix, since data is already in world space
-            );  
-
-            if (this.id === "player_one") {
-
-                console.log(worldAABB);
-            }
-
-            // if (this.id === "triangle_1") {
-            //     console.log(`triangle worldAABB min is ${worldAABB.min}`);
-            // }
-            //console.log(`drawing collider for ${this.id}`)
+            if (debugSettings.COLLIDERS === true) this.debugWireFrameCube(gl);           
         };
 
     
+    }
+
+    debugWireFrameCube(gl) {
+
+        const wireData = findWireFrameCube(this.worldAABB.min, this.worldAABB.max);
+
+        // Upload new AABB collider geometry to the GPU
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.collBuffers.position);
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireData.positions), gl.DYNAMIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.collBuffers.index);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireData.indices), gl.STATIC_DRAW);
+
+        drawWireFrameCube(
+            this.mesh.gl, 
+            myShaders.SolidColor, 
+            this.collBuffers, 
+            mat4.create() // identity matrix, since data is already in world space
+        );             
     }
 
     //#region Closest Lights

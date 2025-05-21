@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { drawWireFrameCube, wireFrameCube } from './collisions.js';
+import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
 
 
 const TILE_SIZE = 1;
@@ -17,7 +17,7 @@ class Mesh {
         // AABB Colliison Setup. aabb is sent from below in meshShapes.js, where shapes are defined ("CreateTriangle", etc)
         if (aabb) { 
             this.aabb = aabb; // just max and min
-            this.collider = wireFrameCube(aabb.min, aabb.max); // returns indexes and vertecies
+            this.collider = findWireFrameCube(aabb.min, aabb.max); // returns indexes and vertecies
 
             // const positionBuffer = gl.createBuffer();
             // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);

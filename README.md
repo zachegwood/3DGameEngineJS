@@ -21,6 +21,15 @@ When creating a new shape, you also have to put it in the draw() method of main 
 
 
 
+Mesh Shapes defines shapes, like Cube
+Scene creates new Entity(mesh=createCube // from Mesh Shapesz)
+mesh calculates AABB, but holds it, since it's only local
+Entity then takes that AABB and converts it to world space. THATS where the collider comes from
+AABB never changes, since the model never changes, but the worldAABB does. so that's the collider.
+
+
+
+
 
 
 

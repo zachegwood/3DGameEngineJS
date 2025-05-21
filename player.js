@@ -2,6 +2,8 @@ import { vec3, mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/ind
 import { getMovementVector } from "./controls.js"; // also provides movement vector
 import { forwardMovementVector, rightMovementVector } from './camera.js';
 import { Entity } from './entity.js'
+import { collisionSystem } from './main.js';
+import { getWorldAABB } from './collisions.js';
 
 
 // Player inherits from Entity for Draw()
@@ -21,6 +23,7 @@ export class Player extends Entity {
         texture,
         material,
         id = "default_player",
+        aabb,
     }) {
         const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
         super(mesh, startPos);
@@ -39,6 +42,25 @@ export class Player extends Entity {
         if (this.mesh && this.id) this.mesh.myEntity = this.id; // name the mesh
 
         this.updateCollider();
+
+        //collisionSystem.add(this.collBuffers);
+
+                if (this.mesh) {
+        
+                    
+        
+                    this.aabb = this.mesh.aabb;
+        
+                    console.log(`${this.id} -< ${this.aabb}`);
+         
+                    this.mesh.myEntity = this.id; // name the mesh
+        
+                    this.updateCollider();
+        
+                    this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
+        
+                    collisionSystem.add(this.worldAABB);
+                }
 
         // offset Y position by half size of cube, so we're ON the floor
         
