@@ -129,6 +129,47 @@ export function createTriangle(gl, size = TILE_SIZE / 2) {
     return new Mesh(gl, verts, 3, uvs, null, aabb);
 }
 
+export function createSphere(radius) {
+    const latBands = 10;
+    const longBands = 10;
+    const positions = [];
+    const indices = [];
+
+    // Generate vertices
+    for (let i = 0; i <= latBands; i++) {
+        const phi = (i / latBands) * Math.PI;
+        for (let j = 0; j <= longBands; j++) {
+            const theta = (j / longBands) * 2 * Math.PI;
+
+            const x = radius * Math.sin(phi) * Math.cos(theta);
+            const y = radius * Math.cos(phi);
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+
+            positions.push(x, y, z);
+        }
+    }
+
+    // Generate indices for lines
+    for (let i = 0; i < latBands; i++) {
+        for (let j = 0; j < longBands; j++) {
+            const first = i * (longBands + 1) + j;
+            const second = first + longBands + 1;
+
+            // horizontal (longitude)
+            indices.push(first, first + 1);
+
+            // vertical (latitude)
+            indices.push(first, second);
+        }
+    }
+
+    return {
+        positions: positions,
+        indices: indices
+    };
+}
+
+
 export function createSquare(gl, size = TILE_SIZE / 2) {
     const verts = [
         -size, 0, -size,  // bottom left

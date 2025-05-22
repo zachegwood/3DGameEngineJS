@@ -3,7 +3,8 @@ import { getMovementVector } from "./controls.js"; // also provides movement vec
 import { forwardMovementVector, rightMovementVector } from './camera.js';
 import { Entity } from './entity.js'
 import { collisionSystem } from './main.js';
-import { aabbIntersects } from './collisions.js';
+import { aabbIntersects,  } from './collisions.js';
+import { createSphere } from './meshShapes.js';
 
 
 // Player inherits from Entity for Draw()
@@ -12,6 +13,7 @@ import { aabbIntersects } from './collisions.js';
 const SPEED = 3;
 const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
+const SPHERE_RADIUS = 0.8;
 
 
 export class Player extends Entity {
@@ -25,7 +27,7 @@ export class Player extends Entity {
         id,
         aabb,
     }) {
-        const startPos = vec3.fromValues(-2, PLAYER_HEIGHT/2, 2);
+        const startPos = vec3.fromValues(-5, PLAYER_HEIGHT/2, 2);
 
         // Call Entity constructor
         super({
@@ -44,22 +46,33 @@ export class Player extends Entity {
         this.facingAngle = 0;
         this.currentAngle = 0; // visible rotation used for interpolation     
 
+        const wireSphere = createSphere(SPHERE_RADIUS);
+        this.secondCollider = wireSphere; // for player, enemies
+                           const wireModelMatrix = mat4.create();
+                    mat4.fromTranslation(wireModelMatrix, this.position);   
+
+        
         
     }
 
     update(dt) {
 
         this.movePlayer(dt);
-
-        //console.log(`player world aabb is `, this.worldAABB);
-        collisionSystem.checkAllCollisions(this.worldAABB, this.id);       
-        
+        collisionSystem.checkAllCollisions(this); 
     }
+
+    // draw(gl) {
+    //     super.draw(gl, view, projection, allLights);
+    //     const wireSphere = createSphere(1);
+    //     const wireModelMatrix = mat4.create();
+    //     mat4.fromTranslation(wireModelMatrix, this.position);
+    //     this.debugWireFrameCube(gl, wireSphere, wireModelMatrix);
+
+    // }
 
     movePlayer(dt) {
 
         const inputVec = getMovementVector(); // ex [1.0, 0.0, 0.7] Player Input
-
         const movement = vec3.create();
         const forwardComponent = vec3.create();
         const rightComponent = vec3.create();
@@ -67,8 +80,7 @@ export class Player extends Entity {
         // Convert movement to world-space. IE, forward moves INTO 3D space
         vec3.scale(forwardComponent, forwardMovementVector, inputVec[2]); // z input
         vec3.scale(rightComponent, rightMovementVector, inputVec[0]); // x input
-
-        vec3.add(movement, forwardComponent, rightComponent);
+        vec3.add(movement, forwardComponent, rightComponent); // combine scale and movement
 
         // Move Player
         // Rotate if there's rotation  
@@ -76,7 +88,33 @@ export class Player extends Entity {
 
             vec3.normalize(movement, movement); // Normalize to prevent diagonal speedup
             vec3.scale(movement, movement, SPEED * dt);
-            vec3.add(this.position, this.position, movement);    // move position
+
+            // Stop here, check collisions
+            //console.log("player world aabb is ", this.worldAABB);
+
+
+            if (this.isOverlappingFirstCollider === true) {
+
+                //const potentialPos = this.offsetAABB(this.worldAABB, movement); // where we're trying to move
+                //const potentialPos = this.offsetAABB(this.secondCollider, movement); // where we're trying to move
+
+                const movedCenter = vec3.add(vec3.create(), this.position, movement);
+                const sphere = { center: movedCenter, radius: SPHERE_RADIUS};
+
+               // if (collisionSystem.manualCollisionCheck(potentialPos, this.id) === false) {
+               if (collisionSystem.sphereVsAABBCollide(sphere, this.id)) {
+                    // Allow the actual movement
+                    
+                    console.log("collision true");
+                } else { console.log("collision false");
+                    vec3.add(this.position, this.position, movement);    // move position
+                }
+
+            } else {
+                vec3.add(this.position, this.position, movement);    // move position
+            }
+
+
 
             // Update target facing angle based on movement direciton, to interpolate later
             this.facingAngle = Math.atan2(movement[0], movement[2]); // yaw angle in Y

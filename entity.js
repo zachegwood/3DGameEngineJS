@@ -8,6 +8,8 @@ import { myShaders, collisionSystem } from './main.js'
 import { debugSettings } from './debug.js';
 import { getWorldAABB } from './collisions.js';
 
+import { createSphere } from './meshShapes.js';
+
 
 
 export class Entity {
@@ -37,26 +39,30 @@ export class Entity {
         this.closestLights = null; // use function below, called from MAIN
         this.updateMatrix(); // calls the function below
 
-        this.isOverlappingCollider = false;
+        this.isOverlappingFirstCollider = false; // set dynamically from collider.js. Used to change collider color in draw()
+        this.isOverlappingSecondCollider = false;
 
         this.id = id;
 
+        this.secondCollider = null; // will need for player, enemies
+        
+
         if (this.mesh) {            
 
-            this.aabb = this.mesh.aabb;            
- 
+            this.aabb = this.mesh.aabb;    
             this.mesh.myEntity = this.id; // name the mesh
 
             this.updateCollider();
 
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
-            collisionSystem.add(this.worldAABB, this);
-            
-            if (this.id === "colCube_1") {
-                console.log(`i am ${this.id}, and my worldAABB is`, this.worldAABB );
-            }
+            collisionSystem.add(this); // add this entity to the list of colliders to check against
         }
+    }
+
+    // Called from Collisions.js
+    getCollider() {
+        return this.worldAABB;
     }
 
     updateMatrix() {
@@ -118,37 +124,57 @@ export class Entity {
 
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
-            if (debugSettings.COLLIDERS === true) this.debugWireFrameCube(gl);           
-        };
+            if (debugSettings.COLLIDERS === true) {
 
-    
+                const aabbWireData = findWireFrameCube(this.worldAABB.min, this.worldAABB.max);
+                const localWireData = findWireFrameCube(this.aabb.min, this.aabb.max);
+
+                this.debugWireFrameCube(gl, aabbWireData);        
+                //this.debugWireFrameCube(gl, localWireData);   
+
+                if (this.secondCollider !== null && this.isOverlappingFirstCollider) {
+
+                    const wireModelMatrix = mat4.create();
+                    mat4.fromTranslation(wireModelMatrix, this.position);  
+                    this.debugWireFrameCube(gl, this.secondCollider, wireModelMatrix);
+                    
+                }
+                
+            }
+        };
     }
 
-    debugWireFrameCube(gl) {
-
-        const wireData = findWireFrameCube(this.worldAABB.min, this.worldAABB.max);
+    debugWireFrameCube(gl, wireData, model = mat4.create()) {       
 
         // Upload new AABB collider geometry to the GPU
         gl.bindBuffer(gl.ARRAY_BUFFER, this.collBuffers.position);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(wireData.positions), gl.DYNAMIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.collBuffers.index);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireData.indices), gl.STATIC_DRAW);
+        this.collBuffers.count = wireData.indices.length;
 
+        // color of wireframe boxes
         let colorToDrawWireframe = new Float32Array([1,1,1,1]); // default wireframe color. change below if overlapping
-
-        if (this.isOverlappingCollider === true) { 
-            colorToDrawWireframe = new Float32Array([1,0,0,1]); 
-        } 
-
-        
+        if (this.isOverlappingFirstCollider === true) { // set dynamically from collider.js
+            colorToDrawWireframe = new Float32Array([1,0,0,1]); // change to red
+        }         
 
         drawWireFrameCube(
             this.mesh.gl, 
             myShaders.SolidColor, 
             this.collBuffers, 
-            mat4.create(), // identity matrix, since data is already in world space
-            colorToDrawWireframe
-        );             
+            model, // AABB will use mat4.create (identity matrix). second sphere collider uses a matrix model
+            colorToDrawWireframe // color from above
+        );  
+
+    }
+
+    // used for testing velocity collisions
+    offsetAABB(aabb, velocity) {
+        return {
+            min: vec3.add(vec3.create(), aabb.min, velocity),
+            max: vec3.add(vec3.create(), aabb.max, velocity)
+        }
     }
 
     //#region Closest Lights
