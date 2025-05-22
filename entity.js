@@ -37,6 +37,8 @@ export class Entity {
         this.closestLights = null; // use function below, called from MAIN
         this.updateMatrix(); // calls the function below
 
+        this.isOverlappingCollider = false;
+
         this.id = id;
 
         if (this.mesh) {            
@@ -49,8 +51,11 @@ export class Entity {
 
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
-            collisionSystem.add(this.worldAABB);
-            //console.log(`${this.id} -< adding collider: `, this.worldAABB);
+            collisionSystem.add(this.worldAABB, this);
+            
+            if (this.id === "colCube_1") {
+                console.log(`i am ${this.id}, and my worldAABB is`, this.worldAABB );
+            }
         }
     }
 
@@ -129,11 +134,20 @@ export class Entity {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.collBuffers.index);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(wireData.indices), gl.STATIC_DRAW);
 
+        let colorToDrawWireframe = new Float32Array([1,1,1,1]); // default wireframe color. change below if overlapping
+
+        if (this.isOverlappingCollider === true) { 
+            colorToDrawWireframe = new Float32Array([1,0,0,1]); 
+        } 
+
+        
+
         drawWireFrameCube(
             this.mesh.gl, 
             myShaders.SolidColor, 
             this.collBuffers, 
-            mat4.create() // identity matrix, since data is already in world space
+            mat4.create(), // identity matrix, since data is already in world space
+            colorToDrawWireframe
         );             
     }
 

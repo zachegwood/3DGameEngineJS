@@ -51,7 +51,8 @@ export class Player extends Entity {
 
         this.movePlayer(dt);
 
-        collisionSystem.checkAllCollisions(this.worldAABB);       
+        //console.log(`player world aabb is `, this.worldAABB);
+        collisionSystem.checkAllCollisions(this.worldAABB, this.id);       
         
     }
 

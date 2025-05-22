@@ -4,22 +4,24 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 
 
 export class CollisionSystem {
-    constructor() {
-        this.colliders = [];
+    constructor() { 
+        this.colliders = []; // An obj of the collider and its entity {aabb, gameObject}
     }
 
-    add(collider) {
-        this.colliders.push(collider);
+    add(collider, entity) {
+        this.colliders.push( { collider: collider, gameObject: entity } );
+        console.log(`added ${entity.id}`);
     }
 
     remove(collider) {
-        const index = this.colliders.indexOf(collider); // if it exists
+        const index = this.colliders.indexOf(c => c.collider === collider); // if it exists. collider is {aabb, gameObject}
         if (index !== -1) {
             this.colliders.splice(index, 1);
         }
     }
 
-    checkAllCollisions(thisCollider) {
+    //#region Check Collisions
+    checkAllCollisions(thisCollider, thisGameObjectID) {
 
         //console.log(`Checking collider: `, thisCollider);
 
@@ -27,9 +29,22 @@ export class CollisionSystem {
         const hits = null;
 
         this.colliders.forEach(c => {
-            if (c === thisCollider) return; // skip self
-            if (aabbIntersects(c, thisCollider)) {
-                console.log("hit");
+
+            if (c.gameObject.id === thisGameObjectID) return; // skip self
+
+            if (aabbIntersects(c.collider, thisCollider)) {
+                //console.log(`colliding with thisCollider --->  ${c.gameObjectID}`);
+
+                c.gameObject.isOverlappingCollider = true;
+                console.log(`${c.gameObject.id} is overlapping with ${thisGameObjectID}`);
+
+                if (c.gameObject.id === "colCube_1") {
+                    console.log(`i am ${c.gameObject.id}, and my worldAABB is`, c.collider );
+                }
+
+
+            } else {
+                c.gameObject.isOverlappingCollider = false;
             }
         });
         //return;
@@ -117,10 +132,11 @@ export function findWireFrameCube(min, max) {
 }
 
 //#region Draw Wire Cube
-export function drawWireFrameCube(gl, shader, collBuffers, wireModel) {
+export function drawWireFrameCube(gl, shader, collBuffers, wireModel, colorToDraw) {
 
     shader.use();
-    shader.setColor(1,1,1,1);    
+    //shader.setColor(1,1,1,1);   
+    shader.setColor(...colorToDraw);
     shader.setModelMatrix(wireModel);
 
     const positionBuffer = collBuffers.position;
