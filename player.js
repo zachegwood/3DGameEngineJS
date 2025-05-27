@@ -15,7 +15,7 @@ const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 const SPHERE_RADIUS = 0.8;
 
-
+//#region Player Class
 export class Player extends Entity {
     constructor( 
     { 
@@ -27,7 +27,7 @@ export class Player extends Entity {
         id,
         aabb,
     }) {
-        const startPos = vec3.fromValues(-5, PLAYER_HEIGHT/2, 2);
+        const startPos = vec3.fromValues(-5, PLAYER_HEIGHT, -10);
 
         // Call Entity constructor
         super({
@@ -55,21 +55,14 @@ export class Player extends Entity {
         
     }
 
+    //#region Update
     update(dt) {
 
         this.movePlayer(dt);
         collisionSystem.checkAllCollisions(this); 
     }
 
-    // draw(gl) {
-    //     super.draw(gl, view, projection, allLights);
-    //     const wireSphere = createSphere(1);
-    //     const wireModelMatrix = mat4.create();
-    //     mat4.fromTranslation(wireModelMatrix, this.position);
-    //     this.debugWireFrameCube(gl, wireSphere, wireModelMatrix);
-
-    // }
-
+    //#region Move
     movePlayer(dt) {
 
         const inputVec = getMovementVector(); // ex [1.0, 0.0, 0.7] Player Input
@@ -89,31 +82,21 @@ export class Player extends Entity {
             vec3.normalize(movement, movement); // Normalize to prevent diagonal speedup
             vec3.scale(movement, movement, SPEED * dt);
 
-            // Stop here, check collisions
-            //console.log("player world aabb is ", this.worldAABB);
-
-
             if (this.isOverlappingFirstCollider === true) { // something is inside the AABB
-
-                //const potentialPos = this.offsetAABB(this.worldAABB, movement); // where we're trying to move
-                //const potentialPos = this.offsetAABB(this.secondCollider, movement); // where we're trying to move
 
                 const movedCenter = vec3.add(vec3.create(), this.position, movement);
                 const sphere = { center: movedCenter, radius: SPHERE_RADIUS };
 
                 const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
 
-               // if (collisionSystem.manualCollisionCheck(potentialPos, this.id) === false) {
                if (hit?.collided === true) {  // something is hitting our REAL collider
                     
                     console.log("collision true");
                     console.log(`normal vector is ${hit.normal}`);
 
                     // Move player out of the wall by penetration depth
-                    if (hit.penetrationDepth > 0.001)
-                        vec3.scaleAndAdd(this.position, this.position, hit.normal, hit.penetrationDepth);
-                    
-                    
+                    if (hit.penetrationDepth > 0.01)
+                        vec3.scaleAndAdd(this.position, this.position, hit.normal, hit.penetrationDepth); 
 
                     // stop movement in normal dir only
                     let movementIntoWall = vec3.dot(movement, hit.normal); // how much of movement is into wall

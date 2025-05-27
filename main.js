@@ -90,6 +90,7 @@ function printSceneNodeNames(node, depth = 0) {
     }
 }
 
+// hover dom element showing player POS vector on screen
 const playerPosLabel = document.createElement("div");
 playerPosLabel.id = "player_pos";
 playerPosLabel.textContent = "X, Y, Z";

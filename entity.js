@@ -122,7 +122,7 @@ export class Entity {
             this.mesh.draw(this.shader);
         }        
 
-        if (this.mesh && this.aabb) {            
+        if (this.mesh && this.aabb) { 
 
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 

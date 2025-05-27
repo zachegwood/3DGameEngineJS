@@ -35,6 +35,8 @@ export class CollisionSystem {
             
             const otherCollider = c.getCollider();
 
+            c.isOverlappingFirstCollider = false;
+
             if (aabbIntersects(myCollider, otherCollider)) {
                 c.isOverlappingFirstCollider = true;
                 thisEntity.isOverlappingFirstCollider = true;
@@ -42,25 +44,7 @@ export class CollisionSystem {
                 c.isOverlappingFirstdCollider = false;
             }
         });
-        //return;
     }
-
-    // Used when attempting to move. Pass in the potential next AABB
-    // manualCollisionCheck(manualCollider, entityID) {
-
-    //     for (const c of this.colliders) {
-
-    //         if (c.id === entityID) continue; // skip self
-
-    //         if (aabbIntersects(manualCollider, c.getCollider())) {
-    //             console.log("collided potentially");
-    //             return true;
-    //         }
-    //     }
-
-    //     return false;
-
-    // }
 
         //#region Sphere Vs AABB
         // Clamp sphere's center to nearest point INSIDE AABB; check if point is close enough to collide
@@ -80,14 +64,14 @@ export class CollisionSystem {
 
             if (distSq <= sphere.radius * sphere.radius) {
 
+                const diff = vec3.subtract(vec3.create(), sphere.center, closest);
+
                 // the normal vector of the collided surface
-                const normal = vec3.subtract(vec3.create(), sphere.center, closest);
-                vec3.normalize(normal, normal);
+                const normal = vec3.normalize(vec3.create(), diff);
 
                 Raycast(closest, normal, 5, [0,1,1,1]);
 
-                const penetrationDepth = sphere.radius - Math.sqrt(distSq);
-                
+                const penetrationDepth = sphere.radius - vec3.length(diff);                
 
                 // Early exit on first collision
                 return {
@@ -100,20 +84,6 @@ export class CollisionSystem {
 
         return { collided: false };
     }
-
-    //         if (aabbIntersects(manualCollider, c.getCollider())) {
-    //             console.log("collided potentially");
-    //             return true;
-    //         }
-    //     }
-
-    //     return false;
-
-
-
-
-
-    // return distSq <= sphere.radius * sphere.radius;
 }
 
 export function aabbIntersects(a,b) {

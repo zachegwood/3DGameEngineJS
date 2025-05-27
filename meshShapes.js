@@ -57,7 +57,7 @@ class Mesh {
     }
 
 
-
+    //#region Draw
     draw(shader, closeLights) {
         this.shader = shader;
         const gl = this.gl;

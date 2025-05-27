@@ -54,6 +54,18 @@ export function buildLevel(gl, myShaders) {
         id: `square_3`,
     });
 
+        const slopeSmall = new Entity(
+    {
+        mesh: createSquare(gl, 10), 
+        position: [0, 0, -15], 
+        shader: myShaders.TextureUV,
+        id: `slopeSmall`,
+    });
+
+    slopeSmall.rotateX(-15);
+    scene.add(slopeSmall);
+
+
     scene.add(triangle);
     scene.add(square);
     scene.add(triangle2);
