@@ -11,7 +11,7 @@ import { getWorldAABB } from './collisions.js';
 import { createSphere } from './meshShapes.js';
 
 
-
+//#region Entity Class
 export class Entity {
     constructor({
         mesh, 
@@ -85,6 +85,7 @@ export class Entity {
 
     }
 
+        //#region UpdateColl()
     updateCollider() { 
 
         if (!this.mesh) return;
@@ -105,6 +106,7 @@ export class Entity {
         }        
     }
 
+    //#region Draw()
     draw(gl, view, projection, allLights) {
 
         if (!this.shader) return;
@@ -132,7 +134,7 @@ export class Entity {
                 this.debugWireFrameCube(gl, aabbWireData);        
                 //this.debugWireFrameCube(gl, localWireData);   
 
-                if (this.secondCollider !== null && this.isOverlappingFirstCollider) {
+                if (this.secondCollider !== null && this.isOverlappingFirstCollider) { // draw sphere collider
 
                     const wireModelMatrix = mat4.create();
                     mat4.fromTranslation(wireModelMatrix, this.position);  
@@ -144,6 +146,7 @@ export class Entity {
         };
     }
 
+    //#region Debug Cube
     debugWireFrameCube(gl, wireData, model = mat4.create()) {       
 
         // Upload new AABB collider geometry to the GPU

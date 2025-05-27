@@ -1,11 +1,12 @@
 // AABB bounding boxes
 
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { Raycast } from './debug.js';
 
 
 export class CollisionSystem {
     constructor() { 
-        this.colliders = []; // An array ofe entities. Colliders are entity.getCollider()
+        this.colliders = []; // An array of entities. Colliders are entity.getCollider()
     }
 
     add(entity) {
@@ -24,7 +25,7 @@ export class CollisionSystem {
     //#region Check Collisions
     checkAllCollisions(thisEntity) {
 
-        // Reset vars so that collider color is white, not red
+        // Reset vars so that collider color resets to white, not red
         thisEntity.isOverlappingFirstCollider = false;
         const myCollider = thisEntity.getCollider();
 
@@ -45,23 +46,23 @@ export class CollisionSystem {
     }
 
     // Used when attempting to move. Pass in the potential next AABB
-    manualCollisionCheck(manualCollider, entityID) {
+    // manualCollisionCheck(manualCollider, entityID) {
 
-        for (const c of this.colliders) {
+    //     for (const c of this.colliders) {
 
-            if (c.id === entityID) continue; // skip self
+    //         if (c.id === entityID) continue; // skip self
 
-            if (aabbIntersects(manualCollider, c.getCollider())) {
-                console.log("collided potentially");
-                return true;
-            }
-        }
+    //         if (aabbIntersects(manualCollider, c.getCollider())) {
+    //             console.log("collided potentially");
+    //             return true;
+    //         }
+    //     }
 
-        return false;
+    //     return false;
 
-    }
+    // }
 
-
+        //#region Sphere Vs AABB
         // Clamp sphere's center to nearest point INSIDE AABB; check if point is close enough to collide
     sphereVsAABBCollide(sphere, entityID) {        
 
@@ -79,11 +80,25 @@ export class CollisionSystem {
 
             if (distSq <= sphere.radius * sphere.radius) {
 
-                return true; // Early exit on first collision
+                // the normal vector of the collided surface
+                const normal = vec3.subtract(vec3.create(), sphere.center, closest);
+                vec3.normalize(normal, normal);
+
+                Raycast(closest, normal, 5, [0,1,1,1]);
+
+                const penetrationDepth = sphere.radius - Math.sqrt(distSq);
+                
+
+                // Early exit on first collision
+                return {
+                    collided: true,
+                    normal: normal,
+                    penetrationDepth: penetrationDepth,
+                }
             }
         }
 
-        return false;
+        return { collided: false };
     }
 
     //         if (aabbIntersects(manualCollider, c.getCollider())) {
@@ -113,40 +128,40 @@ export function aabbIntersects(a,b) {
 
 //}
 
-function updatePlayerAABB(position, size) {
-    const halfSize = size.map(s => s / 2);
-    return {
-        min: [
-            position[0] - halfSize[0],
-            position[1] - halfSize[1],
-            position[2] - halfSize[2]
-        ],
-        max: [
-            position[0] + halfSize[0],
-            position[1] + halfSize[1],
-            position[2] + halfSize[2]
-        ]
-    };
-}
+// function updatePlayerAABB(position, size) {
+//     const halfSize = size.map(s => s / 2);
+//     return {
+//         min: [
+//             position[0] - halfSize[0],
+//             position[1] - halfSize[1],
+//             position[2] - halfSize[2]
+//         ],
+//         max: [
+//             position[0] + halfSize[0],
+//             position[1] + halfSize[1],
+//             position[2] + halfSize[2]
+//         ]
+//     };
+// }
 
 //#region Try Move Player
-function tryMovePlayer(playerPos, velocity, size, levelBoxes) {
-    const nextPos = [
-        playerPos[0] + velocity[0],
-        playerPos[1] + velocity[1],
-        playerPos[2] + velocity[2]
-    ];
+// function tryMovePlayer(playerPos, velocity, size, levelBoxes) {
+//     const nextPos = [
+//         playerPos[0] + velocity[0],
+//         playerPos[1] + velocity[1],
+//         playerPos[2] + velocity[2]
+//     ];
 
-    const nextAABB = updatePlayerAABB(nextPos, size);
+//     const nextAABB = updatePlayerAABB(nextPos, size);
 
-    for (const box of levelBoxes) {
-        if (aabbIntersects(nextAABB, box)) {
-            return playerPos; // Blocked, stay in place
-        }
-    }
+//     for (const box of levelBoxes) {
+//         if (aabbIntersects(nextAABB, box)) {
+//             return playerPos; // Blocked, stay in place
+//         }
+//     }
 
-    return nextPos // No collision, move
-}
+//     return nextPos // No collision, move
+// }
 
 // Given a cube, find the corners in LOCAL SPACE
 function findCubeCorners(min, max) {

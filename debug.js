@@ -7,8 +7,14 @@ export const debugSettings = {
     COLLIDERS: true,
 }
 
+const raysToDraw = [];
+
 let rayBuffer = null;
+let attribLocation = null;
 let grid = null;
+
+
+//#region Create Grid
 
 export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
     const lines = [];
@@ -53,14 +59,7 @@ export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...lines, ...centerLines]), gl.STATIC_DRAW);
 
-    const originRay = [
-        0, 0, 0, // origin
-        0, 10, 0 // 10 units straight up
-    ];
-    
-    rayBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(originRay), gl.STATIC_DRAW);
+   
 
     return {
         buffer,
@@ -68,6 +67,8 @@ export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
         centerLines: centerLines // Return the center lines as well
     };
 }
+
+//#region Draw Grid
 
 export function DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor) {
 
@@ -99,13 +100,73 @@ export function DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor) {
     // Reset to identity before drawing ray
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
 
-    // Change debug color -- red
-    shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
+    // // Change debug color -- red
+    // shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
 
-    // Draw Origin Ray
+    // // Draw Origin Ray
+    // gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    // gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+    // gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
+    // gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
+
+     //Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
+}
+
+//#region Raycast 
+
+// Define the Rays and add to the raysToDraw Array. The actual drawing happens below in DrawRays(gl, shader)
+export function Raycast(origin, direction, length, color) {
+
+	const end = [
+		origin[0] + direction[0] * length,
+		origin[1] + direction[1] * length,
+		origin[2] + direction[2] * length
+	];
+
+	const rayVertices = [
+		origin[0], origin[1], origin[2],
+		end[0], end[1], end[2]
+	];
+
+    raysToDraw.push( {
+        vertices: rayVertices,
+        color: color
+    } );
+}
+
+//#region Draw Rays
+
+export function DrawRays(gl, shader) {
+
+    if (!raysToDraw.length) console.log("no rays to draw")    ;
+
+    if (!raysToDraw.length) return; // nothing to draw    
+
+    // console.log(`ray to draw is:  ` +
+    //     `(${raysToDraw[0].vertices[0]}, ${raysToDraw[0].vertices[1]}, ${raysToDraw[0].vertices[2]}) -> ` + 
+    //     `(${raysToDraw[0].vertices[3]}, ${raysToDraw[0].vertices[4]}, ${raysToDraw[0].vertices[5]})
+    //        color: ${raysToDraw[0].color}` );
+
+    if (rayBuffer === null) rayBuffer = gl.createBuffer(); // setup ray buffer ONCE
+
     gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
-    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
+
+    if (shader.attribLocations.position !== -1) {
+        gl.enableVertexAttribArray(shader.attribLocations.position);
+        gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+    }
+
+    shader.setModelMatrix(mat4.create()); // identity matrix, cancels out previous model transform
+
+
+    raysToDraw.forEach( ray => {
+
+        shader.setColor(...ray.color); // js spread syntax, since ray.color is an array
+        
+        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
+        gl.drawArrays(gl.LINES, 0, 2);
+    });    
+
+    raysToDraw.length = 0; // Clear for the next frame
 
 }

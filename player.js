@@ -93,30 +93,45 @@ export class Player extends Entity {
             //console.log("player world aabb is ", this.worldAABB);
 
 
-            if (this.isOverlappingFirstCollider === true) {
+            if (this.isOverlappingFirstCollider === true) { // something is inside the AABB
 
                 //const potentialPos = this.offsetAABB(this.worldAABB, movement); // where we're trying to move
                 //const potentialPos = this.offsetAABB(this.secondCollider, movement); // where we're trying to move
 
                 const movedCenter = vec3.add(vec3.create(), this.position, movement);
-                const sphere = { center: movedCenter, radius: SPHERE_RADIUS};
+                const sphere = { center: movedCenter, radius: SPHERE_RADIUS };
+
+                const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
 
                // if (collisionSystem.manualCollisionCheck(potentialPos, this.id) === false) {
-               if (collisionSystem.sphereVsAABBCollide(sphere, this.id)) {
-                    // Allow the actual movement
+               if (hit?.collided === true) {  // something is hitting our REAL collider
                     
                     console.log("collision true");
-                } else { console.log("collision false");
+                    console.log(`normal vector is ${hit.normal}`);
+
+                    // Move player out of the wall by penetration depth
+                    if (hit.penetrationDepth > 0.001)
+                        vec3.scaleAndAdd(this.position, this.position, hit.normal, hit.penetrationDepth);
+                    
+                    
+
+                    // stop movement in normal dir only
+                    let movementIntoWall = vec3.dot(movement, hit.normal); // how much of movement is into wall
+                    let slideVec = vec3.scale(vec3.create(), hit.normal, movementIntoWall); // project onto normal
+                    vec3.subtract(slideVec, movement, slideVec);
+
+                    vec3.add(this.position, this.position, slideVec);    // move position
+
+                } else { 
                     vec3.add(this.position, this.position, movement);    // move position
+                    console.log("collision false");
                 }
 
             } else {
                 vec3.add(this.position, this.position, movement);    // move position
             }
 
-
-
-            // Update target facing angle based on movement direciton, to interpolate later
+            // Update target facing angle based on movement direciton, to interpolate below
             this.facingAngle = Math.atan2(movement[0], movement[2]); // yaw angle in Y
         } 
 

@@ -1,5 +1,5 @@
-import { mat4,} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { DrawGrid, debugSettings } from './debug.js';
+import { mat4, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { DrawGrid, debugSettings, DrawRays, Raycast } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
 import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js';
@@ -22,6 +22,8 @@ canvas.height = window.innerHeight;
 
 const gl = canvas.getContext("webgl");
 if (!gl) throw new Error("WebGL not supported");
+
+
 
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
@@ -88,7 +90,27 @@ function printSceneNodeNames(node, depth = 0) {
     }
 }
 
+const playerPosLabel = document.createElement("div");
+playerPosLabel.id = "player_pos";
+playerPosLabel.textContent = "X, Y, Z";
+document.body.appendChild(playerPosLabel);
 
+function worldToScreen(pos, viewMatrix, projectionMatrix, canvas) {
+    const clipSpace = vec4.transformMat4([], [pos[0], pos[1], pos[2], 1], viewMatrix);
+    vec4.transformMat4(clipSpace, clipSpace, projectionMatrix);
+
+    // Perspective divide
+    const ndc = [
+        clipSpace[0] / clipSpace[3],
+        clipSpace[1] / clipSpace[3],
+    ];
+
+    // Convert NDC [-1, 1] to screen [0, canvas.width/height]
+    return [
+        (ndc[0] + 1) * 0.5 * canvas.width,
+        (1 - ndc[1]) * 0.5 * canvas.height // Y is inverted
+    ];
+}
 
 
 
@@ -187,6 +209,7 @@ function render(elapsedTime) {
     // Yaw: [${yaw.toFixed(2)}]
     // `;
 
+
     if (debugSettings.GRID === true)
         DrawGrid(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // debug grid draw methods. all GPU stuffs
 
@@ -196,9 +219,19 @@ function render(elapsedTime) {
     scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights);
 
 
+    Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
+    DrawRays(gl, myShaders.SolidColor); // All raycasts
 
+    
 
-
+    // Draw player's POS in text above player head
+    const screenPos = worldToScreen(playerOne.position, viewMatrix, projectionMatrix, canvas);
+    playerPosLabel.style.left = `${screenPos[0]}px`;
+    playerPosLabel.style.top = `${screenPos[1]}px`;
+    playerPosLabel.textContent = 
+        `${playerOne.position[0].toFixed(1)}, 
+         ${playerOne.position[1].toFixed(1)}, 
+         ${playerOne.position[2].toFixed(1)}`;
 
 
 // Wireframe Cube around...(currently nothing, just vectors). 
