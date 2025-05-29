@@ -169,8 +169,9 @@ export function createSphere(radius) {
     };
 }
 
+//#region Square
+export function createSquare(gl, size = TILE_SIZE / 2, colType = `collider`) {
 
-export function createSquare(gl, size = TILE_SIZE / 2) {
     const verts = [
         -size, 0, -size,  // bottom left
          size, 0, -size,  // bottom right
@@ -199,9 +200,10 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
         0, 1, 0,  0, 1, 0,  0, 1, 0
     ]
 
-        const aabb = {
+    const aabb = {
         min: [-size, 0, -size],
-        max: [ size, 0,  size]
+        max: [ size, 0,  size],
+        colType // collider, trigger, etc
     }
 
     return new Mesh(gl, verts, 6, uvs,  normals, aabb);
@@ -209,7 +211,7 @@ export function createSquare(gl, size = TILE_SIZE / 2) {
 
 //#region 3D Shapes
 
-export function createCube(gl, size = 0.5) {
+export function createCube(gl, size = 0.5, colType = `collider`) {
     const s = size;
 
     // 6 faces * 2 triangles per face * 3 vertices per triangle = 36 vertices
@@ -288,7 +290,8 @@ export function createCube(gl, size = 0.5) {
 
     const aabb = {
         min: [-s, -s, -s],
-        max: [ s,  s,  s]
+        max: [ s,  s,  s],
+        colType // collider, trigger, etc
     }
 
     return new Mesh(gl, positions, 36, uvs, normals, aabb);

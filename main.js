@@ -80,15 +80,29 @@ document.addEventListener("visibilitychange", () => {
 
         console.log(" Website is visible. User has returned. ");
 
-        debugPause = false;
-        pauseText.style.display = 'none';   
-        if (isGameLoopRunning === false){
-             requestAnimationFrame(gameLoop);
-             isGameLoopRunning = true;
-        }
+        // debugPause = false;
+        // pauseText.style.display = 'none';   
+        // if (isGameLoopRunning === false){
+        //      requestAnimationFrame(gameLoop);
+        //      isGameLoopRunning = true;
+        // }
 
     }
 });
+
+export function unPauseGame() {
+
+    debugPause = false;
+    pauseText.style.display = 'none';   
+    if (isGameLoopRunning === false){
+
+        lastTime = performance.now();
+
+         requestAnimationFrame(gameLoop);
+         isGameLoopRunning = true;
+    }
+    
+}
 
 
 

@@ -1,4 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { unPauseGame } from './main.js';
 
 const canvas = document.getElementById("glcanvas");
 
@@ -38,6 +39,7 @@ export let forwardLookVector = vec3.create();
 // Lock cursor to brower window when clicked
 canvas.addEventListener("click", () => {
     canvas.requestPointerLock();
+    unPauseGame();
 });
 
 canvas.addEventListener('mousemove', e => {

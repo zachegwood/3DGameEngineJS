@@ -61,6 +61,8 @@ export class CollisionSystem {
         for (const c of this.colliders) {
             if (c.id === entityID) continue; // skip self
 
+
+
             const otherCollider = c.getCollider();            
             const closest = vec3.fromValues(
                 Math.max(otherCollider.min[0], Math.min(sphere.center[0], otherCollider.max[0])),
@@ -71,6 +73,12 @@ export class CollisionSystem {
             const distSq = vec3.squaredDistance(sphere.center, closest);
 
             if (distSq <= sphere.radius * sphere.radius) {
+
+                if (c.aabb.colType === `trigger`) { 
+                    console.log(`Player activated a trigger box: ${c.id} is a triggerBox. 
+                        For now, just skip this collider. Later, add in logic.`);
+                    continue;
+                }
 
                 collided = true;
 
