@@ -70,128 +70,234 @@ export class Player extends Entity {
     }
 
 
-  movePlayer(dt) {
-    // Apply gravity
-    if (!this.grounded) { 
-        this.velocity[1] -= GRAVITY * dt;
-    } else {
-        this.velocity[1] = 0;
+    _collidesAny() {
+        const sphere = { center: this.position, radius: SPHERE_RADIUS };
+        // or use your world-AABB test if you prefer AABB vs AABB
+        return collisionSystem.sphereVsAABBCollide(sphere, this.id).collided;
     }
 
-    // Get normalized input direction
-    const controllerMovement = getMovementVector(); // [x, 0, z]
-    const inputVector = vec3.create();
 
-    const forwardComponent = vec3.create();
-    const rightComponent = vec3.create();
+    movePlayer(dt) {
+        // Apply gravity
+        if (!this.grounded) { 
+            this.velocity[1] -= GRAVITY * dt;
+        } else {
+            this.velocity[1] = 0;
+        }
 
-    // Convert movement to world-space. IE, forward moves INTO 3D space
-    vec3.scale(forwardComponent, forwardMovementVector, controllerMovement[2]); // z input
-    vec3.scale(rightComponent, rightMovementVector, controllerMovement[0]); // x input
-    vec3.add(inputVector, forwardComponent, rightComponent); // combine scale and movement
+        // Get normalized input direction
+        const controllerMovement = getMovementVector(); // [x, 0, z]
+        const inputVector = vec3.create();
 
-    if (vec3.length(inputVector) > 0.001) {
-        vec3.normalize(inputVector, inputVector);
-        const moveVelocity = vec3.create();
-        vec3.scale(moveVelocity, inputVector, SPEED);
-        
-        // Set horizontal velocity (keep vertical velocity)
-        this.velocity[0] = moveVelocity[0];
-        this.velocity[2] = moveVelocity[2];
+        const forwardComponent = vec3.create();
+        const rightComponent = vec3.create();
 
-        // Face in movement direction
-        this.facingAngle = Math.atan2(inputVector[0], inputVector[2]);
-    } else {
-        // No input? Stop horizontal motion
-        this.velocity[0] = 0;
-        this.velocity[2] = 0;
-    }
+        // Convert movement to world-space. IE, forward moves INTO 3D space
+        vec3.scale(forwardComponent, forwardMovementVector, controllerMovement[2]); // z input
+        vec3.scale(rightComponent, rightMovementVector, controllerMovement[0]); // x input
+        vec3.add(inputVector, forwardComponent, rightComponent); // combine scale and movement
 
-    // Predict new position
-    const proposedPosition = vec3.create();
-    vec3.scaleAndAdd(proposedPosition, this.position, this.velocity, dt);
-
-    if (this.isOverlappingFirstCollider === true) {
-
-        console.log(`player touching ${this.allColliders.length} colliders`);
-
-        // Collision test using projected sphere
-        const sphere = { center: proposedPosition, radius: SPHERE_RADIUS };
-
-        let newGround = false;
-
-
-
-
-
-        //for (let x = 0; x < this.allColliders.length; x++) {
-
-            const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
-
-            //this.grounded = false;
-
+        if (vec3.length(inputVector) > 0.001) {
+            vec3.normalize(inputVector, inputVector);
+            const moveVelocity = vec3.create();
+            vec3.scale(moveVelocity, inputVector, SPEED);
             
+            // Set horizontal velocity (keep vertical velocity)
+            this.velocity[0] = moveVelocity[0];
+            this.velocity[2] = moveVelocity[2];
 
-            if (hit?.collided) {
-
-                for (const hitInfo of hit.hitInfo) {
-
-                    // Is this the ground?
-                    if (vec3.dot(hitInfo.normal, [0,1,0]) > 0.7) {
-                        this.grounded = true;
-                        console.log("grounded");
-                        newGround = true;
-                    }
+            // Face in movement direction
+            this.facingAngle = Math.atan2(inputVector[0], inputVector[2]);
+        } else {
+            // No input? Stop horizontal motion
+            this.velocity[0] = 0;
+            this.velocity[2] = 0;
+        }
 
 
+  // your proposed deltas
+  const dx = this.velocity[0] * dt;
+  const dy = this.velocity[1] * dt;
+  const dz = this.velocity[2] * dt;
 
-                    // Slide: remove velocity into wall
-                    const intoWall = vec3.dot(this.velocity, hitInfo.normal);
-                    if (intoWall < 0) {
-                        const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
-                        vec3.subtract(this.velocity, this.velocity, slideVec);
-                    }
+  // 2) X-axis
+  this.position[0] += dx;
+  if (this._collidesAny()) {
+    this.position[0] -= dx;
+    this.velocity[0] = 0;
+  }
 
-                    vec3.scaleAndAdd(this.position, this.position, this.velocity, dt);
+  // 3) Z-axis
+  this.position[2] += dz;
+  if (this._collidesAny()) {
+    this.position[2] -= dz;
+    this.velocity[2] = 0;
+  }
 
-                    if (hitInfo.penetrationDepth > 0.01) {
-                        // Move out of wall
-                        vec3.scaleAndAdd(this.position, this.position, hitInfo.normal, hitInfo.penetrationDepth);
-                    }
+  // 4) Y-axis (gravity & ground) — exact correction version
+this.position[1] += dy;
 
-                    // const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
-                    // vec3.subtract(slideVec, this.velocity, slideVec);
-                    // vec3.scaleAndAdd(this.position, this.position, slideVec, dt);
-                }
+const hitY = collisionSystem.sphereVsAABBCollide(
+  { center: this.position, radius: SPHERE_RADIUS },
+  this.id
+);
 
-            } else {
-                // No collision, just move
-                vec3.copy(this.position, proposedPosition);
-            }
-        //}
+if (hitY.collided) {
+  // Find any “floor” contacts
+  const groundHits = hitY.hitInfo.filter(h => vec3.dot(h.normal, [0,1,0]) > 0.7);
 
-        // empty collider array
-        this.allColliders = [];
-        if (newGround === false) this.grounded = false;
+  if (groundHits.length > 0) {
+    // We’re on the ground
+    this.grounded = true;
+    this.velocity[1] = 0;
 
-    } else {
-        // No collision, just move
-        vec3.copy(this.position, proposedPosition);
-    }
+    // Compute the maximum vertical correction needed
+    // (penetrationDepth along the Y-axis)
+    const maxPenY = Math.max(
+      ...groundHits.map(h => h.penetrationDepth * h.normal[1])
+    );
 
-    // Smooth rotation
-    const angleDiff = this._shortestAngleDiff(this.currentAngle, this.facingAngle);
-    this.currentAngle += angleDiff * Math.min(1, ROTATE_SPEED * dt);
-
-    // Apply transform
-    const rotation = mat4.create();
-    mat4.fromYRotation(rotation, this.currentAngle);
-
-    const translation = mat4.create();
-    mat4.fromTranslation(translation, this.position);
-
-    mat4.mul(this.modelMatrix, translation, rotation);
+    // Snap exactly up by that amount
+    this.position[1] += maxPenY;
+  } else {
+    // It was a “ceiling” or side hit: just zero vertical motion
+    this.velocity[1] = 0;
+    // Snap by totalCorrection’s Y component so you don’t get stuck in the ceiling
+    this.position[1] += hitY.totalCorrection[1];
+    this.grounded = false;
+  }
+} else {
+  // Free fall
+  this.grounded = false;
 }
+
+  // 4) Y-axis (gravity & ground)
+//   this.position[1] += dy;
+//   if (this._collidesAny()) {
+//     // hit something vertically
+//     // push back up until no overlap
+//     while (this._collidesAny()) {
+//       this.position[1] += 0.01;  // small step up
+//     }
+//     this.velocity[1] = 0;
+//     this.grounded = true;
+//   } else {
+//     this.grounded = false;
+//   }
+
+
+
+
+
+
+        // // Predict new position
+        // const proposedPosition = vec3.create();
+        // vec3.scaleAndAdd(proposedPosition, this.position, this.velocity, dt);
+
+        // if (this.isOverlappingFirstCollider === true) {
+
+        //     console.log(`player touching ${this.allColliders.length} colliders`);
+
+        //     // Collision test using projected sphere
+        //     const sphere = { center: proposedPosition, radius: SPHERE_RADIUS };
+
+        //     let newGround = false;
+        //     this.allColliders = [];
+        //     this.isOverlappingFirstCollider = false;
+
+
+
+
+        //     //for (let x = 0; x < this.allColliders.length; x++) {
+
+        //         const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
+
+        //         //this.grounded = false;
+
+                
+
+        //         if (hit?.collided) {
+
+        //             //for (const hitInfo of hit.hitInfo) {
+
+        //                 // Fix penetration
+        //                 vec3.add(this.position, this.position, hit.totalCorrection);
+
+        //                 // single average normal
+        //                 vec3.normalize(hit.sumNormals, hit.sumNormals);
+
+        //                 // slide: remove the velocity component into that normal
+        //                 const intoWall = vec3.dot(this.velocity, hit.sumNormals);
+        //                 if (intoWall < 0) {
+        //                     const slide = vec3.scale(vec3.create(), hit.sumNormals, intoWall);
+        //                     vec3.subtract(this.velocity, this.velocity, slide);
+        //                 }
+
+        //                 // Apply (slid) velocity
+        //                 vec3.scaleAndAdd(this.position, this.position, this.velocity, dt);
+
+        //                 this.grounded = hit.hitInfo.some(h => vec3.dot(h.normal, [0,1,0]) > 0.7);
+        //                 console.log(`are we grounded? ${this.grounded}`);
+
+
+
+
+        //                 // // Is this the ground?
+        //                 // if (vec3.dot(hitInfo.normal, [0,1,0]) > 0.7) {
+        //                 //     this.grounded = true;
+        //                 //     console.log("grounded");
+        //                 //     newGround = true;
+        //                 // }
+
+
+
+        //                 // // Slide: remove velocity into wall
+        //                 // const intoWall = vec3.dot(this.velocity, hitInfo.normal);
+        //                 // if (intoWall < 0) {
+        //                 //     const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
+        //                 //     vec3.subtract(this.velocity, this.velocity, slideVec);
+        //                 // }
+
+        //                 // vec3.scaleAndAdd(this.position, this.position, this.velocity, dt);
+
+        //                 // if (hitInfo.penetrationDepth > 0.01) {
+        //                 //     // Move out of wall
+        //                 //     vec3.scaleAndAdd(this.position, this.position, hitInfo.normal, hitInfo.penetrationDepth);
+        //                 // }
+
+        //                 // const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
+        //                 // vec3.subtract(slideVec, this.velocity, slideVec);
+        //                 // vec3.scaleAndAdd(this.position, this.position, slideVec, dt);
+        //             //}
+
+        //         } else {
+        //             // No collision, just move
+        //             vec3.copy(this.position, proposedPosition);
+        //         }
+        //     //}
+
+        //     // empty collider array
+        //     this.allColliders = [];
+        //     if (newGround === false) this.grounded = false;
+
+        // } else {
+        //     // No collision, just move
+        //     vec3.copy(this.position, proposedPosition);
+        // }
+
+        // Smooth rotation
+        const angleDiff = this._shortestAngleDiff(this.currentAngle, this.facingAngle);
+        this.currentAngle += angleDiff * Math.min(1, ROTATE_SPEED * dt);
+
+        // Apply transform
+        const rotation = mat4.create();
+        mat4.fromYRotation(rotation, this.currentAngle);
+
+        const translation = mat4.create();
+        mat4.fromTranslation(translation, this.position);
+
+        mat4.mul(this.modelMatrix, translation, rotation);
+    }
 
 
 

@@ -54,6 +54,7 @@ export class CollisionSystem {
     sphereVsAABBCollide(sphere, entityID) {    
         
         let totalCorrection = vec3.create(); // accumulated pushback from all colliders
+        let sumNormals = vec3.create();
         let collided = false;
         const hitInfo = [];
 
@@ -71,6 +72,8 @@ export class CollisionSystem {
 
             if (distSq <= sphere.radius * sphere.radius) {
 
+                collided = true;
+
                 const diff = vec3.subtract(vec3.create(), sphere.center, closest);
                 const dist = vec3.length(diff);
                 const penetrationDepth = sphere.radius - dist;  
@@ -80,10 +83,13 @@ export class CollisionSystem {
                 // the normal vector of the collided surface
                 const normal = vec3.normalize(vec3.create(), diff, 1 / dist); // normalized
 
+                // accumulate normal
+                vec3.add(sumNormals, sumNormals, normal);
+
                 // Accumulate MTV correction 
                 const correction = vec3.scale(vec3.create(), normal, penetrationDepth);
                 vec3.add(totalCorrection, totalCorrection, correction);
-                collided = true;
+                
 
                 Raycast(closest, normal, 5, [0,1,1,1]);
 
@@ -102,7 +108,8 @@ export class CollisionSystem {
 
         return {
             collided,
-            correction: totalCorrection,
+            totalCorrection,
+            sumNormals,
             hitInfo,
         };
     }
