@@ -23,8 +23,6 @@ canvas.height = window.innerHeight;
 const gl = canvas.getContext("webgl");
 if (!gl) throw new Error("WebGL not supported");
 
-
-
 window.addEventListener("resize", () => {
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
@@ -54,6 +52,44 @@ if (debugSettings.COLLIDERS === true) {
 if (debugSettings.GRID === true) {
     debugToggleGrid.classList.add("debug_enabled");
 }
+
+
+// Keep these here. They define the goodLog/badLog console overriding
+console.badLog = function(message) {
+    console.log(`%c${message}`, 'color: red; font-size: 12px; background: white; border-radius: 10%; padding: 2px;font-weight: bold;')
+}
+console.goodLog = function(message) {
+    console.log(`%c${message}`, 'color: blue; font-size: 12px; background: white; border-radius: 10%; padding: 2px; font-weight: bold;')
+}
+
+let debugPause = false;
+let isGameLoopRunning = true;
+const pauseText = document.getElementById("pause_text");
+
+// If user clicked to another window 
+document.addEventListener("visibilitychange", () => {
+
+    if (document.hidden) {
+
+        console.log(" Webpage is hidden. User has clicked away. ");
+
+        debugPause = true;
+        pauseText.style.display = 'block';
+
+    } else {
+
+        console.log(" Website is visible. User has returned. ");
+
+        debugPause = false;
+        pauseText.style.display = 'none';   
+        if (isGameLoopRunning === false){
+             requestAnimationFrame(gameLoop);
+             isGameLoopRunning = true;
+        }
+
+    }
+});
+
 
 
 export const collisionSystem = new CollisionSystem();
@@ -134,7 +170,10 @@ let lastFrameTimer = 0;
 
 function gameLoop(timestamp) {
 
-    
+    if (debugPause) {
+        isGameLoopRunning = false;
+        return;
+    }
 
     if (!lastTime) lastTime = timestamp;
 
@@ -174,6 +213,8 @@ requestAnimationFrame(gameLoop);
 
 //#region Render Loop
 function render(elapsedTime) {
+
+    if (debugPause === true) return;
 
     frameCount++;
     frameTimer = performance.now() - lastFrameTimer;

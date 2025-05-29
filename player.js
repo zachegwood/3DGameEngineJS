@@ -17,6 +17,8 @@ const SPHERE_RADIUS = 0.8;
 const PLAYER_START = vec3.fromValues(0, PLAYER_HEIGHT, -10);
 const GRAVITY = .5;
 
+
+
 //#region Player Class
 export class Player extends Entity {
     constructor( 
@@ -55,6 +57,8 @@ export class Player extends Entity {
         this.secondCollider = wireSphere; // for player, enemies
                            const wireModelMatrix = mat4.create();
                     mat4.fromTranslation(wireModelMatrix, this.position);          
+
+        this.allColliders = [] // every collider my sphere is touching
         
     }
 
@@ -68,7 +72,11 @@ export class Player extends Entity {
 
   movePlayer(dt) {
     // Apply gravity
-    if (!this.grounded) this.velocity[1] -= GRAVITY * dt;
+    if (!this.grounded) { 
+        this.velocity[1] -= GRAVITY * dt;
+    } else {
+        this.velocity[1] = 0;
+    }
 
     // Get normalized input direction
     const controllerMovement = getMovementVector(); // [x, 0, z]
@@ -105,32 +113,67 @@ export class Player extends Entity {
 
     if (this.isOverlappingFirstCollider === true) {
 
+        console.log(`player touching ${this.allColliders.length} colliders`);
+
         // Collision test using projected sphere
         const sphere = { center: proposedPosition, radius: SPHERE_RADIUS };
-        const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
 
-        if (hit?.collided) {
+        let newGround = false;
 
-            // Is this the ground?
-            if (vec3.dot(hit.normal, [0,1,0]) > 0.7) {
-                this.grounded = true;
-                console.log("grounded");
+
+
+
+
+        //for (let x = 0; x < this.allColliders.length; x++) {
+
+            const hit = collisionSystem.sphereVsAABBCollide(sphere, this.id);
+
+            //this.grounded = false;
+
+            
+
+            if (hit?.collided) {
+
+                for (const hitInfo of hit.hitInfo) {
+
+                    // Is this the ground?
+                    if (vec3.dot(hitInfo.normal, [0,1,0]) > 0.7) {
+                        this.grounded = true;
+                        console.log("grounded");
+                        newGround = true;
+                    }
+
+
+
+                    // Slide: remove velocity into wall
+                    const intoWall = vec3.dot(this.velocity, hitInfo.normal);
+                    if (intoWall < 0) {
+                        const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
+                        vec3.subtract(this.velocity, this.velocity, slideVec);
+                    }
+
+                    vec3.scaleAndAdd(this.position, this.position, this.velocity, dt);
+
+                    if (hitInfo.penetrationDepth > 0.01) {
+                        // Move out of wall
+                        vec3.scaleAndAdd(this.position, this.position, hitInfo.normal, hitInfo.penetrationDepth);
+                    }
+
+                    // const slideVec = vec3.scale(vec3.create(), hitInfo.normal, intoWall);
+                    // vec3.subtract(slideVec, this.velocity, slideVec);
+                    // vec3.scaleAndAdd(this.position, this.position, slideVec, dt);
+                }
+
+            } else {
+                // No collision, just move
+                vec3.copy(this.position, proposedPosition);
             }
+        //}
 
-            if (hit.penetrationDepth > 0.01) {
-                // Move out of wall
-                vec3.scaleAndAdd(this.position, this.position, hit.normal, hit.penetrationDepth);
-            }
+        // empty collider array
+        this.allColliders = [];
+        if (newGround === false) this.grounded = false;
 
-            // Slide: remove velocity into wall
-            const intoWall = vec3.dot(this.velocity, hit.normal);
-            const slideVec = vec3.scale(vec3.create(), hit.normal, intoWall);
-            vec3.subtract(slideVec, this.velocity, slideVec);
-            vec3.scaleAndAdd(this.position, this.position, slideVec, dt);
-        } else {
-            // No collision, just move
-            vec3.copy(this.position, proposedPosition);
-        }
     } else {
         // No collision, just move
         vec3.copy(this.position, proposedPosition);

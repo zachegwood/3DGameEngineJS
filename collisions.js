@@ -40,6 +40,9 @@ export class CollisionSystem {
             if (aabbIntersects(myCollider, otherCollider)) {
                 c.isOverlappingFirstCollider = true;
                 thisEntity.isOverlappingFirstCollider = true;
+
+                if (thisEntity.allColliders) thisEntity.allColliders.push(otherCollider);
+
             } else {
                 c.isOverlappingFirstdCollider = false;
             }
@@ -48,7 +51,11 @@ export class CollisionSystem {
 
         //#region Sphere Vs AABB
         // Clamp sphere's center to nearest point INSIDE AABB; check if point is close enough to collide
-    sphereVsAABBCollide(sphere, entityID) {        
+    sphereVsAABBCollide(sphere, entityID) {    
+        
+        let totalCorrection = vec3.create(); // accumulated pushback from all colliders
+        let collided = false;
+        const hitInfo = [];
 
         for (const c of this.colliders) {
             if (c.id === entityID) continue; // skip self
@@ -65,24 +72,39 @@ export class CollisionSystem {
             if (distSq <= sphere.radius * sphere.radius) {
 
                 const diff = vec3.subtract(vec3.create(), sphere.center, closest);
+                const dist = vec3.length(diff);
+                const penetrationDepth = sphere.radius - dist;  
+
+                if (dist === 0) continue; // Avoid NaNs from zero-length normal
 
                 // the normal vector of the collided surface
-                const normal = vec3.normalize(vec3.create(), diff);
+                const normal = vec3.normalize(vec3.create(), diff, 1 / dist); // normalized
+
+                // Accumulate MTV correction 
+                const correction = vec3.scale(vec3.create(), normal, penetrationDepth);
+                vec3.add(totalCorrection, totalCorrection, correction);
+                collided = true;
 
                 Raycast(closest, normal, 5, [0,1,1,1]);
 
-                const penetrationDepth = sphere.radius - vec3.length(diff);                
+                hitInfo.push( { normal: normal, penetrationDepth: penetrationDepth, } );
 
-                // Early exit on first collision
-                return {
-                    collided: true,
-                    normal: normal,
-                    penetrationDepth: penetrationDepth,
-                }
+                // // Early exit on first collision
+                // return {
+                //     collided: true,
+                //     normal: normal,
+                //     penetrationDepth: penetrationDepth,
+                // }
             }
         }
 
-        return { collided: false };
+        // return { collided: false };
+
+        return {
+            collided,
+            correction: totalCorrection,
+            hitInfo,
+        };
     }
 }
 
