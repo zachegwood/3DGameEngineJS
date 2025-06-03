@@ -130,6 +130,9 @@ export function buildLevel(gl, myShaders) {
 
     //#region Create Lights
 
+    
+   
+
     const lights = [
         
         new Light([1, 2, 5], [1, 1, 0], 1.0),
@@ -146,14 +149,23 @@ export function buildLevel(gl, myShaders) {
         // new Light([-9, 2, -40], [0.5, 1, 1], 2.0),
         // new Light([9, 2, -50], [0.5, 1, 1], 2.0),
         // new Light([-9, 2, -50], [0.5, 1, 1], 2.0),
-        new Light([0,8,0], [0,0,1], 0.5)
+        new Light([0,8,0], [0,0,1], 0.5),
     ]
+
+    const sunDir = [0,-1,0];
+    const sunColor = [1, 0, 0];
+    const sun = new Light([0, 9, 0], sunColor, 1.0);
+    sun.direction = sunDir;
+    sun.isSun = true;
+    lights.push(sun);
 
     const lightsGroup = new SceneNode();
     lightsGroup.id = `LightsGroupSceneNode`;
 
     const lightCubes = new SceneNode();
     lightCubes.id = 'LightCubeSceneNode';
+
+
 
     lights.forEach(
         (l, index) => { 
@@ -170,12 +182,11 @@ export function buildLevel(gl, myShaders) {
                     type: 'previewCube',
                 });
 
-        // Attach a per‐entity “before draw” hook that uploads that specific light’s uniforms.
+             // Attach a per‐entity “before draw” hook that uploads that specific light’s uniforms.
             lightCube.onBeforeDraw = (gl, shaderObj) => {
 
                 const program = shaderObj.program;
 
-                console.log(program);
                 // NOTE: `program` here will be myShaders.PreviewLight’s WebGLProgram,
                 //       *after* gl.useProgram(program) has been called.
                 const locColor     = gl.getUniformLocation(program, "u_lightColor");
@@ -186,7 +197,6 @@ export function buildLevel(gl, myShaders) {
                 gl.uniform1f (locIntensity, l.intensity);
                 gl.uniform1f (locAmbient,   0.1);
             };
-
 
             lightCubes.add(lightCube);
 

@@ -16,6 +16,7 @@ export class Shader {
             projection: gl.getUniformLocation(program, "u_projection"),
             color: gl.getUniformLocation(program, "u_color"),
             lightDirection: gl.getUniformLocation(program, "u_lightDirection"),
+            u_isDirectionalLight: gl.getUniformLocation(program, "u_isDirectionalLight"),
             textureSampler: gl.getUniformLocation(program, "textureSampler"),
 
             // Point Light vars
@@ -24,10 +25,20 @@ export class Shader {
             u_lightColors: gl.getUniformLocation(program, "u_lightColors"),
             u_lightIntensities: gl.getUniformLocation(program, "u_lightIntensities"),
 
-            u_ambientStrength: gl.getUniformLocation(program, 'u_ambientStrength'),
-        };
+            u_mainLightColor: gl.getUniformLocation(program, "u_mainLightColor"),
+            u_mainLightIntensity: gl.getUniformLocation(program, "u_mainLightIntensity"),
 
-        
+            u_ambientStrength: gl.getUniformLocation(program, 'u_ambientStrength'),
+        };        
+    }
+
+    setAsDirectional(color, direction) {
+        this.gl.uniform1i(this.uniformLocations.u_isDirectionalLight, 1);
+        //this.gl.uniform3f(program.u_lightDirection, -0.5, -1.0, -0.5); // top-left front light
+        this.gl.uniform3f(this.uniformLocations.lightDirection, ...direction); // top-left front light
+
+        this.gl.uniform3f(this.uniformLocations.u_mainLightColor, 1.0, 0.0, 0.0);
+        this.gl.uniform1f(this.uniformLocations.u_mainLightIntensity, 0.2);
     }
 
     use() {
@@ -55,7 +66,7 @@ export class Shader {
         this.gl.uniformMatrix4fv(this.uniformLocations.model, false, model);
     }
 
-    setLights(lights) {      
+    setLights(lights) {  
 
         const maxLights = 4;
         const lightPositions = [];
@@ -222,8 +233,15 @@ export const shaders = {
         uniform mat4 u_view;
         uniform mat4 u_projection;
 
+        // For point light
         varying vec3 v_lightPosition; // Optional, only needed if transforming the light
         uniform vec3 u_lightPosition; // only needed if passing transformed light position
+
+        // for directional light
+        uniform bool u_isDirectionalLight;
+        uniform vec3 u_lightDirection; // world space normalized
+
+        varying vec3 v_lightVector; // Vector from surface to light 
 
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
@@ -233,11 +251,25 @@ export const shaders = {
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
             v_worldPosition = worldPosition.xyz;
 
-            // Transform light position to world space (if necessary)
-            v_lightPosition = (u_model * vec4(u_lightPosition, 1.0)).xyz;
+            v_normal = normalize(mat3(u_model) * a_normal);  // Simple normal transformation
+
+            if (u_isDirectionalLight) {
+
+                // light vector is just inverse of light direction
+                v_lightVector = normalize(-u_lightDirection);
+            
+            } else {
+
+                // for point light, computer vector from surface point to light position
+                v_lightVector = normalize(u_lightPosition - v_worldPosition);
+             
+            }
+
+            // // Transform light position to world space (if necessary)
+            // v_lightPosition = (u_model * vec4(u_lightPosition, 1.0)).xyz;
 
             // Transform and normalize the normal (no need for manual inverse/transpose here)
-            v_normal = normalize(mat3(u_model) * a_normal);  // Simple normal transformation
+            
 
             // Final Position
             gl_Position = u_projection * u_view * worldPosition;
@@ -254,22 +286,37 @@ export const shaders = {
         uniform vec3 u_lightColors[MAX_LIGHTS];      // RBG of light
         uniform float u_lightIntensities[MAX_LIGHTS]; // Light intensity
 
+        // for "sun"
+        uniform vec3 u_mainLightColor;
+        uniform float u_mainLightIntensity;
+
         uniform vec4 u_color;           // Material base color
         uniform float u_ambientStrength; // ambient light multiplier (ex 0.2)
 
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
+        varying vec3 v_lightVector; // from vertex shader (main light only)
+
+        
 
         void main () {
             vec3 normal = normalize(v_normal);
-            //vec3 baseColor = u_color.rgb;
+            vec3 lightDir = normalize(v_lightVector);
 
-            vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
+            vec3 baseColor = u_color.rgb;
 
-
+            //vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
             vec3 color = baseColor * u_ambientStrength;
             //vec3 color = baseColor;
 
+
+            // Main light contribution (directional or point, sent from vertex shader)
+            vec3 mainLightDir = normalize(v_lightVector);
+            float diffuseMain = max(dot(normal, mainLightDir), 0.0);
+            vec3 mainDiffuse = u_mainLightColor * diffuseMain * u_mainLightIntensity;
+            color += mainDiffuse * diffuseMain;
+
+            // extra point lights
             for (int i = 0; i < MAX_LIGHTS; i++) {
                 if (i >= u_lightCount) break;
 

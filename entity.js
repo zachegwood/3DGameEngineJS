@@ -51,7 +51,6 @@ export class Entity {
         
 
         if (this.mesh) {            
-
                
             this.mesh.myEntity = this.id; // name the mesh
 
@@ -116,8 +115,6 @@ export class Entity {
     //#region Draw()
     draw(gl, view, projection, allLights) {
 
-        
-
         if (!this.shader) return;
 
         this.shader.use();  
@@ -127,17 +124,18 @@ export class Entity {
 
             if (this.type === 'previewCube') {
 
-                console.log("Program object:", this.shader);
-
                 this.onBeforeDraw(gl, this.shader);
             }
 
+            for (let i = 0; i < allLights.length; i++) {
+                if (allLights[i].isSun === true) {
+                    this.shader.setAsDirectional(allLights[i].color, allLights[i].direction);
+                    console.log("here");
+                } 
+            }
 
             this.closeLights = this.getClosestLights(allLights);
-            this.mesh.draw(this.shader, this.closeLights);
-            
-
-            
+            this.mesh.draw(this.shader, this.closeLights);         
 
         } else {
             this.mesh.draw(this.shader);

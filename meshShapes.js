@@ -391,7 +391,7 @@ export async function loadModel(gl, url) {
 //#region TerrainMesh
 export function createTerrainMesh(gl) {
 
-    const terrainInfo = generateFlatGrid(10,10,10,10);
+    const terrainInfo = generateFlatGrid(100,100,10,10);
 
     const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices);
 

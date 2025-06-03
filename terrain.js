@@ -8,11 +8,11 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
 
     for (let z = 0; z <= segmentsZ; z++) {
         for (let x = 0; x <= segmentsX; x++) {
-            const posX = (x / segmentsX) * width;
-            const posZ = (z / segmentsZ) * depth;
+            const posX = (x / segmentsX) * width - (width / 2); // center at (0,0)
+            const posZ = (z / segmentsZ) * depth - (depth / 2);
 
 
-            let y = Math.random(-1,1);
+            let y = Math.random() * 4;
             positions.push(posX, y, posZ); 
 
             //positions.push(posX, 0, posZ); // y = 0 for now
