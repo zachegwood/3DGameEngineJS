@@ -49,8 +49,12 @@ export class Entity {
 
         if (this.mesh) {            
 
-            this.aabb = this.mesh.aabb;    
+               
             this.mesh.myEntity = this.id; // name the mesh
+
+            if (!this.mesh.aabb) return; // dont add collider info if we're not using it
+
+            this.aabb = this.mesh.aabb; 
 
             this.updateCollider();
 

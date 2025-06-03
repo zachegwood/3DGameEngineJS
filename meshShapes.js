@@ -1,5 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
+import { generateFlatGrid } from './terrain.js';
 
 
 const TILE_SIZE = 1;
@@ -8,9 +9,11 @@ const TILE_SIZE = 1;
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
 class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null) {
+    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null) {
         this.gl = gl;
         this.vertexCount = vertexCount;
+
+        this.useIndices = !!indices; // set to true below if indicies are passed in
 
         //this.myEntity is passed from the entity id
 
@@ -53,6 +56,14 @@ class Mesh {
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(normals), gl.STATIC_DRAW);
         }
 
+        if (indices) {
+            this.indexBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW);
+            this.indexCount = indices.length;
+            this.useIndices = true;
+        }
+
         //this.modelMatrix = mat4.create();
     }
 
@@ -92,8 +103,21 @@ class Mesh {
         // Pass the model matrix to the shader
         //gl.uniformMatrix4fv(shader.uniformLocations.model, false, this.modelMatrix);
 
-        // Draw the mesh
-        gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);      
+        // Are we using Vertices or Indices?
+
+        if (this.useIndices === true) {
+
+            gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.indexBuffer);
+            gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_SHORT, 0);
+
+        } else {
+
+            // Draw the mesh
+            gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);     
+
+        }
+
+         
         
         // Clean up: disable used attributes
         for (const loc of enabled) {
@@ -363,3 +387,27 @@ export async function loadModel(gl, url) {
     );
 }
 
+
+//#region TerrainMesh
+export function createTerrainMesh(gl) {
+
+    const terrainInfo = generateFlatGrid(10,10,10,10);
+
+    const s = 100;
+
+    const aabb = {
+        min: [-s, -s, -s],
+        max: [ s,  s,  s],
+        colType: 'trigger'
+    }
+
+    return new Mesh(
+        gl, 
+        terrainInfo.positions, 
+        (terrainInfo.positions.length / 3), 
+        terrainInfo.uvs, 
+        null, 
+        aabb, 
+        terrainInfo.indices);
+
+}

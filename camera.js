@@ -18,7 +18,7 @@ export let pitch = -0.3; // rotation around X (up/down)
 const MIN_PITCH = -0.7;
 const MAX_PITCH = -0.2;
 const MIN_FOLLOW_DIST = 3.0;
-const MAX_FOLLOW_DIST = 10.0;
+const MAX_FOLLOW_DIST = 100.0; // should be 10.0 unless debugging
 
 // let cursorTarget = 0;
 

@@ -2,7 +2,8 @@ import { SceneNode } from "./scene.js";
 import { Entity } from "./entity.js";
 import { Light } from "./lights.js";
 
-import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
+import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from './meshShapes.js';
+import { generateFlatGrid,  } from "./terrain.js";
 
 
 export function buildLevel(gl, myShaders) {
@@ -59,6 +60,7 @@ export function buildLevel(gl, myShaders) {
         mesh: createSquare(gl, 10, `trigger`), 
         position: [0, 0, -15], 
         shader: myShaders.TextureUV,
+        texture: texture,
         id: `slopeSmall`
     });
     slopeSmall.rotateX(-15);
@@ -70,6 +72,24 @@ export function buildLevel(gl, myShaders) {
     scene.add(triangle2);
     scene.add(square2);
     scene.add(square3);
+
+
+ //#region Terrain
+     const terrain = new Entity(
+    {
+        mesh: createTerrainMesh(gl), 
+        position: [0, 0, 0],
+        shader: myShaders.TextureUV,
+        texture: texture,
+        id: `terrain_1`,
+    });
+    scene.add(terrain);
+    console.log(terrain);
+
+
+
+
+
 
     //const columnsArray = [];
     const columnCount = 16;
