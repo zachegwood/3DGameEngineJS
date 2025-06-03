@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
-import { generateFlatGrid } from './terrain.js';
+import { generateFlatGrid, calculateNormals } from './terrain.js';
 
 
 const TILE_SIZE = 1;
@@ -393,6 +393,8 @@ export function createTerrainMesh(gl) {
 
     const terrainInfo = generateFlatGrid(10,10,10,10);
 
+    const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices);
+
     const s = 100;
 
     const aabb = {
@@ -406,7 +408,7 @@ export function createTerrainMesh(gl) {
         terrainInfo.positions, 
         (terrainInfo.positions.length / 3), 
         terrainInfo.uvs, 
-        null, 
+        normals, 
         aabb, 
         terrainInfo.indices);
 
