@@ -131,10 +131,14 @@ export function CreateShaders(gl) {
     const programLighting = createProgram(gl, shaders.vs_lighting, shaders.fs_lighting);
     const Lighting = new Shader(gl, programLighting);
 
+    const programPreviewLight = createProgram(gl, shaders.vs_previewLight, shaders.fs_previewLight);
+    const PreviewLight = new Shader(gl, programPreviewLight);
+
     return {
         TextureUV,
         SolidColor,
         Lighting,
+        PreviewLight,
     }
 }
 
@@ -289,5 +293,40 @@ export const shaders = {
            // gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0); // Visualize normal direction
         }    
     `,
+
+    vs_previewLight: `
+        attribute vec3 a_position;
+
+        uniform mat4 u_model;
+        uniform mat4 u_view;
+        uniform mat4 u_projection;
+
+        void main() {
+            gl_Position = u_projection * u_view * u_model * vec4(a_position, 1.0);
+        }
+    
+    `,
+
+    fs_previewLight: `
+        precision mediump float;
+
+        uniform vec3 u_lightColor;      // just the RGB of that single light
+        uniform float u_lightIntensity; // its intensity
+        uniform float u_ambientStrength;  // if you want tiny ambient
+
+        void main() {
+            // You can pick a fixed “normal → lightDir” if you like.
+            // But if you want “full bright” as if the light is right on the surface,
+            // you can just ignore dot(normal, lightDir) entirely and say its glowing.
+            
+            // In practice, for a “glowing sphere” effect:
+            vec3 emissive = u_lightColor * u_lightIntensity;
+            vec3 ambient = u_lightColor * u_ambientStrength;
+            vec3 finalColor = ambient + emissive;
+            gl_FragColor = vec4(finalColor, 1.0);
+        }
+    `,
+
+
 
 }

@@ -151,26 +151,48 @@ export function buildLevel(gl, myShaders) {
 
     const lightsGroup = new SceneNode();
     lightsGroup.id = `LightsGroupSceneNode`;
+
+    const lightCubes = new SceneNode();
+    lightCubes.id = 'LightCubeSceneNode';
+
     lights.forEach(
         (l, index) => { 
             lightsGroup.add(l); 
             l.id = `light_${index}`;
 
 
-            const lightSquare = new Entity(
+            const lightCube = new Entity(
                 {
                     mesh: createCube(gl, 0.25, 'trigger'), 
                     position: l.position, 
-                    shader: myShaders.SolidColor,
-                    color: l.color,
-                    id: `${l.id}_square`,
+                    shader: myShaders.PreviewLight,
+                    id: `${l.id}_previewCube`,
+                    type: 'previewCube',
                 });
 
-                console.log(`light color is ${l.color}`);
+        // Attach a per‐entity “before draw” hook that uploads that specific light’s uniforms.
+            lightCube.onBeforeDraw = (gl, shaderObj) => {
 
-            scene.add(lightSquare);
+                const program = shaderObj.program;
+
+                console.log(program);
+                // NOTE: `program` here will be myShaders.PreviewLight’s WebGLProgram,
+                //       *after* gl.useProgram(program) has been called.
+                const locColor     = gl.getUniformLocation(program, "u_lightColor");
+                const locIntensity = gl.getUniformLocation(program, "u_lightIntensity");
+                const locAmbient   = gl.getUniformLocation(program, "u_ambientStrength");
+
+                gl.uniform3fv(locColor,     l.color);
+                gl.uniform1f (locIntensity, l.intensity);
+                gl.uniform1f (locAmbient,   0.1);
+            };
+
+
+            lightCubes.add(lightCube);
 
     });    
+
+    scene.add(lightCubes);
     scene.add(lightsGroup);
 
     // vars to let me access these things from main
@@ -183,6 +205,10 @@ export function buildLevel(gl, myShaders) {
     //     [0.0, 1.0, 1.0],    // White color
     //     1.0                 // Full intensity
     // );
+
+
+
+
 
     return scene;
 }

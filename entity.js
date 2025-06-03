@@ -24,12 +24,15 @@ export class Entity {
         material,
         id,
         aabb, //min/max passed from Mesh during creation
+        type, // used by light preview cubes for debug
     }) {
         this.mesh = mesh;
         this.shader = shader;
         this.color = color;
         this.texture = texture;
         this.material = material;
+
+        this.type = type;
 
         this.position = vec3.clone(position);
         this.rotation = rotation // Euler rotation in radians: [x, y, z]
@@ -113,14 +116,28 @@ export class Entity {
     //#region Draw()
     draw(gl, view, projection, allLights) {
 
+        
+
         if (!this.shader) return;
 
         this.shader.use();  
         this.shader.setUniforms(view, projection, this.modelMatrix, this.color, this.texture);
         
         if (allLights) {
+
+            if (this.type === 'previewCube') {
+
+                console.log("Program object:", this.shader);
+
+                this.onBeforeDraw(gl, this.shader);
+            }
+
+
             this.closeLights = this.getClosestLights(allLights);
             this.mesh.draw(this.shader, this.closeLights);
+            
+
+            
 
         } else {
             this.mesh.draw(this.shader);
