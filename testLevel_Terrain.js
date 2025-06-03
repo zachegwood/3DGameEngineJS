@@ -6,6 +6,7 @@ import { createSquare, createTriangle, loadTexture, loadModel, createCube, creat
 import { generateFlatGrid,  } from "./terrain.js";
 
 
+
 export function buildLevel(gl, myShaders) {
         // The scene that will hold all entities (game objects)
     const scene = new SceneNode();
@@ -43,7 +44,7 @@ export function buildLevel(gl, myShaders) {
     {
         mesh: createSquare(gl, 3), 
         position: [0, 5, 0], 
-        shader: myShaders.Lighting,
+        shader: myShaders.TextureUV,
         texture: texture,
         id: `square_2`,
     });
@@ -151,8 +152,24 @@ export function buildLevel(gl, myShaders) {
     const lightsGroup = new SceneNode();
     lightsGroup.id = `LightsGroupSceneNode`;
     lights.forEach(
-        (l, index) => { lightsGroup.add(l); 
-        l.id = `light_${index}`;
+        (l, index) => { 
+            lightsGroup.add(l); 
+            l.id = `light_${index}`;
+
+
+            const lightSquare = new Entity(
+                {
+                    mesh: createCube(gl, 0.25, 'trigger'), 
+                    position: l.position, 
+                    shader: myShaders.SolidColor,
+                    color: l.color,
+                    id: `${l.id}_square`,
+                });
+
+                console.log(`light color is ${l.color}`);
+
+            scene.add(lightSquare);
+
     });    
     scene.add(lightsGroup);
 

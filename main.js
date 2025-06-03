@@ -9,7 +9,7 @@ import { Entity } from './entity.js';
 import { Player } from './player.js';
 import { SceneNode } from './scene.js';
 
-import { buildLevel } from './testLevel_Terrain.js'; // currently changing this is how we change levels lol
+import { buildLevel } from './testLevel_Terrain.js'; // currently changing this is how we change levels
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
 
@@ -162,6 +162,7 @@ function worldToScreen(pos, viewMatrix, projectionMatrix, canvas) {
         (1 - ndc[1]) * 0.5 * canvas.height // Y is inverted
     ];
 }
+
 
 
 
