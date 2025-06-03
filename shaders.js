@@ -23,11 +23,16 @@ export class Shader {
             u_lightPositions: gl.getUniformLocation(program, "u_lightPositions"),
             u_lightColors: gl.getUniformLocation(program, "u_lightColors"),
             u_lightIntensities: gl.getUniformLocation(program, "u_lightIntensities"),
+
+            u_ambientStrength: gl.getUniformLocation(program, 'u_ambientStrength'),
         };
+
+        
     }
 
     use() {
         this.gl.useProgram(this.program);
+
     }
 
     setColor(r, g, b, a) {
@@ -75,6 +80,8 @@ export class Shader {
         this.gl.uniform3fv(this.uniformLocations.u_lightPositions, new Float32Array(lightPositions));
         this.gl.uniform3fv(this.uniformLocations.u_lightColors, new Float32Array(lightColors));
         this.gl.uniform1fv(this.uniformLocations.u_lightIntensities, new Float32Array(lightIntensities));
+
+        this.gl.uniform1f(this.uniformLocations.u_ambientStrength, 0.1);
     }
 
 }
@@ -242,14 +249,22 @@ export const shaders = {
         uniform vec3 u_lightPositions[MAX_LIGHTS];   // world-space position of light
         uniform vec3 u_lightColors[MAX_LIGHTS];      // RBG of light
         uniform float u_lightIntensities[MAX_LIGHTS]; // Light intensity
+
         uniform vec4 u_color;           // Material base color
+        uniform float u_ambientStrength; // ambient light multiplier (ex 0.2)
 
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
 
         void main () {
             vec3 normal = normalize(v_normal);
-            vec3 color = vec3(0.0);
+            //vec3 baseColor = u_color.rgb;
+
+            vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
+
+
+            vec3 color = baseColor * u_ambientStrength;
+            //vec3 color = baseColor;
 
             for (int i = 0; i < MAX_LIGHTS; i++) {
                 if (i >= u_lightCount) break;
@@ -264,10 +279,7 @@ export const shaders = {
                 float diffuse = max(dot(normal, lightDir), 0.0);
                 vec3 lightColor = u_lightColors[i] * diffuse * u_lightIntensities[i] * attenuation;
 
-                // Add ambient term (optional)
-                float ambient = 0.2;
-
-                color += lightColor;
+                color += lightColor * baseColor; // Multiply lightColor by baseColor to apply material
             }            
 
             // Clamp the final color so it doesn't blow out
