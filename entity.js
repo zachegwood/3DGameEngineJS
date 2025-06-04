@@ -129,7 +129,10 @@ export class Entity {
 
             for (let i = 0; i < allLights.length; i++) {
                 if (allLights[i].isSun === true) {
-                    this.shader.setAsDirectional(allLights[i].color, allLights[i].direction);
+                    this.shader.setAsDirectional(
+                        allLights[i].color, 
+                        allLights[i].direction, 
+                        allLights[i].intensity);
                     //console.log("here");
                 } 
             }

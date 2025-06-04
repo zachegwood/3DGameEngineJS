@@ -1,5 +1,7 @@
 //#region Class
 
+
+
 // Class: Shader program + attribute/uniform locations
 export class Shader {
     constructor(gl, program) {
@@ -32,13 +34,13 @@ export class Shader {
         };        
     }
 
-    setAsDirectional(color, direction) {
+    setAsDirectional(color, direction, intensity) {
         this.gl.uniform1i(this.uniformLocations.u_isDirectionalLight, 1);
         //this.gl.uniform3f(program.u_lightDirection, -0.5, -1.0, -0.5); // top-left front light
         this.gl.uniform3f(this.uniformLocations.lightDirection, ...direction); // top-left front light
 
         this.gl.uniform3f(this.uniformLocations.u_mainLightColor, ...color);
-        this.gl.uniform1f(this.uniformLocations.u_mainLightIntensity, 0.2);
+        this.gl.uniform1f(this.uniformLocations.u_mainLightIntensity, intensity);
     }
 
     use() {
@@ -92,7 +94,7 @@ export class Shader {
         this.gl.uniform3fv(this.uniformLocations.u_lightColors, new Float32Array(lightColors));
         this.gl.uniform1fv(this.uniformLocations.u_lightIntensities, new Float32Array(lightIntensities));
 
-        this.gl.uniform1f(this.uniformLocations.u_ambientStrength, 0.1);
+        this.gl.uniform1f(this.uniformLocations.u_ambientStrength, 0.0);
     }
 
 }
@@ -227,8 +229,10 @@ export const shaders = {
     vs_lighting: `
 
         precision mediump float;
+
         attribute vec3 a_position;
         attribute vec3 a_normal;
+
         uniform mat4 u_model;
         uniform mat4 u_view;
         uniform mat4 u_projection;
@@ -239,7 +243,12 @@ export const shaders = {
         varying vec3 v_normal;
         varying vec3 v_worldPosition;
 
+        attribute vec2 uv;
+        varying vec2 v_uv;
+
         void main() {
+
+            v_uv = uv;
 
             // Transform the position to world space
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
@@ -277,12 +286,16 @@ export const shaders = {
         uniform float u_mainLightIntensity;
         uniform int u_isDirectionalLight;
 
+        uniform sampler2D textureSampler;
+        varying vec2 v_uv;
 
         void main () {
 
+            vec3 baseColor = texture2D(textureSampler, v_uv).rgb;
+
             vec3 normal = normalize(v_normal);
             //vec3 baseColor = u_color.rgb;
-            vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
+            //vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
 
             vec3 color = baseColor * u_ambientStrength;
             //vec3 color = baseColor;
@@ -324,6 +337,7 @@ export const shaders = {
         }    
     `,
 
+    //#region Preview Light
     vs_previewLight: `
         attribute vec3 a_position;
 
