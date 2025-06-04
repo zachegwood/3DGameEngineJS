@@ -9,7 +9,7 @@ import { Entity } from './entity.js';
 import { Player } from './player.js';
 import { SceneNode } from './scene.js';
 
-import { buildLevel } from './testLevel.js'; // currently changing this is how we change levels
+import { buildLevel } from './testLevel_Terrain.js'; // currently changing this is how we change levels
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
 

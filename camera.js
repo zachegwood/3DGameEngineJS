@@ -23,7 +23,7 @@ const MAX_FOLLOW_DIST = 100.0; // should be 10.0 unless debugging
 // let cursorTarget = 0;
 
 let followTarget = null;
-let followDistance = 8;  // positioned behind player
+let followDistance = 20;  // positioned behind player
 
 let cameraPosition = vec3.fromValues(0, 1, followDistance); 
 

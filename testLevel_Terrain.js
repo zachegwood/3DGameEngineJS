@@ -150,6 +150,7 @@ export function buildLevel(gl, myShaders) {
         // new Light([9, 2, -50], [0.5, 1, 1], 2.0),
         // new Light([-9, 2, -50], [0.5, 1, 1], 2.0),
         new Light([0,8,0], [0,0,1], 0.5),
+        new Light([-2,6,0], [1,0,1], 0.5),
     ]
 
     const sunDir = [0,-1,0];

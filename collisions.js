@@ -75,8 +75,8 @@ export class CollisionSystem {
             if (distSq <= sphere.radius * sphere.radius) {
 
                 if (c.aabb.colType === `trigger`) { 
-                    console.log(`Player activated a trigger box: ${c.id} is a triggerBox. 
-                        For now, just skip this collider. Later, add in logic.`);
+                    // console.log(`Player activated a trigger box: ${c.id} is a triggerBox. 
+                    //     For now, just skip this collider. Later, add in logic.`);
                     continue;
                 }
 
