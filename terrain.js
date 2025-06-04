@@ -12,7 +12,7 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
             const posZ = (z / segmentsZ) * depth - (depth / 2);
 
 
-            let y = Math.random() * 4;
+            let y = Math.random() * 6;
             positions.push(posX, y, posZ); 
 
             //positions.push(posX, 0, posZ); // y = 0 for now
@@ -86,6 +86,9 @@ export function calculateNormals(positions, indices) {
         normals[i + 1] = ny / len;
         normals[i + 2] = nz / len;
     }
+
+    console.log(normals.slice(0, 9)); // first 3 normals
+
 
     return normals;
 }

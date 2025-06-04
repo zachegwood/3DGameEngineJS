@@ -37,7 +37,7 @@ export class Shader {
         //this.gl.uniform3f(program.u_lightDirection, -0.5, -1.0, -0.5); // top-left front light
         this.gl.uniform3f(this.uniformLocations.lightDirection, ...direction); // top-left front light
 
-        this.gl.uniform3f(this.uniformLocations.u_mainLightColor, 1.0, 0.0, 0.0);
+        this.gl.uniform3f(this.uniformLocations.u_mainLightColor, ...color);
         this.gl.uniform1f(this.uniformLocations.u_mainLightIntensity, 0.2);
     }
 
@@ -227,163 +227,101 @@ export const shaders = {
     vs_lighting: `
 
         precision mediump float;
-
-
-
         attribute vec3 a_position;
-
         attribute vec3 a_normal;
-
-
-
         uniform mat4 u_model;
-
         uniform mat4 u_view;
-
         uniform mat4 u_projection;
 
-
-
         varying vec3 v_lightPosition; // Optional, only needed if transforming the light
-
         uniform vec3 u_lightPosition; // only needed if passing transformed light position
 
-
-
         varying vec3 v_normal;
-
         varying vec3 v_worldPosition;
-
-
 
         void main() {
 
             // Transform the position to world space
-
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
-
             v_worldPosition = worldPosition.xyz;
 
-
-
             // Transform light position to world space (if necessary)
-
             v_lightPosition = (u_model * vec4(u_lightPosition, 1.0)).xyz;
 
-
-
             // Transform and normalize the normal (no need for manual inverse/transpose here)
-
             v_normal = normalize(mat3(u_model) * a_normal);  // Simple normal transformation
 
-
-
             // Final Position
-
             gl_Position = u_projection * u_view * worldPosition;
-
         }
-
     `,
 
-
-
     fs_lighting: `
-
         precision mediump float;
-
-
 
         #define MAX_LIGHTS 4
 
-
-
         uniform int u_lightCount;
-
         uniform vec3 u_lightPositions[MAX_LIGHTS];   // world-space position of light
-
         uniform vec3 u_lightColors[MAX_LIGHTS];      // RBG of light
-
         uniform float u_lightIntensities[MAX_LIGHTS]; // Light intensity
 
-
-
         uniform vec4 u_color;           // Material base color
-
         uniform float u_ambientStrength; // ambient light multiplier (ex 0.2)
-
-
-
         varying vec3 v_normal;
-
         varying vec3 v_worldPosition;
 
+        // Directional "Sun" Light
+        uniform vec3 u_lightDirection;
+        uniform vec3 u_mainLightColor;
+        uniform float u_mainLightIntensity;
+        uniform int u_isDirectionalLight;
 
 
         void main () {
 
             vec3 normal = normalize(v_normal);
-
             //vec3 baseColor = u_color.rgb;
-
-
-
             vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
 
-
-
-
-
             vec3 color = baseColor * u_ambientStrength;
-
             //vec3 color = baseColor;
-
-
 
             for (int i = 0; i < MAX_LIGHTS; i++) {
 
-                if (i >= u_lightCount) break;
+                if (i < u_lightCount) {
 
+                    vec3 lightDir = normalize(u_lightPositions[i] - v_worldPosition);
 
+                    // Attenuation based on distance (optional, but more realistic)
+                    float distance = length(u_lightPositions[i] - v_worldPosition);
 
-                vec3 lightDir = normalize(u_lightPositions[i] - v_worldPosition);
+                    float attenuation = 1.0 / (distance * distance);                
 
+                    // Diffuse shading
+                    float diffuse = max(dot(normal, lightDir), 0.0);
 
+                    vec3 lightColor = u_lightColors[i] * diffuse * u_lightIntensities[i] * attenuation;
 
-                // Attenuation based on distance (optional, but more realistic)
+                    color += lightColor * baseColor; // Multiply lightColor by baseColor to apply material
+                }
+            } 
 
-                float distance = length(u_lightPositions[i] - v_worldPosition);
-
-                float attenuation = 1.0 / (distance * distance);                
-
-
-
-                // Diffuse shading
-
-                float diffuse = max(dot(normal, lightDir), 0.0);
-
-                vec3 lightColor = u_lightColors[i] * diffuse * u_lightIntensities[i] * attenuation;
-
-
-
-                color += lightColor * baseColor; // Multiply lightColor by baseColor to apply material
-
-            }            
-
+            // Add directional "sun" light if it's enabled
+            if (u_isDirectionalLight == 1) {
+                vec3 dirLightDir = normalize(-u_lightDirection); // Light comes *from* direction
+                float diffuse = max(dot(normal, dirLightDir), 0.0);
+                vec3 dirLightColor = u_mainLightColor * u_mainLightIntensity * diffuse;
+                color += dirLightColor * baseColor;
+            }
 
 
             // Clamp the final color so it doesn't blow out
-
             gl_FragColor = vec4(color, 1.0);
 
-
-
            // debug -- visualize normals 
-
            // gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0); // Visualize normal direction
-
         }    
-
     `,
 
     vs_previewLight: `

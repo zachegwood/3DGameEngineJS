@@ -44,7 +44,7 @@ export function buildLevel(gl, myShaders) {
     {
         mesh: createSquare(gl, 3), 
         position: [0, 5, 0], 
-        shader: myShaders.TextureUV,
+        shader: myShaders.Lighting,
         texture: texture,
         id: `square_2`,
     });
@@ -153,9 +153,9 @@ export function buildLevel(gl, myShaders) {
         new Light([-2,6,0], [1,0,1], 0.5),
     ]
 
-    const sunDir = [0,-1,0];
-    const sunColor = [1, 0, 0];
-    const sun = new Light([0, 9, 0], sunColor, 1.0);
+    const sunDir = [-0.5,-1,0.5];
+    const sunColor = [.2, 0.8, 0.5];
+    const sun = new Light([0, 9, 0], sunColor, 1.0); // pos is just to see the debug box
     sun.direction = sunDir;
     sun.isSun = true;
     lights.push(sun);
