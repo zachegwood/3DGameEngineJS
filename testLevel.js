@@ -148,11 +148,41 @@ export function buildLevel(gl, myShaders) {
     ]
 
     const lightsGroup = new SceneNode();
+    const lightCubes = new SceneNode();
     lightsGroup.id = `LightsGroupSceneNode`;
     lights.forEach(
         (l, index) => { lightsGroup.add(l); 
         l.id = `light_${index}`;
+    const lightCube = new Entity(
+                {
+                    mesh: createCube(gl, 0.25, 'trigger'), 
+                    position: l.position, 
+                    shader: myShaders.PreviewLight,
+                    id: `${l.id}_previewCube`,
+                    type: 'previewCube',
+                });
+
+             // Attach a per‐entity “before draw” hook that uploads that specific light’s uniforms.
+            lightCube.onBeforeDraw = (gl, shaderObj) => {
+
+                const program = shaderObj.program;
+
+                // NOTE: `program` here will be myShaders.PreviewLight’s WebGLProgram,
+                //       *after* gl.useProgram(program) has been called.
+                const locColor     = gl.getUniformLocation(program, "u_lightColor");
+                const locIntensity = gl.getUniformLocation(program, "u_lightIntensity");
+                const locAmbient   = gl.getUniformLocation(program, "u_ambientStrength");
+
+                gl.uniform3fv(locColor,     l.color);
+                gl.uniform1f (locIntensity, l.intensity);
+                gl.uniform1f (locAmbient,   0.1);
+            };
+
+            lightCubes.add(lightCube);
+
     });    
+
+    scene.add(lightCubes);
     scene.add(lightsGroup);
 
     // vars to let me access these things from main
