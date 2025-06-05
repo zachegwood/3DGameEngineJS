@@ -24,19 +24,20 @@ function worldToChunkCoord(x,z) {
 //#region Build Terrain
 export function buildTerrain(gl) {
 
-
-
-    const CHUNK_PIECES = 4;
+    const CHUNK_PIECES = 10;
     const halfPieces = CHUNK_PIECES / 2;
     const texture = loadTexture(gl, "Art/testTile.png");
 
     for (let x = -halfPieces; x < halfPieces; x++) {
         for (let z = -halfPieces; z < halfPieces; z++){
 
+            const worldOffsetX = x * CHUNK_SIZE;
+            const worldOffsetZ = z * CHUNK_SIZE;
+
             const terrainChunk = new Entity(
                 {
-                    mesh: createTerrainMesh(gl, CHUNK_SIZE), 
-                    position: [x*CHUNK_SIZE, 0, z*CHUNK_SIZE],
+                    mesh: createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ), 
+                    position: [worldOffsetX, 0, worldOffsetZ],
                     shader: myShaders.Lighting,
                     texture: texture,
                     id: `terrain_chunk_${x},${z}`,
@@ -57,7 +58,7 @@ export function buildTerrain(gl) {
 
 
 //#region Gen Flat Grid
-export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
+export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, offsetZ) {
 
     const positions = [];
     const indices = [];

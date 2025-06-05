@@ -389,9 +389,14 @@ export async function loadModel(gl, url) {
 
 
 //#region TerrainMesh
-export function createTerrainMesh(gl, chunkSize) {
+export function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
 
-    const terrainInfo = generateFlatGrid(chunkSize,chunkSize,10,10); // from terrain.js
+    const terrainInfo = generateFlatGrid(
+        chunkSize, chunkSize,
+        10, 10, 
+        worldOffsetX, worldOffsetZ
+    ); // from terrain.js
+    
     const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
     const s = chunkSize/2; // size
