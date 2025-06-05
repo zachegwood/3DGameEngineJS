@@ -1,5 +1,59 @@
+import { Entity } from './entity.js'
+import { createTerrainMesh, loadTexture } from './meshShapes.js';
+import { myShaders } from './main.js';
+
+
+
+
 // ProcGen Terrain
 
+
+//#region Chunking
+
+const CHUNK_SIZE = 32; // 32x32 units
+
+const chunks = new Map();
+
+function worldToChunkCoord(x,z) {
+    return [
+        Math.floor(x / CHUNK_SIZE),
+        Math.floor(z / CHUNK_SIZE)
+    ];
+}
+
+export function buildTerrain(gl) {
+
+    const CHUNK_PIECES = 2;
+    const halfPieces = CHUNK_PIECES / 2;
+    const texture = loadTexture(gl, "Art/testTile.png");
+
+    for (let x = -halfPieces; x < halfPieces; x++) {
+        for (let z = -halfPieces; z < halfPieces; z++){
+
+            const terrainChunk = new Entity(
+                {
+                    mesh: createTerrainMesh(gl, CHUNK_SIZE), 
+                    position: [x*CHUNK_SIZE, 0, z*CHUNK_SIZE],
+                    shader: myShaders.Lighting,
+                    texture: texture,
+                    id: `terrain_chunk_${x},${z}`,
+                });
+
+            chunks.set(`${x},${z}`, terrainChunk);
+
+            console.log(`${terrainChunk.id} -->  ${terrainChunk.position}`);
+        }   
+    }
+
+    return chunks;
+}
+
+
+
+
+
+
+//#region Flat Grid
 export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
 
     const positions = [];
@@ -39,7 +93,7 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
 
 }
 
-
+//#region Calc Normals
 export function calculateNormals(positions, indices) {
     const normals = new Array(positions.length).fill(0);
 
@@ -86,9 +140,6 @@ export function calculateNormals(positions, indices) {
         normals[i + 1] = ny / len;
         normals[i + 2] = nz / len;
     }
-
-    console.log(normals.slice(0, 9)); // first 3 normals
-
 
     return normals;
 }

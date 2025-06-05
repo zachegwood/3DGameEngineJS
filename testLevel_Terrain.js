@@ -3,7 +3,7 @@ import { Entity } from "./entity.js";
 import { Light } from "./lights.js";
 
 import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from './meshShapes.js';
-import { generateFlatGrid,  } from "./terrain.js";
+import { generateFlatGrid, buildTerrain } from "./terrain.js";
 
 
 
@@ -76,16 +76,29 @@ export function buildLevel(gl, myShaders) {
 
 
  //#region Terrain
-     const terrain = new Entity(
-    {
-        mesh: createTerrainMesh(gl), 
-        position: [0, 0, 0],
-        shader: myShaders.Lighting,
-        texture: texture,
-        id: `terrain_1`,
-    });
-    scene.add(terrain);
-    console.log(terrain);
+    //  const terrain = new Entity(
+    // {
+    //     mesh: createTerrainMesh(gl), 
+    //     position: [0, 0, 0],
+    //     shader: myShaders.Lighting,
+    //     texture: texture,
+    //     id: `terrain_1`,
+    // });
+    // scene.add(terrain);
+
+  
+    const terrain2 = buildTerrain(gl);
+    const chunksArray = Array.from(terrain2.values());
+    for (let i = 0; i < terrain2.size; i++) {
+        scene.add(chunksArray[i]);
+        console.log(chunksArray[i]);
+    }
+    // scene.add(terrain2.get(`0,0`));
+    // scene.add(terrain2.get(`0,1`));
+    // scene.add(terrain2.get(`1,0`));
+    // scene.add(terrain2.get(`1,1`));
+
+
 
 
 
