@@ -394,7 +394,7 @@ export function createTerrainMesh(gl, chunkSize) {
     const terrainInfo = generateFlatGrid(chunkSize,chunkSize,10,10); // from terrain.js
     const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
-    const s = chunkSize; // size
+    const s = chunkSize/2; // size
 
     const aabb = {
         min: [-s, -s, -s],

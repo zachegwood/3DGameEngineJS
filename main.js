@@ -252,7 +252,7 @@ function render(elapsedTime) {
    
     const cameraPosition = getCameraPosition();
 
-    const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.1, 100);
+    const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.5, 1000);
     //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
 
     let rayTarget = getLookRayTarget();
