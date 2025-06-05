@@ -1,7 +1,7 @@
 import { Entity } from './entity.js'
 import { createTerrainMesh, loadTexture } from './meshShapes.js';
 import { myShaders } from './main.js';
-
+import { generateSimplexNoise,  } from './simplexNoise.js';
 
 
 
@@ -21,7 +21,10 @@ function worldToChunkCoord(x,z) {
     ];
 }
 
+//#region Build Terrain
 export function buildTerrain(gl) {
+
+
 
     const CHUNK_PIECES = 4;
     const halfPieces = CHUNK_PIECES / 2;
@@ -41,7 +44,7 @@ export function buildTerrain(gl) {
 
             chunks.set(`${x},${z}`, terrainChunk);
 
-            console.log(`${terrainChunk.id} -->  ${terrainChunk.position}`);
+            //console.log(`${terrainChunk.id} -->  ${terrainChunk.position}`);
         }   
     }
 
@@ -53,20 +56,28 @@ export function buildTerrain(gl) {
 
 
 
-//#region Flat Grid
+//#region Gen Flat Grid
 export function generateFlatGrid(width, depth, segmentsX, segmentsZ) {
 
     const positions = [];
     const indices = [];
     const uvs = [];
 
+    const scale = 0.1; // controls "zoom level" of noise
+    const amplitude = 6.0; // controls vertical exaggeration    
+
     for (let z = 0; z <= segmentsZ; z++) {
         for (let x = 0; x <= segmentsX; x++) {
-            const posX = (x / segmentsX) * width - (width / 2); // center at (0,0)
-            const posZ = (z / segmentsZ) * depth - (depth / 2);
 
+            let posX = (x / segmentsX) * width - (width / 2); // center at (0,0)
+            let posZ = (z / segmentsZ) * depth - (depth / 2);
 
-            let y = Math.random() * 6;
+            let worldX = posX + offsetX;
+            let worldZ = posZ + offsetZ;
+
+            let y = generateSimplexNoise(worldX * scale, worldZ * scale) * amplitude;
+
+            //let y = Math.random() * 6;
             positions.push(posX, y, posZ); 
 
             //positions.push(posX, 0, posZ); // y = 0 for now

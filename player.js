@@ -10,12 +10,12 @@ import { createSphere } from './meshShapes.js';
 // Player inherits from Entity for Draw()
 
 
-const SPEED = 5;
+const SPEED = 25;
 const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 const SPHERE_RADIUS = 0.8;
 const PLAYER_START = vec3.fromValues(0, PLAYER_HEIGHT + 5, 0);
-const GRAVITY = .5;
+const GRAVITY = 0;
 
 
 

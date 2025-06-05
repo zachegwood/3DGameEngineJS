@@ -44,7 +44,7 @@ export function buildLevel(gl, myShaders) {
     const chunksArray = Array.from(terrain2.values());
     for (let i = 0; i < terrain2.size; i++) {
         scene.add(chunksArray[i]);
-        console.log(chunksArray[i]);
+        //console.log(chunksArray[i]);
     }
 
 
