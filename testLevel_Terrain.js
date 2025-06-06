@@ -44,7 +44,6 @@ export function buildLevel(gl, myShaders) {
     const chunksArray = Array.from(terrain2.values());
     for (let i = 0; i < terrain2.size; i++) {
         scene.add(chunksArray[i]);
-        //console.log(chunksArray[i]);
     }
 
 
@@ -52,12 +51,12 @@ export function buildLevel(gl, myShaders) {
     //#region Create Lights  
     const lights = [
         
-        new Light([1, 2, 5], [1, 1, 0], 1.0),
-        new Light([-1, 2, 5], [1, 0, 0], 1.0),
-        new Light([9, 2, 0], [0.5, 1, 1], 0.5),
-        new Light([-9, 2, 0], [0.5, 1, 1], 1.0),
+        new Light([1, 2, -32], [1, 1, 0], 1.0),
+        new Light([-1, 2, 32], [1, 0, 0], 1.0),
+        new Light([32, 2, 0], [0.5, 1, 1], 0.5),
+        new Light([-32, 2, 0], [0.5, 1, 1], 1.0),
         new Light([0,8,0], [0,0,1], 0.5),
-        new Light([-2,6,0], [1,0,1], 0.5),
+        new Light([-32,6,-32], [1,0,1], 0.5),
     ]
 
     const sunDir = [-0.5,-1,0.5];
@@ -108,7 +107,7 @@ export function buildLevel(gl, myShaders) {
                 gl.uniform1f (locAmbient,   0.1);
             };
 
-            lightCubes.add(lightCube);
+            //lightCubes.add(lightCube);
 
     });    
 

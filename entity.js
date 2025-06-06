@@ -49,6 +49,9 @@ export class Entity {
         this.id = id;
 
         this.secondCollider = null; // will need for player, enemies
+
+        this.isVisible = false;
+        this.alwaysVisible = false; // to prevent culling
         
 
         if (this.mesh) {            
@@ -149,10 +152,10 @@ export class Entity {
 
             this.worldAABB = getWorldAABB(this.aabb.min, this.aabb.max, this.modelMatrix);
 
-            if (debugSettings.COLLIDERS === true) {
+            if (debugSettings.COLLIDERS === true && this.isVisible === true) {
 
                 const aabbWireData = findWireFrameCube(this.worldAABB.min, this.worldAABB.max);
-                const localWireData = findWireFrameCube(this.aabb.min, this.aabb.max);
+                //const localWireData = findWireFrameCube(this.aabb.min, this.aabb.max);
 
                 this.debugWireFrameCube(gl, aabbWireData);        
                 //this.debugWireFrameCube(gl, localWireData);   

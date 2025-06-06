@@ -59,6 +59,8 @@ export class Player extends Entity {
                     mat4.fromTranslation(wireModelMatrix, this.position);          
 
         this.allColliders = [] // every collider my sphere is touching
+
+        this.alwaysVisible = true; // prevent frustum culling
         
     }
 

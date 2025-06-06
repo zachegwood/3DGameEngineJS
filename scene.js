@@ -3,6 +3,10 @@
 // This recursively runs on all children
 
 import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { extractFrustumPlanes, isAABBInFrustum } from './frustum.js'
+
+const entities = [];
+const visibleEntities = [];
 
 export class SceneNode {
     constructor() {
@@ -15,6 +19,9 @@ export class SceneNode {
     add(child) {
         this.children.push(child);
         child.parent = this;
+
+        // Add to the global array of all entities
+        entities.push(child);
     }
 
     updateWorldMatrix(parentMatrix) {
@@ -30,15 +37,55 @@ export class SceneNode {
         }
     }
 
-    update(deltaTime) {
+    update(deltaTime, gl) {
         for (let child of this.children) {
-            if (child.update) child.update(deltaTime);
+            if (child.update) child.update(deltaTime, gl);
         }
     }
 
-    draw(gl, viewMatrix, projectionMatrix, lights) {
-        for (let child of this.children) {
-            if (child.draw)  child.draw(gl, viewMatrix, projectionMatrix, lights);
+    draw(gl, viewMatrix, projectionMatrix, lights, isRoot = false) {
+
+        if (isRoot) {
+
+            
+            visibleEntities.length = 0; // reset array
+
         }
+
+        const frustumPlanes = extractFrustumPlanes(viewMatrix, projectionMatrix);
+
+        for (let child of this.children) {
+
+            child.isVisible = false; // will turn on after check below. makes debug colliders turn off
+
+            //console.log(`${this.children.indexOf(child)} --< ${child.id}`);
+
+            //if (child.id.startsWith("terrain_chunk")) console.log("here => one");
+
+            let shouldDraw = false;
+
+            if (typeof child.draw === 'function') {
+
+                // Draw even if there's no mesh or anything, bc why not.
+                // Also don't cull the player
+                if (!child.aabb || child.alwaysVisible === true)                   
+                {
+                    shouldDraw = true;
+                } else if (isAABBInFrustum(child.worldAABB, frustumPlanes)) {
+                    shouldDraw = true;
+                }
+            }
+
+            if (shouldDraw === true) { 
+                child.isVisible = true;
+                visibleEntities.push(child);
+                child.draw(gl, viewMatrix, projectionMatrix, lights);
+                
+            } 
+
+            //console.log(`test1 < ${visibleEntities.length} >`);
+        }
+
+         console.log(`[ ${visibleEntities.length} ] visible entities`);
     }
 }

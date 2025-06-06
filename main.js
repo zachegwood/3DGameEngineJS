@@ -1,4 +1,4 @@
-import { mat4, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { mat4, vec3, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { DrawGrid, debugSettings, DrawRays, Raycast } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
@@ -145,7 +145,7 @@ function printSceneNodeNames(node, depth = 0) {
 const playerPosLabel = document.createElement("div");
 playerPosLabel.id = "player_pos";
 playerPosLabel.textContent = "X, Y, Z";
-document.body.appendChild(playerPosLabel);
+//document.body.appendChild(playerPosLabel);
 
 function worldToScreen(pos, viewMatrix, projectionMatrix, canvas) {
     const clipSpace = vec4.transformMat4([], [pos[0], pos[1], pos[2], 1], viewMatrix);
@@ -274,7 +274,7 @@ function render(elapsedTime) {
     scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
     // Draw all game objects
-    scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights);
+    scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights, true);
 
 
     Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
