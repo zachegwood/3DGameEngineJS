@@ -43,16 +43,19 @@ export class SceneNode {
         }
     }
 
-    draw(gl, viewMatrix, projectionMatrix, lights, isRoot = false) {
+    draw(gl, viewMatrix, projectionMatrix, lights, isRoot = false, cullingCamera = null) {
+
+        if (cullingCamera === null) return;
 
         if (isRoot) {
-
             
             visibleEntities.length = 0; // reset array
 
         }
 
-        const frustumPlanes = extractFrustumPlanes(viewMatrix, projectionMatrix);
+        let frustumPlanes = null;
+        
+        if (cullingCamera) frustumPlanes = extractFrustumPlanes(cullingCamera.getViewMatrix(), projectionMatrix);
 
         for (let child of this.children) {
 

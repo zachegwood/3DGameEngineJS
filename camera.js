@@ -7,6 +7,10 @@ export class Camera {
 
     constructor(canvas, followTarget = null, config = {}) {
 
+        this.id = config.id ?? "new_camera";
+
+        console.log(this.id);
+
         this.canvas = canvas;
 
         this.CAMERA_SPEED = config.CAMERA_SPEED ?? 2.0;
@@ -17,7 +21,7 @@ export class Camera {
         this.MIN_FOLLOW_DIST = config.MIN_FOLLOW_DIST ?? 3.0;
         this.MAX_FOLLOW_DIST = config.MAX_FOLLOW_DIST ?? 100.0; // should be 10.0 unless debugging
 
-        this.yaw = 0; // rotation around Y (left/right)
+        this.yaw = config.yaw ?? 0; // rotation around Y (left/right)
         this.pitch = -0.3 // rotation around X (up/down)
 
         // mouse tracking
@@ -103,7 +107,6 @@ export class Camera {
     updateCameraPosition(dt, targetPos) {
 
         // Forward Vector
-
         const Fx = -Math.sin(this.yaw);
         const Fz = Math.cos(this.yaw);
 

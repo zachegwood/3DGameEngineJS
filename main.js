@@ -29,6 +29,7 @@ window.addEventListener("resize", () => {
     gl.viewport(0, 0, canvas.width, canvas.height);
 });
 
+//#region Debug Toggles
 const debugToggleGrid = document.getElementById("debug_toggle_grid");
 const debugToggleColliders = document.getElementById("debug_toggle_colliders");
 
@@ -53,7 +54,11 @@ if (debugSettings.GRID === true) {
     debugToggleGrid.classList.add("debug_enabled");
 }
 
+let debugPause = false;
+let isGameLoopRunning = true;
+const pauseText = document.getElementById("pause_text");
 
+//#region Logs
 // Keep these here. They define the goodLog/badLog console overriding
 console.badLog = function(message) {
     console.log(`%c${message}`, 'color: red; font-size: 12px; background: white; border-radius: 10%; padding: 2px;font-weight: bold;')
@@ -62,10 +67,8 @@ console.goodLog = function(message) {
     console.log(`%c${message}`, 'color: blue; font-size: 12px; background: white; border-radius: 10%; padding: 2px; font-weight: bold;')
 }
 
-let debugPause = false;
-let isGameLoopRunning = true;
-const pauseText = document.getElementById("pause_text");
 
+//#region Event Listeners
 // If user clicked to another window 
 document.addEventListener("visibilitychange", () => {
 
@@ -90,6 +93,7 @@ document.addEventListener("visibilitychange", () => {
     }
 });
 
+//#region Pause
 export function unPauseGame() {
 
     debugPause = false;
@@ -105,10 +109,8 @@ export function unPauseGame() {
 }
 
 
-
+//#region Build Level
 export const collisionSystem = new CollisionSystem();
-
-
 
 // object that holds refs to all shaders. Created in shaders.js
 export const myShaders = CreateShaders(gl);
@@ -118,16 +120,29 @@ const scene = buildLevel(gl, myShaders);
 scene.id = `TestLevelParentScene`;
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
 const defaultTexture = loadTexture(gl, "Art/testTile.png");
-const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting, texture: defaultTexture, id: "player_one"} );
 
+const playerOne = new Player( 
+    {
+        mesh: blenderModel, 
+        shader: myShaders.Lighting, 
+        texture: defaultTexture, 
+        id: "player_one"
+    });
+
+//#region Camera
 const camPropertiesOverhead = {
-    followDistance: 50,
-    position: vec3.fromValues(0, 50, 0),
+    id: "camera_overhead",
+    MIN_FOLLOW_DIST: 100,
+    MAX_FOLLOW_DIST: 300,
+    followDistance: 300,
+    position: vec3.fromValues(0, 150, 0),
     MIN_PITCH: -1.5,
-    MAX_PITCH: -1.4
+    MAX_PITCH: -1.0
 }
-const camera_player = new Camera(canvas);
+const camera_player = new Camera(canvas, playerOne, {id: "camera_player"});
 const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
+// camera_overhead.id = "camera_overhead";
+// camera_player.id = "camera_player";
 
 console.log(camera_overhead.position);
 
@@ -219,6 +234,7 @@ function gameLoop(timestamp) {
         // Fixed time step updates
     while (accumulator >= FIXED_TIMESTEP) {
         camera_player.updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
+        camera_overhead.updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position);
         accumulator -= FIXED_TIMESTEP;
     }
     
@@ -287,8 +303,10 @@ function render(elapsedTime) {
 
     scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
+    const viewMatrixOverhead = camera_overhead.getViewMatrix();
+
     // Draw all game objects
-    scene.draw(gl, viewMatrix, projectionMatrix, scene.testLights, true);
+    scene.draw(gl, viewMatrixOverhead, projectionMatrix, scene.testLights, true, camera_player);
 
 
     Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
