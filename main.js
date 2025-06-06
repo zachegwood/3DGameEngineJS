@@ -137,7 +137,7 @@ const camPropertiesOverhead = {
     followDistance: 300,
     position: vec3.fromValues(0, 150, 0),
     MIN_PITCH: -1.5,
-    MAX_PITCH: -1.0
+    MAX_PITCH: -.5
 }
 const camera_player = new Camera(canvas, playerOne, {id: "camera_player"});
 const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
@@ -304,9 +304,10 @@ function render(elapsedTime) {
     scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
     const viewMatrixOverhead = camera_overhead.getViewMatrix();
+    const viewMatrixPlayer = camera_player.getViewMatrix();
 
     // Draw all game objects
-    scene.draw(gl, viewMatrixOverhead, projectionMatrix, scene.testLights, true, camera_player);
+    scene.draw(gl, viewMatrixPlayer, projectionMatrix, scene.testLights, true, camera_player);
 
 
     Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0

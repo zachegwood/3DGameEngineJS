@@ -24,7 +24,7 @@ function worldToChunkCoord(x,z) {
 //#region Build Terrain
 export function buildTerrain(gl) {
 
-    const CHUNK_PIECES = 10;
+    const CHUNK_PIECES = 50;
     const halfPieces = CHUNK_PIECES / 2;
     const texture = loadTexture(gl, "Art/testTile.png");
 
