@@ -154,17 +154,19 @@ export class Entity {
 
             if (debugSettings.COLLIDERS === true && this.isVisible === true) {
 
+                // draw a wireframe collider around the mesh                
+
                 const aabbWireData = findWireFrameCube(this.worldAABB.min, this.worldAABB.max);
                 //const localWireData = findWireFrameCube(this.aabb.min, this.aabb.max);
 
-                this.debugWireFrameCube(gl, aabbWireData);        
+                this.debugWireFrameCube(gl, aabbWireData, mat4.create(), view, projection);        
                 //this.debugWireFrameCube(gl, localWireData);   
 
                 if (this.secondCollider !== null && this.isOverlappingFirstCollider) { // draw sphere collider
 
                     const wireModelMatrix = mat4.create();
                     mat4.fromTranslation(wireModelMatrix, this.position);  
-                    this.debugWireFrameCube(gl, this.secondCollider, wireModelMatrix);
+                    this.debugWireFrameCube(gl, this.secondCollider, wireModelMatrix, view, projection);
                     
                 }
                 
@@ -173,7 +175,7 @@ export class Entity {
     }
 
     //#region Debug Cube
-    debugWireFrameCube(gl, wireData, model = mat4.create()) {       
+    debugWireFrameCube(gl, wireData, model = mat4.create(), view, project) {      
 
         // Upload new AABB collider geometry to the GPU
         gl.bindBuffer(gl.ARRAY_BUFFER, this.collBuffers.position);
@@ -193,7 +195,8 @@ export class Entity {
             myShaders.SolidColor, 
             this.collBuffers, 
             model, // AABB will use mat4.create (identity matrix). second sphere collider uses a matrix model
-            colorToDrawWireframe // color from above
+            colorToDrawWireframe, // color from above
+            view, project
         );  
 
     }

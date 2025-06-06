@@ -10,7 +10,7 @@ import { createSphere } from './meshShapes.js';
 // Player inherits from Entity for Draw()
 
 
-const SPEED = 25;
+const SPEED = 100;
 const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 const SPHERE_RADIUS = 0.8;

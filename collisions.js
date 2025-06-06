@@ -202,12 +202,15 @@ export function findWireFrameCube(min, max) {
 }
 
 //#region Draw Wire Cube
-export function drawWireFrameCube(gl, shader, collBuffers, wireModel, colorToDraw) {
+export function drawWireFrameCube(gl, shader, collBuffers, wireModel, colorToDraw, view, project) {
 
     shader.use();
+
+    shader.setUniforms(view, project, wireModel, colorToDraw);
+
     //shader.setColor(1,1,1,1);   
-    shader.setColor(...colorToDraw);
-    shader.setModelMatrix(wireModel);
+    //shader.setColor(...colorToDraw);
+    //shader.setModelMatrix(wireModel);
 
     const positionBuffer = collBuffers.position;
     gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
