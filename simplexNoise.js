@@ -9,8 +9,6 @@ const p = new Uint8Array(256);
     [1,1], [-1,1], [1,-1], [-1,-1] // repeat to make 12 gradients
 ];
 
-
-//#region Perm Table
 // Create a permutation table: a suffled array of [0...255] doubled for overflow
 
 for (let i = 0; i < 256; i++) p[i] = i; // fill with 1,2,3...255
@@ -23,12 +21,9 @@ for (let i = 0; i < 512; i++) {
 }
 
 
-
+//#region Single Octave
 
 export function generateSimplexNoise(x, y) {
-
-
-    //#region Skew
 
     // Vlues that make equalateral triangles fit together
     const F2 = 0.5 * (Math.sqrt(3) - 1);    // ~ 0.36602  // used to skew
@@ -68,8 +63,6 @@ export function generateSimplexNoise(x, y) {
     const gi1 = perm[ii + i1 + perm[jj + j1]] % 12;
     const gi2 = perm[ii + 1 + perm[jj + 1]] % 12;
 
-    //#region Contribution
-
     // calculate corner contributions
     function contribution(t, x, y, gi) {
         if (t < 0) return 0.0;
@@ -92,4 +85,36 @@ export function generateSimplexNoise(x, y) {
 
     // sum the contributions
     return 70.0 * (n0 + n1 + n2); // 70 = scale factor
+}
+
+//#region Fractal Noise
+
+// ====== fBm / Fractal noise helper ==========
+/**
+ * fractalNoise(x, z, octaves, lacunarity, gain)
+ *   x, z       : world‐space coordinates
+ *   octaves    : number of noise layers to sum (e.g. 4)
+ *   lacunarity : frequency multiplier per octave (typically 2.0)
+ *   gain       : amplitude multiplier per octave (typically 0.5)
+ *
+ * Returns a value in approximately [−1 … +1], though the exact range
+ * depends on the choice of octaves & gain. You may need to normalize if you
+ * care about a guaranteed range.
+ */
+
+export function fractalNoise(x, z, octaves = 4, lacunarity = 2.0, gain = 0.5) {
+    let amplitude = 1.0;
+    let frequency = 1.0;
+    let sum = 0.0;
+    let max = 0.0; // for normalization (optional)
+
+    for (let o = 0; o < octaves; o++) {
+        sum += generateSimplexNoise(x * frequency, z * frequency) * amplitude;
+        max += amplitude;
+        amplitude *= gain;
+        frequency *= lacunarity;
+    }
+
+    // Now sum ∈ [−max … +max]. If you want to clamp to [−1…1], do:
+    return sum / max;
 }

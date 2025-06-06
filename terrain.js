@@ -1,7 +1,7 @@
 import { Entity } from './entity.js'
 import { createTerrainMesh, loadTexture } from './meshShapes.js';
 import { myShaders } from './main.js';
-import { generateSimplexNoise,  } from './simplexNoise.js';
+import { generateSimplexNoise,  fractalNoise } from './simplexNoise.js';
 
 
 
@@ -64,8 +64,18 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
     const indices = [];
     const uvs = [];
 
-    const scale = 0.1; // controls "zoom level" of noise
-    const amplitude = 6.0; // controls vertical exaggeration    
+    const scale = 0.1; // controls "zoom level" of noise  
+
+    // If you want “continents” or larger features, you might
+    // use a very low base scale (e.g. 0.001), then let fBm handle the rest.
+    // In practice, you can just multiply worldX/worldZ by a single base scale:
+    const baseScale = 0.005;  // tweak until you see rolling hills rather than tiny bumps
+    const amplitude = 20.0;   // overall vertical exaggeration (max height)
+
+    // fBm parameters:
+    const OCTAVES     = 5;
+    const LACUNARITY  = 2.0;
+    const GAIN        = 0.5;
 
     for (let z = 0; z <= segmentsZ; z++) {
         for (let x = 0; x <= segmentsX; x++) {
@@ -76,7 +86,23 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
             let worldX = posX + offsetX;
             let worldZ = posZ + offsetZ;
 
-            let y = generateSimplexNoise(worldX * scale, worldZ * scale) * amplitude;
+            // Sample fractal noise at (worldX, worldZ):
+            let noiseValue = fractalNoise(
+                worldX * baseScale,
+                worldZ * baseScale,
+                OCTAVES,
+                LACUNARITY,
+                GAIN
+            );
+           // noiseValue ∈ approximately [−1 … +1]
+
+            // Optionally “lift” the range to [0…1] if it’s easier to shape:
+            // let normalized = (noiseValue + 1) * 0.5; // ∈ [0…1]
+            // Then you could e.g. apply a curve (normalized**1.2) to flatten plateaus.
+
+            let y = noiseValue * amplitude;
+
+            //let y = generateSimplexNoise(worldX * scale, worldZ * scale) * amplitude;
 
             //let y = Math.random() * 6;
             positions.push(posX, y, posZ); 
