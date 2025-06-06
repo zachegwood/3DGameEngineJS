@@ -1,6 +1,6 @@
 import { vec3, mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { getMovementVector } from "./controls.js"; // also provides movement vector
-import { forwardMovementVector, rightMovementVector } from './camera.js';
+//import { forwardMovementVector, rightMovementVector } from './camera.js';
 import { Entity } from './entity.js'
 import { collisionSystem } from './main.js';
 import { aabbIntersects,  } from './collisions.js';
@@ -61,6 +61,8 @@ export class Player extends Entity {
         this.allColliders = [] // every collider my sphere is touching
 
         this.alwaysVisible = true; // prevent frustum culling
+
+        this.camera = null;
         
     }
 
@@ -95,8 +97,8 @@ export class Player extends Entity {
         const rightComponent = vec3.create();
 
         // Convert movement to world-space. IE, forward moves INTO 3D space
-        vec3.scale(forwardComponent, forwardMovementVector, controllerMovement[2]); // z input
-        vec3.scale(rightComponent, rightMovementVector, controllerMovement[0]); // x input
+        vec3.scale(forwardComponent, this.camera.forwardMovementVector, controllerMovement[2]); // z input
+        vec3.scale(rightComponent, this.camera.rightMovementVector, controllerMovement[0]); // x input
         vec3.add(inputVector, forwardComponent, rightComponent); // combine scale and movement
 
         if (vec3.length(inputVector) > 0.001) {

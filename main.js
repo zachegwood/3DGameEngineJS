@@ -2,7 +2,7 @@ import { mat4, vec3, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/es
 import { DrawGrid, debugSettings, DrawRays, Raycast } from './debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
-import { updateCameraPosition, getCameraPosition, getMouseWorldRayTarget, getLookRayTarget } from './camera.js';
+import { Camera } from './camera.js';
 
 import { Light } from './lights.js';
 import { Entity } from './entity.js';
@@ -119,6 +119,19 @@ scene.id = `TestLevelParentScene`;
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
 const defaultTexture = loadTexture(gl, "Art/testTile.png");
 const playerOne = new Player( {mesh: blenderModel, shader: myShaders.Lighting, texture: defaultTexture, id: "player_one"} );
+
+const camPropertiesOverhead = {
+    followDistance: 50,
+    position: vec3.fromValues(0, 50, 0),
+    MIN_PITCH: -1.5,
+    MAX_PITCH: -1.4
+}
+const camera_player = new Camera(canvas);
+const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
+
+console.log(camera_overhead.position);
+
+playerOne.camera = camera_player;
 scene.add(playerOne);
 
 
@@ -205,7 +218,7 @@ function gameLoop(timestamp) {
 
         // Fixed time step updates
     while (accumulator >= FIXED_TIMESTEP) {
-        updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
+        camera_player.updateCameraPosition((FIXED_TIMESTEP / 1000), playerOne.position); // pass delta in seconds
         accumulator -= FIXED_TIMESTEP;
     }
     
@@ -250,14 +263,15 @@ function render(elapsedTime) {
 
     const angle = elapsedTime * 0.001; // deterministic time step
    
-    const cameraPosition = getCameraPosition();
+    const cameraPosition = camera_player.getCameraPosition();
 
     const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.5, 1000);
     //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
 
-    let rayTarget = getLookRayTarget();
+    let rayTarget = camera_player.getLookRayTarget();
 
-    const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
+    //const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
+    const viewMatrix = camera_player.getViewMatrix();
 
     // debugElement.innerText = `
     // Camera Position: (${cameraPosition.map(n => n.toFixed(2)).join(",")})
