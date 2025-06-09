@@ -4,7 +4,7 @@ const TILE_SIZE = 1;
 
 export const debugSettings = {
     GRID: false,
-    COLLIDERS: true,
+    COLLIDERS: false,
 }
 
 const raysToDraw = [];

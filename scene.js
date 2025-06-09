@@ -89,6 +89,6 @@ export class SceneNode {
             //console.log(`test1 < ${visibleEntities.length} >`);
         }
 
-         console.log(`[ ${visibleEntities.length} ] visible entities`);
+         //console.log(`[ ${visibleEntities.length} ] visible entities`);
     }
 }

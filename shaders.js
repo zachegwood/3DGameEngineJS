@@ -11,6 +11,7 @@ export class Shader {
             position: gl.getAttribLocation(program, "a_position"),
             normal: gl.getAttribLocation(program, "a_normal"),
             uv: gl.getAttribLocation(program, "uv"), 
+            a_biome: gl.getAttribLocation(program, "a_biome"),
         };
         this.uniformLocations = {
             model: gl.getUniformLocation(program, "u_model"),
@@ -31,6 +32,8 @@ export class Shader {
             u_mainLightIntensity: gl.getUniformLocation(program, "u_mainLightIntensity"),
 
             u_ambientStrength: gl.getUniformLocation(program, 'u_ambientStrength'),
+
+            
         };        
     }
 
@@ -230,6 +233,9 @@ export const shaders = {
 
         precision mediump float;
 
+        attribute float a_biome;
+        varying float v_rawBiome;
+
         attribute vec3 a_position;
         attribute vec3 a_normal;
 
@@ -249,6 +255,8 @@ export const shaders = {
         void main() {
 
             v_uv = uv;
+
+            v_rawBiome = a_biome;
 
             // Transform the position to world space
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
@@ -270,6 +278,8 @@ export const shaders = {
 
         #define MAX_LIGHTS 4
 
+        varying float v_rawBiome;
+
         uniform int u_lightCount;
         uniform vec3 u_lightPositions[MAX_LIGHTS];   // world-space position of light
         uniform vec3 u_lightColors[MAX_LIGHTS];      // RBG of light
@@ -290,6 +300,8 @@ export const shaders = {
         varying vec2 v_uv;
 
         void main () {
+        
+
 
             vec3 baseColor = texture2D(textureSampler, v_uv).rgb;
 
@@ -331,9 +343,13 @@ export const shaders = {
 
             // Clamp the final color so it doesn't blow out
             gl_FragColor = vec4(color, 1.0);
+            
+
 
            // debug -- visualize normals 
            // gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0); // Visualize normal direction
+           //gl_FragColor = vec4(v_uv.y, v_uv.y, v_uv.y, 1.0); // grayscale biome debug
+            //gl_FragColor = vec4(v_rawBiome, v_rawBiome, v_rawBiome, 1.0);
         }    
     `,
 

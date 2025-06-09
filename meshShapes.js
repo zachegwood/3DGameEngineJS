@@ -9,7 +9,7 @@ const TILE_SIZE = 1;
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
 class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null) {
+    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null, biomes = null) {
         this.gl = gl;
         this.vertexCount = vertexCount;
 
@@ -38,8 +38,8 @@ class Mesh {
         }
 
         // Position buffer
-        this.buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        this.positionBuffer = gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
 
         // UV buffer (optional)
@@ -64,6 +64,13 @@ class Mesh {
             this.useIndices = true;
         }
 
+        if (biomes) {
+
+            this.biomesBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.biomesBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomes), gl.STATIC_DRAW);
+        }
+
         //this.modelMatrix = mat4.create();
     }
 
@@ -78,7 +85,7 @@ class Mesh {
         if (shader.attribLocations.position !== -1) {
 
             // Bind the vertex position buffer
-            gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.positionBuffer);
             gl.enableVertexAttribArray(shader.attribLocations.position);
             gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
             enabled.push(shader.attribLocations.position);
@@ -97,6 +104,13 @@ class Mesh {
             gl.vertexAttribPointer(shader.attribLocations.normal, 3, gl.FLOAT, false, 0, 0);
             enabled.push(shader.attribLocations.normal);
         } 
+
+        if (shader.attribLocations.biomes !== -1 && this.biomesBuffer) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.biomesBuffer);
+            gl.enableVertexAttribArray(shader.attribLocations.biomes);
+            gl.vertexAttribPointer(shader.attribLocations.biomes, 1, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.biomes);
+        }
 
         if (closeLights) shader.setLights(closeLights);
 
@@ -414,6 +428,8 @@ export function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
         terrainInfo.uvs, 
         normals, 
         aabb, 
-        terrainInfo.indices);
+        terrainInfo.indices,
+        terrainInfo.biomes, // added for visualization
+    );
 
 }

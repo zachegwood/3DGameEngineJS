@@ -3,11 +3,17 @@
 const perm = new Uint8Array(512);
 const p = new Uint8Array(256);
 
-    const grad3 = [
-    [1,1], [-1,1], [1,-1], [-1,-1],
-    [1,0], [-1,0], [0,1], [0,-1],
-    [1,1], [-1,1], [1,-1], [-1,-1] // repeat to make 12 gradients
-];
+//     const grad3 = [
+//     [1,1], [-1,1], [1,-1], [-1,-1],
+//     [1,0], [-1,0], [0,1], [0,-1],
+//     [1,1], [-1,1], [1,-1], [-1,-1] // repeat to make 12 gradients
+// ];
+
+const grad3 = [];
+for (let i = 0; i < 12; i++) {
+    const angle = (Math.PI * 2 * i) / 12;
+    grad3.push([Math.cos(angle), Math.sin(angle)]);
+}
 
 // Create a permutation table: a suffled array of [0...255] doubled for overflow
 
@@ -102,19 +108,54 @@ export function generateSimplexNoise(x, y) {
  * care about a guaranteed range.
  */
 
-export function fractalNoise(x, z, octaves = 4, lacunarity = 2.0, gain = 0.5) {
-    let amplitude = 1.0;
-    let frequency = 1.0;
+//export function fractalNoise(x, z, octaves = 4, lacunarity = 2.0, gain = 0.5, freq, amp) {
+export function fractalNoise(parameters) {
+    let { x, z, octaves, lacunarity, gain, freq, amp } = parameters;
+
+    //let amplitude = 1.0;
+    //let frequency = 1.0;
     let sum = 0.0;
     let max = 0.0; // for normalization (optional)
 
-    for (let o = 0; o < octaves; o++) {
-        sum += generateSimplexNoise(x * frequency, z * frequency) * amplitude;
-        max += amplitude;
-        amplitude *= gain;
-        frequency *= lacunarity;
+    for (let o = 0; o < Math.floor(octaves); o++) {
+        //sum += generateSimplexNoise(x * frequency, z * frequency) * amplitude;
+
+
+        // const angle = o * Math.PI * 0.4;
+        // const cos = Math.cos(angle), sin = Math.sin(angle);
+        // let rx = (x * cos - z * sin);
+        // let rz = (x * sin + z * cos);
+
+        //sum += generateSimplexNoise(rx * freq, rz * freq) * amp;
+
+        sum += generateSimplexNoise(x * freq, z * freq) * amp;
+
+        //max += amplitude;
+        //amplitude *= gain;
+        //frequency *= lacunarity;
+
+        max += amp;
+        amp *= gain;
+        freq *= lacunarity;
+        
+        
     }
 
     // Now sum ∈ [−max … +max]. If you want to clamp to [−1…1], do:
     return sum / max;
+}
+
+
+
+export function fractalNoiseRaw(params) {
+  // exactly your existing fBm, but ALWAYS full octaves (or use the fractional version from before)
+  let { x, z, octaves, lacunarity, gain, freq, amp } = params;
+  let sum = 0, max = 0;
+  for (let o = 0; o < octaves; o++) {
+    sum += generateSimplexNoise(x * freq, z * freq) * amp;
+    max += amp;
+    amp *= gain;
+    freq *= lacunarity;
+  }
+  return sum / max; 
 }
