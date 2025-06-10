@@ -36,7 +36,7 @@ function worldToChunkCoord(x,z) {
 //#region Build Terrain
 export function buildTerrain(gl) {
 
-    const CHUNK_PIECES = 25;
+    const CHUNK_PIECES = 20;
     const halfPieces = CHUNK_PIECES / 2;
     const texture = loadTexture(gl, "Art/testTile.png");
 
@@ -66,38 +66,142 @@ export function buildTerrain(gl) {
 
 //#region Biome Blender
 class BiomeBlender {
-    constructor(biomeData) {
-        this.plainsParams = biomeData.plains;
-        this.mountainsParams = biomeData.mountains;
+    constructor(weightFunctions) {
+        // this.plainsParams = this.biomeData.plains;
+        // this.mountainsParams = this.biomeData.mountains;
+
+        //this.biomeData = biomeData;
+
+        this.weightFunctions = weightFunctions;
+
+        //#region Weight F(n)s
+        this.weightFunctions = {
+            plains: (x,z) => { 
+                const v = this.getBiomeValue(x, z);
+                return (1 - smoothstep(0.2, 0.5, v)) + 0.05;
+            },
+            mountains: (x,z) => { 
+                const v = this.getBiomeValue(x, z);
+                return smoothstep(0.5, 0.9, v) + 0.05;
+            },
+            desert: (x,z) => { 
+                const v = this.getBiomeValue(x, z);
+                let d = 1 - Math.abs(v - 0.45) / 0.25;
+                return Math.max(d, 0) + 0.05;
+            },
+            plateau: (x,z) => { 
+                const v = this.getBiomeValue(x, z);
+                return (1 - smoothstep(0.0, 0.2, v)) + 0.05;
+            },
+        }
+
+        this.biomeData = {
+            plains: {
+                octaves:    5,
+                lacunarity: 2.0,
+                gain:       0.5,
+                freq:       0.02,
+                amp:        4.0
+            },
+            mountains: {
+                octaves:    5,
+                lacunarity: 2.0,
+                gain:       0.4,
+                freq:       0.01,
+                amp:        80.0
+            },
+            desert: {
+                octaves:    4,
+                lacunarity: 2.0,
+                gain:       0.3,
+                freq:       0.015,
+                amp:        0.8
+            },
+            plateau: {
+                octaves:    1,
+                lacunarity: 2.0,
+                gain:       0.2,
+                freq:       0.012,
+                amp:        20.0
+            },
+        }
     }
 
     getBlendedNoise(x, z) {
-        const params = this.getInterpolatedParams(x,z);
+        const params = this.getInterpolatedParams(x,z, this.biomeData);
         return { noise: fractalNoise(params), amp: params.amp };
     }
 
-    getInterpolatedParams(x,z) {
+    //#region ColorMap
+    getColorMap(weights) {
+        const colors = {
+            plains: [0, 1, 0],      // green
+            mountains: [1, 0, 0],   // red
+            desert: [0, 0, 0],      // black
+            plateau: [0, 0, 1],     // blue
+        }
 
+        const blendedColor = [
+            weights.plains      * colors.plains[0] +
+            weights.mountains   * colors.mountains[0] +
+            weights.desert      * colors.desert[0] +
+            weights.plateau     * colors.plateau[0], 
 
+            weights.plains      * colors.plains[1] +
+            weights.mountains   * colors.mountains[1] +
+            weights.desert      * colors.desert[1] +
+            weights.plateau     * colors.plateau[1],
+
+            weights.plains      * colors.plains[2] +
+            weights.mountains   * colors.mountains[2] +
+            weights.desert      * colors.desert[2] +
+            weights.plateau     * colors.plateau[2]
+        ];
+
+        return blendedColor;
+    }
+
+    getInterpolatedParams(x,z, biomeParams) {
+
+        let weights = this.getBiomeWeights(x, z);
+
+        let interpolated = {
+            x: x,
+            z: z,
+            octaves: 0,
+            lacunarity: 0,
+            gain: 0,
+            freq: 0,
+            amp: 0
+        };
 
         // Get biome value at this position (0 = plains, 1 = mountains)
         // allows smooth map variation
-        const biomeRaw = this.getBiomeValue(x, z);
-            
-            
-        let blend = smoothstep(0.3, 0.7, biomeRaw);
+        //const biomeRaw = this.getBiomeValue(x, z);
+        //let blend = smoothstep(0.3, 0.7, biomeRaw);
 
+        for (const biome in biomeParams) {
+            let w = weights[biome] || 0;
+            let params = biomeParams[biome];
+            interpolated.octaves    += params.octaves * w;
+            interpolated.lacunarity += params.lacunarity * w;
+            interpolated.gain       += params.gain * w;
+            interpolated.freq       += params.freq * w;
+            interpolated.amp        += params.amp * w;
+        }
+
+        return interpolated;
         
 
-        return {
-            x: x,
-            z: z,
-            octaves:    lerp(this.plainsParams.octaves, this.mountainsParams.octaves, blend),
-            lacunarity: lerp(this.plainsParams.lacunarity, this.mountainsParams.lacunarity, blend),
-            gain:       lerp(this.plainsParams.gain, this.mountainsParams.gain, blend),
-            freq:       lerp(this.plainsParams.freq, this.mountainsParams.freq, blend),
-            amp:        lerp(this.plainsParams.amp, this.mountainsParams.amp, blend),
-        }
+        // return {
+        //     x: x,
+        //     z: z,
+        //     octaves:    lerp(this.plainsParams.octaves, this.mountainsParams.octaves, blend),
+        //     lacunarity: lerp(this.plainsParams.lacunarity, this.mountainsParams.lacunarity, blend),
+        //     gain:       lerp(this.plainsParams.gain, this.mountainsParams.gain, blend),
+        //     freq:       lerp(this.plainsParams.freq, this.mountainsParams.freq, blend),
+        //     amp:        lerp(this.plainsParams.amp, this.mountainsParams.amp, blend),
+        // }
 
 
 
@@ -122,32 +226,70 @@ class BiomeBlender {
     }
 
 
+    getBiomeWeights(x,z) {
+    let weights = {};
+    let total = 0;
 
-}
-
-
-
-
-
-
-
-//#region Biome Data
-const biomeData = {
-    plains: {
-        octaves:    5,
-        lacunarity: 2.0,
-        gain:       0.5,
-        freq:       0.02,
-        amp:        4.0
-    },
-    mountains: {
-        octaves:    5,
-        lacunarity: 2.0,
-        gain:       0.4,
-        freq:       0.01,
-        amp:        80.0
+    for (const [biome, fn] of Object.entries(this.weightFunctions)) {
+        let w = fn(x,z);
+        weights[biome] = w;
+        total += w;
     }
+    // Normalize weights
+    for (const biome in weights) {
+        weights[biome] /= total;
+    }
+    return weights;
 }
+
+
+
+
+}
+
+
+
+
+
+
+
+// //#region Biome Data
+// const biomeData = {
+//     plains: {
+//         octaves:    5,
+//         lacunarity: 2.0,
+//         gain:       0.5,
+//         freq:       0.02,
+//         amp:        4.0
+//     },
+//     mountains: {
+//         octaves:    5,
+//         lacunarity: 2.0,
+//         gain:       0.4,
+//         freq:       0.01,
+//         amp:        80.0
+//     },
+//     desert: {
+//         octaves:    4,
+//         lacunarity: 2.0,
+//         gain:       0.3,
+//         freq:       0.015,
+//         amp:        0.8
+//     },
+//     plateau: {
+//         octaves:    3,
+//         lacunarity: 2.0,
+//         gain:       0.25,
+//         freq:       0.012,
+//         amp:        15.0
+//     },
+// }
+
+
+
+
+
+
 
 
 //#region Gen Flat Grid
@@ -157,6 +299,9 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
     const indices = [];
     const uvs = [];
     const biomesArray = []; // used to send to shader
+    const colorsArray = [];
+
+    const biomeBlender = new BiomeBlender();
 
     for (let z = 0; z <= segmentsZ; z++) {
         for (let x = 0; x <= segmentsX; x++) {
@@ -167,39 +312,22 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
             let worldX = posX + offsetX;
             let worldZ = posZ + offsetZ;
 
-            //const newParams = biomeBlender.getInterpolatedParams(x,z);
-
-            const biomeBlender = new BiomeBlender(biomeData);
-
-
-
+            // passed to shader for visualization. debug only
+            biomesArray.push(biomeBlender.getBiomeValue(worldX,worldZ));
 
             const result = biomeBlender.getBlendedNoise(worldX, worldZ);
 
             let y = result.noise * result.amp;
 
-            
-            
-            
 
-            // passed to shader for visualization. debug only
-            biomesArray.push(biomeBlender.getBiomeValue(worldX,worldZ));
-
-
-            // let plainsParams = {x: worldX, z: worldZ, ...biomeData.plains};
-            // let mountainsParams = {x: worldX, z: worldZ, ...biomeData.mountains};
-            // let plainsNoise = (fractalNoise(plainsParams));
-            // let mountainsNoise = (fractalNoise(mountainsParams));
-
-            // let noiseValue = lerp(plainsNoise, mountainsNoise, biome);
-            // let blendedAmp = lerp(biomeData.plains.amp, biomeData.mountains.amp, biome);
-            
-            //let y = noiseValue * blendedAmp;
+            // color map for debug rendering
+            const weightsColor = biomeBlender.getColorMap(biomeBlender.getBiomeWeights(worldX, worldZ));
+            colorsArray.push(...weightsColor);
 
             positions.push(posX, y, posZ); 
 
             uvs.push(x / segmentsX, z / segmentsZ);
-        }
+        }        
     }
 
     // Generate indices for triangle strip
@@ -217,7 +345,7 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
         }
     }  
 
-    return { positions, indices, uvs, biomes: biomesArray };
+    return { positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray };
 
 }
 

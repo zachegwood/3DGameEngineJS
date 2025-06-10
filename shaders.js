@@ -12,7 +12,9 @@ export class Shader {
             normal: gl.getAttribLocation(program, "a_normal"),
             uv: gl.getAttribLocation(program, "uv"), 
             a_biome: gl.getAttribLocation(program, "a_biome"),
+            a_biomeColors: gl.getAttribLocation(program, "a_biomeColors"),
         };
+
         this.uniformLocations = {
             model: gl.getUniformLocation(program, "u_model"),
             view: gl.getUniformLocation(program, "u_view"),
@@ -236,6 +238,9 @@ export const shaders = {
         attribute float a_biome;
         varying float v_rawBiome;
 
+        attribute vec3 a_biomeColors;
+        varying vec3 v_biomeColors;
+
         attribute vec3 a_position;
         attribute vec3 a_normal;
 
@@ -258,6 +263,9 @@ export const shaders = {
 
             v_rawBiome = a_biome;
 
+            v_biomeColors = a_biomeColors;
+
+
             // Transform the position to world space
             vec4 worldPosition = u_model * vec4(a_position, 1.0);
             v_worldPosition = worldPosition.xyz;
@@ -279,6 +287,8 @@ export const shaders = {
         #define MAX_LIGHTS 4
 
         varying float v_rawBiome;
+
+        varying vec3 v_biomeColors;
 
         uniform int u_lightCount;
         uniform vec3 u_lightPositions[MAX_LIGHTS];   // world-space position of light
@@ -341,6 +351,9 @@ export const shaders = {
             }
 
 
+            color += v_biomeColors; // add biome heatmap over map
+
+
             // Clamp the final color so it doesn't blow out
             gl_FragColor = vec4(color, 1.0);
             
@@ -350,6 +363,7 @@ export const shaders = {
            // gl_FragColor = vec4(normal * 0.5 + 0.5, 1.0); // Visualize normal direction
            //gl_FragColor = vec4(v_uv.y, v_uv.y, v_uv.y, 1.0); // grayscale biome debug
             //gl_FragColor = vec4(v_rawBiome, v_rawBiome, v_rawBiome, 1.0);
+            //gl_FragColor = vec4(v_biomeColors, 1.0);
         }    
     `,
 

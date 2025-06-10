@@ -9,7 +9,11 @@ const TILE_SIZE = 1;
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
 class Mesh {
-    constructor(gl, vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null, biomes = null) {
+    constructor(
+        gl, 
+        vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null, 
+        biomes = null, biomeColors
+    ) {
         this.gl = gl;
         this.vertexCount = vertexCount;
 
@@ -64,11 +68,22 @@ class Mesh {
             this.useIndices = true;
         }
 
-        if (biomes) {
+        if (biomes) {       
 
             this.biomesBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.biomesBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomes), gl.STATIC_DRAW);
+        }
+
+        // if (typeof biomeColors !== "undefined") {       
+        //     console.log("inside biome colors", biomeColors);
+        // }
+
+        if (biomeColors) {
+
+            this.biomeColorsBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.biomeColorsBuffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomeColors), gl.STATIC_DRAW);
         }
 
         //this.modelMatrix = mat4.create();
@@ -105,11 +120,18 @@ class Mesh {
             enabled.push(shader.attribLocations.normal);
         } 
 
-        if (shader.attribLocations.biomes !== -1 && this.biomesBuffer) {
+        if (shader.attribLocations.a_biome !== -1 && this.biomesBuffer) {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.biomesBuffer);
-            gl.enableVertexAttribArray(shader.attribLocations.biomes);
-            gl.vertexAttribPointer(shader.attribLocations.biomes, 1, gl.FLOAT, false, 0, 0);
-            enabled.push(shader.attribLocations.biomes);
+            gl.enableVertexAttribArray(shader.attribLocations.a_biome);
+            gl.vertexAttribPointer(shader.attribLocations.a_biome, 1, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.a_biome);
+        }
+
+        if (shader.attribLocations.a_biomeColors !== -1 && this.biomeColorsBuffer) {
+            gl.bindBuffer(gl.ARRAY_BUFFER, this.biomeColorsBuffer);
+            gl.enableVertexAttribArray(shader.attribLocations.a_biomeColors);
+            gl.vertexAttribPointer(shader.attribLocations.a_biomeColors, 3, gl.FLOAT, false, 0, 0);
+            enabled.push(shader.attribLocations.a_biomeColors);
         }
 
         if (closeLights) shader.setLights(closeLights);
@@ -430,6 +452,7 @@ export function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
         aabb, 
         terrainInfo.indices,
         terrainInfo.biomes, // added for visualization
+        terrainInfo.biomeColors, // added for visualization
     );
 
 }
