@@ -108,7 +108,7 @@ class BiomeBlender {
                 lacunarity: 2.0,
                 gain:       0.4,
                 freq:       0.01,
-                amp:        80.0
+                amp:        150.0
             },
             desert: {
                 octaves:    4,
@@ -122,14 +122,32 @@ class BiomeBlender {
                 lacunarity: 2.0,
                 gain:       0.2,
                 freq:       0.012,
-                amp:        20.0
+                amp:        40.0
             },
         }
     }
 
     getBlendedNoise(x, z) {
-        const params = this.getInterpolatedParams(x,z, this.biomeData);
-        return { noise: fractalNoise(params), amp: params.amp };
+  // Compute blended parameters and weights as before.
+  const { params, weights } = this.getInterpolatedParams(x, z, this.biomeData);
+  let rawNoise = fractalNoise(params);
+
+  // Define your plateau parameters.
+  const plateauThreshold = 0.55;         // If plateau weight exceeds this, force it.
+  const plateauConstantValue = 0.5;       // The flat noise value you want for plateaus.
+  
+  let finalNoise;
+  if (weights.plateau > plateauThreshold) {
+    // If plateau dominates, override the noisy value completely.
+    finalNoise = plateauConstantValue;
+  } else {
+    // Otherwise, linearly blend between the raw noise and the plateau constant.
+    // You can adjust the blending curve as needed.
+    let t = weights.plateau / plateauThreshold; 
+    finalNoise = (1 - t) * rawNoise + t * plateauConstantValue;
+  }
+
+        return { noise: finalNoise, amp: params.amp };
     }
 
     //#region ColorMap
@@ -180,9 +198,12 @@ class BiomeBlender {
         //const biomeRaw = this.getBiomeValue(x, z);
         //let blend = smoothstep(0.3, 0.7, biomeRaw);
 
+        //console.log(`plateau is ${weights.plateau}`);
+
         for (const biome in biomeParams) {
             let w = weights[biome] || 0;
             let params = biomeParams[biome];
+            
             interpolated.octaves    += params.octaves * w;
             interpolated.lacunarity += params.lacunarity * w;
             interpolated.gain       += params.gain * w;
@@ -190,21 +211,7 @@ class BiomeBlender {
             interpolated.amp        += params.amp * w;
         }
 
-        return interpolated;
-        
-
-        // return {
-        //     x: x,
-        //     z: z,
-        //     octaves:    lerp(this.plainsParams.octaves, this.mountainsParams.octaves, blend),
-        //     lacunarity: lerp(this.plainsParams.lacunarity, this.mountainsParams.lacunarity, blend),
-        //     gain:       lerp(this.plainsParams.gain, this.mountainsParams.gain, blend),
-        //     freq:       lerp(this.plainsParams.freq, this.mountainsParams.freq, blend),
-        //     amp:        lerp(this.plainsParams.amp, this.mountainsParams.amp, blend),
-        // }
-
-
-
+        return { params: interpolated, weights: weights };
 
     }
 
@@ -227,67 +234,23 @@ class BiomeBlender {
 
 
     getBiomeWeights(x,z) {
-    let weights = {};
-    let total = 0;
+        let weights = {};
+        let total = 0;
 
-    for (const [biome, fn] of Object.entries(this.weightFunctions)) {
-        let w = fn(x,z);
-        weights[biome] = w;
-        total += w;
+        for (const [biome, fn] of Object.entries(this.weightFunctions)) {
+            let w = fn(x,z);
+            weights[biome] = w;
+            total += w;
+        }
+        // Normalize weights
+        for (const biome in weights) {
+            weights[biome] /= total;
+        }
+        return weights;
     }
-    // Normalize weights
-    for (const biome in weights) {
-        weights[biome] /= total;
-    }
-    return weights;
-}
-
-
 
 
 }
-
-
-
-
-
-
-
-// //#region Biome Data
-// const biomeData = {
-//     plains: {
-//         octaves:    5,
-//         lacunarity: 2.0,
-//         gain:       0.5,
-//         freq:       0.02,
-//         amp:        4.0
-//     },
-//     mountains: {
-//         octaves:    5,
-//         lacunarity: 2.0,
-//         gain:       0.4,
-//         freq:       0.01,
-//         amp:        80.0
-//     },
-//     desert: {
-//         octaves:    4,
-//         lacunarity: 2.0,
-//         gain:       0.3,
-//         freq:       0.015,
-//         amp:        0.8
-//     },
-//     plateau: {
-//         octaves:    3,
-//         lacunarity: 2.0,
-//         gain:       0.25,
-//         freq:       0.012,
-//         amp:        15.0
-//     },
-// }
-
-
-
-
 
 
 
