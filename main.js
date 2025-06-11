@@ -32,6 +32,7 @@ window.addEventListener("resize", () => {
 //#region Debug Toggles
 const debugToggleGrid = document.getElementById("debug_toggle_grid");
 const debugToggleColliders = document.getElementById("debug_toggle_colliders");
+const debugToggleBiomeColors = document.getElementById("debug_toggle_biome_colors");
 
 const debugElement = document.getElementById("cam_debug");
 
@@ -45,6 +46,11 @@ debugToggleGrid.addEventListener("click", () => {
     console.log("toggling debug grid");
     debugSettings.GRID = !debugSettings.GRID;
 });
+debugToggleBiomeColors.addEventListener("click", () => {
+    debugToggleBiomeColors.classList.toggle("debug_enabled");
+    console.log("toggling debug biome colors");
+    debugSettings.BIOME_COLORS = !debugSettings.BIOME_COLORS;
+});
 
 if (debugSettings.COLLIDERS === true) {
     debugToggleColliders.classList.add("debug_enabled");
@@ -52,6 +58,10 @@ if (debugSettings.COLLIDERS === true) {
 
 if (debugSettings.GRID === true) {
     debugToggleGrid.classList.add("debug_enabled");
+}
+
+if (debugSettings.BIOME_COLORS === true) {
+    debugToggleBiomeColors.classList.add("debug_enabled");
 }
 
 let debugPause = false;

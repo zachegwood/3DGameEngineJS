@@ -34,7 +34,7 @@
             font-size: 12px;
         }
 
-         #debug_toggle_colliders {            
+        #debug_toggle_colliders {            
             position: absolute;
             top: 40px;
             right: 50px;
@@ -42,7 +42,18 @@
             background: rgba(255, 2, 2, 0.5);
             padding: 5px;
             font-family: monospace;
-            font-size: 12px;}
+            font-size: 12px;
+        }
+        #debug_toggle_biome_colors {            
+            position: absolute;
+            top: 70px;
+            right: 50px;
+            color: white;
+            background: rgba(255, 2, 2, 0.5);
+            padding: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
 
         #debug_container {
             position: absolute;
@@ -75,6 +86,7 @@
     <div id="debug_container">
         <button id="debug_toggle_grid">GRID</div>
         <button id="debug_toggle_colliders">COLLIDER</button>
+        <button id="debug_toggle_biome_colors">BIOMES</button>
     </div>
     <div id="cam_debug">Test Test</div>
     <canvas id="glcanvas"></canvas>

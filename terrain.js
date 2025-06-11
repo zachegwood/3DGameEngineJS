@@ -2,14 +2,16 @@ import { Entity } from './entity.js'
 import { createTerrainMesh, loadTexture } from './meshShapes.js';
 import { myShaders } from './main.js';
 import { generateSimplexNoise,  fractalNoise, fractalNoiseRaw } from './simplexNoise.js';
+import { biomeData, weightFunctions } from './biomes.js';
+import { debugSettings } from './debug.js';
 
 
 //#region Lerp / Smooth
-function lerp (a, b, t) {
+export function lerp (a, b, t) {
     return a + t * (b - a);
 }
 
-function smoothstep(edge0, edge1, x) {
+export function smoothstep(edge0, edge1, x) {
     const t = Math.max(0, Math.min(1, (x - edge0) / (edge1 - edge0)));
     return t * t * (3 - 2 * t);
 }
@@ -64,88 +66,36 @@ export function buildTerrain(gl) {
     return chunks;
 }
 
+
+
 //#region Biome Blender
 class BiomeBlender {
-    constructor(weightFunctions) {
-        // this.plainsParams = this.biomeData.plains;
-        // this.mountainsParams = this.biomeData.mountains;
+    constructor(data, functions) {              
 
-        //this.biomeData = biomeData;
-
-        this.weightFunctions = weightFunctions;
-
-        //#region Weight F(n)s
-        this.weightFunctions = {
-            plains: (x,z) => { 
-                const v = this.getBiomeValue(x, z);
-                return (1 - smoothstep(0.2, 0.5, v)) + 0.05;
-            },
-            mountains: (x,z) => { 
-                const v = this.getBiomeValue(x, z);
-                return smoothstep(0.5, 0.9, v) + 0.05;
-            },
-            desert: (x,z) => { 
-                const v = this.getBiomeValue(x, z);
-                let d = 1 - Math.abs(v - 0.45) / 0.25;
-                return Math.max(d, 0) + 0.05;
-            },
-            plateau: (x,z) => { 
-                const v = this.getBiomeValue(x, z);
-                return (1 - smoothstep(0.0, 0.2, v)) + 0.05;
-            },
-        }
-
-        this.biomeData = {
-            plains: {
-                octaves:    5,
-                lacunarity: 2.0,
-                gain:       0.5,
-                freq:       0.02,
-                amp:        4.0
-            },
-            mountains: {
-                octaves:    5,
-                lacunarity: 2.0,
-                gain:       0.4,
-                freq:       0.01,
-                amp:        150.0
-            },
-            desert: {
-                octaves:    4,
-                lacunarity: 2.0,
-                gain:       0.3,
-                freq:       0.015,
-                amp:        0.8
-            },
-            plateau: {
-                octaves:    1,
-                lacunarity: 2.0,
-                gain:       0.2,
-                freq:       0.012,
-                amp:        40.0
-            },
-        }
+        // configs in from biomes.js
+        this.biomeData = data;
+        this.weightFunctions = functions();        
     }
 
-    getBlendedNoise(x, z) {
-  // Compute blended parameters and weights as before.
-  const { params, weights } = this.getInterpolatedParams(x, z, this.biomeData);
-  let rawNoise = fractalNoise(params);
+    getHeight(x, z) {
+    // Compute blended parameters and weights as before.
+    const { params, weights } = this.getInterpolatedParams(x, z, this.biomeData);
+    let rawNoise = fractalNoise(params);
 
-  // Define your plateau parameters.
-  const plateauThreshold = 0.55;         // If plateau weight exceeds this, force it.
-  const plateauConstantValue = 0.5;       // The flat noise value you want for plateaus.
-  
-  let finalNoise;
-  if (weights.plateau > plateauThreshold) {
-    // If plateau dominates, override the noisy value completely.
-    finalNoise = plateauConstantValue;
-  } else {
-    // Otherwise, linearly blend between the raw noise and the plateau constant.
-    // You can adjust the blending curve as needed.
-    let t = weights.plateau / plateauThreshold; 
-    finalNoise = (1 - t) * rawNoise + t * plateauConstantValue;
-  }
+    // Define your plateau parameters.
+    const plateauThreshold = 0.55;         // If plateau weight exceeds this, force it.
+    const plateauConstantValue = 0.5;       // The flat noise value you want for plateaus.
+    
+    let finalNoise;
+    if (weights.plateau > plateauThreshold) {
+        // If plateau dominates, override the noisy value completely.
+        finalNoise = plateauConstantValue;
+        } else {
+            // Otherwise, linearly blend between the raw noise and the plateau constant.
+            // You can adjust the blending curve as needed.
+            let t = weights.plateau / plateauThreshold; 
+            finalNoise = (1 - t) * rawNoise + t * plateauConstantValue;
+        }
 
         return { noise: finalNoise, amp: params.amp };
     }
@@ -234,18 +184,21 @@ class BiomeBlender {
 
 
     getBiomeWeights(x,z) {
+        const v = this.getBiomeValue(x,z);
         let weights = {};
         let total = 0;
 
         for (const [biome, fn] of Object.entries(this.weightFunctions)) {
-            let w = fn(x,z);
+            let w = fn(v);
             weights[biome] = w;
             total += w;
         }
         // Normalize weights
-        for (const biome in weights) {
-            weights[biome] /= total;
-        }
+        if (total > 0) {
+            for (const biome in weights) {
+                weights[biome] /= total;
+            }
+        }   
         return weights;
     }
 
@@ -264,7 +217,7 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
     const biomesArray = []; // used to send to shader
     const colorsArray = [];
 
-    const biomeBlender = new BiomeBlender();
+    const biomeBlender = new BiomeBlender(biomeData, weightFunctions); // configs in from biomes.js
 
     for (let z = 0; z <= segmentsZ; z++) {
         for (let x = 0; x <= segmentsX; x++) {
@@ -278,14 +231,15 @@ export function generateFlatGrid(width, depth, segmentsX, segmentsZ, offsetX, of
             // passed to shader for visualization. debug only
             biomesArray.push(biomeBlender.getBiomeValue(worldX,worldZ));
 
-            const result = biomeBlender.getBlendedNoise(worldX, worldZ);
+            const result = biomeBlender.getHeight(worldX, worldZ);
 
             let y = result.noise * result.amp;
 
-
             // color map for debug rendering
-            const weightsColor = biomeBlender.getColorMap(biomeBlender.getBiomeWeights(worldX, worldZ));
-            colorsArray.push(...weightsColor);
+            if (debugSettings.BIOME_COLORS) {
+                const weightsColor = biomeBlender.getColorMap(biomeBlender.getBiomeWeights(worldX, worldZ));
+                colorsArray.push(...weightsColor);
+            }
 
             positions.push(posX, y, posZ); 
 
@@ -342,11 +296,10 @@ export function calculateNormals(positions, indices) {
         const nz = edge1[0] * edge2[1] - edge1[1] * edge2[0];
 
         // Accumulate to each vertex normal
-        for (const idx of [i0, i1, i2]) {
-            normals[idx]     += nx;
-            normals[idx + 1] += ny;
-            normals[idx + 2] += nz;
-        }
+        normals[i0] += nx; normals[i0 + 1] += ny; normals[i0 + 2] += nz;
+        normals[i1] += nx; normals[i1 + 1] += ny; normals[i1 + 2] += nz;
+        normals[i2] += nx; normals[i2 + 1] += ny; normals[i2 + 2] += nz;
+
     }
 
     // Normalize all normals
