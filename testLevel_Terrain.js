@@ -7,7 +7,7 @@ import { generateFlatGrid, buildTerrain } from "./terrain.js";
 
 
 
-export function buildLevel(gl, myShaders) {
+export async function buildLevel(gl, myShaders) {
         // The scene that will hold all entities (game objects)
     const scene = new SceneNode();
     scene.id = `levelSceneParentNode`;
@@ -40,7 +40,7 @@ export function buildLevel(gl, myShaders) {
 
 
  //#region Terrain
-    const terrain2 = buildTerrain(gl);
+    const terrain2 = await buildTerrain(gl);
     const chunksArray = Array.from(terrain2.values());
     for (let i = 0; i < terrain2.size; i++) {
         scene.add(chunksArray[i]);

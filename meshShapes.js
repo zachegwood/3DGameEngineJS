@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
-import { generateFlatGrid, calculateNormals } from './terrain.js';
+import { generateFlatGrid, calculateNormalsAsync } from './terrain.js';
 
 
 const TILE_SIZE = 1;
@@ -425,7 +425,7 @@ export async function loadModel(gl, url) {
 
 
 //#region TerrainMesh
-export function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
+export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
 
     const terrainInfo = generateFlatGrid(
         chunkSize, chunkSize,
@@ -433,7 +433,10 @@ export function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
         worldOffsetX, worldOffsetZ
     ); // from terrain.js
     
-    const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices); // from terrain.js
+    const normals = await calculateNormalsAsync(terrainInfo.positions, terrainInfo.indices); // from terrain.js
+
+
+    //const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
     const s = chunkSize/2; // size
 

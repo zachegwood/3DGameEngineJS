@@ -125,8 +125,13 @@ export const collisionSystem = new CollisionSystem();
 // object that holds refs to all shaders. Created in shaders.js
 export const myShaders = CreateShaders(gl);
 
+// Async web workers
+export const workers = {
+    worker_normals: new Worker('./workerNormals.js', { type: 'module' }),   
+}
+
 // add all game objects to scene
-const scene = buildLevel(gl, myShaders);
+const scene = await buildLevel(gl, myShaders);
 scene.id = `TestLevelParentScene`;
 const blenderModel = await loadModel(gl, "/Art/model_export.json");
 const defaultTexture = loadTexture(gl, "Art/testTile.png");
@@ -137,7 +142,10 @@ const playerOne = new Player(
         shader: myShaders.Lighting, 
         texture: defaultTexture, 
         id: "player_one"
-    });
+    }
+);
+
+
 
 //#region Camera
 const camPropertiesOverhead = {

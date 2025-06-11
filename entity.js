@@ -141,6 +141,8 @@ export class Entity {
                 } 
             }
 
+            //if (this.mesh === undefined) { console.log(`undefined mesh on ${this.id}`); return; }
+
             this.closeLights = this.getClosestLights(allLights);
             this.mesh.draw(this.shader, this.closeLights);         
 
