@@ -1,8 +1,9 @@
-import { lerp, smoothstep } from './terrain.js'
+import { lerp, smoothstep } from './utils.js'
 
 
 //  Data for defining biomes. 
 //  Make sure to add to both of these (biomeData AND weightFunctions)
+
 
 
 //#region Biome Data

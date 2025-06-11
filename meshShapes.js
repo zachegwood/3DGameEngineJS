@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
-import { generateFlatGrid, calculateNormalsAsync } from './terrain.js';
+import { generateFlatGridAsync, calculateNormalsAsync } from './terrain.js';
 
 
 const TILE_SIZE = 1;
@@ -25,20 +25,6 @@ class Mesh {
         if (aabb) { 
             this.aabb = aabb; // just max and min
             this.collider = findWireFrameCube(aabb.min, aabb.max); // returns indexes and vertecies
-
-            // const positionBuffer = gl.createBuffer();
-            // gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
-            // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.collider.positions), gl.STATIC_DRAW);
-
-            // const indexBuffer = gl.createBuffer();
-            // gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer);
-            // gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.collider.indices), gl.STATIC_DRAW);
-
-            // this.collBuffers = {
-            //     position: positionBuffer,
-            //     index: indexBuffer,
-            //     count: this.collider.indices.length,
-            // }
         }
 
         // Position buffer
@@ -75,18 +61,12 @@ class Mesh {
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomes), gl.STATIC_DRAW);
         }
 
-        // if (typeof biomeColors !== "undefined") {       
-        //     console.log("inside biome colors", biomeColors);
-        // }
-
         if (biomeColors) {
 
             this.biomeColorsBuffer = gl.createBuffer();
             gl.bindBuffer(gl.ARRAY_BUFFER, this.biomeColorsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomeColors), gl.STATIC_DRAW);
         }
-
-        //this.modelMatrix = mat4.create();
     }
 
 
@@ -152,19 +132,11 @@ class Mesh {
             gl.drawArrays(gl.TRIANGLES, 0, this.vertexCount);     
 
         }
-
-         
         
         // Clean up: disable used attributes
         for (const loc of enabled) {
             gl.disableVertexAttribArray(loc);
         }
-
-        // // Draw the collider
-        // if (this.aabb) { 
-        //     drawWireFrameCube(this.gl, shader, this.collider, this.collBuffers);  
-        //     console.log(`drawing collider for ${this.myEntity}`)
-        // };
     }
 }
 
@@ -427,16 +399,15 @@ export async function loadModel(gl, url) {
 //#region TerrainMesh
 export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
 
-    const terrainInfo = generateFlatGrid(
-        chunkSize, chunkSize,
-        10, 10, 
-        worldOffsetX, worldOffsetZ
+    // generate flat terrain using a webworker (workerFlatGrid.js)
+    const terrainInfo = await generateFlatGridAsync(
+        chunkSize, chunkSize, 
+        10, 10,
+        worldOffsetX, worldOffsetZ 
     ); // from terrain.js
     
+    // calculate normals using a webworker (workerNormals.js)
     const normals = await calculateNormalsAsync(terrainInfo.positions, terrainInfo.indices); // from terrain.js
-
-
-    //const normals = calculateNormals(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
     const s = chunkSize/2; // size
 

@@ -125,9 +125,11 @@ export const collisionSystem = new CollisionSystem();
 // object that holds refs to all shaders. Created in shaders.js
 export const myShaders = CreateShaders(gl);
 
+//#region Web Workers
 // Async web workers
 export const workers = {
     worker_normals: new Worker('./workerNormals.js', { type: 'module' }),   
+    worker_flatGrid: new Worker('./workerFlatGrid.js', { type: 'module' }),
 }
 
 // add all game objects to scene
