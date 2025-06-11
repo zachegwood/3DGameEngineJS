@@ -119,7 +119,6 @@ export class BiomeBlender {
         return blendedValue;
     }
 
-
     getBiomeWeights(x,z) {
         const v = this.getBiomeValue(x,z);
         let weights = {};
@@ -138,4 +137,6 @@ export class BiomeBlender {
         }   
         return weights;
     }
+
+    //#region Climate Maps
 }
