@@ -9,7 +9,7 @@ export class Camera {
 
         this.id = config.id ?? "new_camera";
 
-        console.log(this.id);
+        //console.log(this.id);
 
         this.canvas = canvas;
 

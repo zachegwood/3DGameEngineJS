@@ -1,8 +1,9 @@
 import { generateSimplexNoise, fractalNoise } from "./simplexNoise.js";
 import { lerp, smoothstep } from '../utils.js';
+//import { VoronoiRegions } from "./Voronoi.js";
 
 
-// called from inside workerFlatGrid.js
+// called from inside workerFlatGrid.js <-- generateFlatGridAsync() in terrain.js <-- meshShapes.js
 
 
 //#region Biome Blender
@@ -11,30 +12,50 @@ export class BiomeBlender {
 
         // configs in from biomes.js
         this.biomeData = data;
-        this.weightFunctions = functions();        
+        this.weightFunctions = functions();     
+        
+        //const voronoi = new VoronoiRegions();
     }
 
     getHeight(x, z) {
-    // Compute blended parameters and weights as before.
-    const { params, weights } = this.getInterpolatedParams(x, z, this.biomeData);
-    let rawNoise = fractalNoise(params);
 
-    // Define your plateau parameters.
-    const plateauThreshold = 0.55;         // If plateau weight exceeds this, force it.
-    const plateauConstantValue = 0.5;       // The flat noise value you want for plateaus.
-    
-    let finalNoise;
-    if (weights.plateau > plateauThreshold) {
-        // If plateau dominates, override the noisy value completely.
-        finalNoise = plateauConstantValue;
-        } else {
-            // Otherwise, linearly blend between the raw noise and the plateau constant.
-            // You can adjust the blending curve as needed.
-            let t = weights.plateau / plateauThreshold; 
-            finalNoise = (1 - t) * rawNoise + t * plateauConstantValue;
-        }
+
+
+
+        // new version, using Voronoi Regions
+        //let baseElevation = voronoi.getHeight();
+        //let detailNoise = fractalNoise(params);
+
+
+        //console.log(`BiomeBlender = baseElevation is ${baseElevation}`);
+
+
+/*
+
+        // Compute blended parameters and weights as before.
+        const { params, weights } = this.getInterpolatedParams(x, z, this.biomeData);
+        let rawNoise = fractalNoise(params);
+
+        // Define your plateau parameters.
+        const plateauThreshold = 0.55;         // If plateau weight exceeds this, force it.
+        const plateauConstantValue = 0.5;       // The flat noise value you want for plateaus.
+        
+        let finalNoise;
+        if (weights.plateau > plateauThreshold) {
+            // If plateau dominates, override the noisy value completely.
+            finalNoise = plateauConstantValue;
+            } else {
+                // Otherwise, linearly blend between the raw noise and the plateau constant.
+                // You can adjust the blending curve as needed.
+                let t = weights.plateau / plateauThreshold; 
+                finalNoise = (1 - t) * rawNoise + t * plateauConstantValue;
+            }
 
         return { noise: finalNoise, amp: params.amp };
+
+*/
+        return { baseElevation };
+        
     }
 
     //#region ColorMap

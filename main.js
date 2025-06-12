@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { DrawGrid, debugSettings, DrawRays, Raycast } from './debug.js';
+import { DrawGrid, debugSettings, DrawRays } from '/debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
 import { Camera } from './camera.js';
@@ -12,6 +12,7 @@ import { SceneNode } from './Levels/scene.js';
 import { buildLevel } from './Levels/testLevel_Terrain.js'; // currently changing this is how we change levels
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
+
 
 //#region GL and Canvas
 
@@ -164,7 +165,7 @@ const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
 // camera_overhead.id = "camera_overhead";
 // camera_player.id = "camera_player";
 
-console.log(camera_overhead.position);
+//console.log(camera_overhead.position);
 
 playerOne.camera = camera_player;
 scene.add(playerOne);
@@ -330,7 +331,7 @@ function render(elapsedTime) {
     scene.draw(gl, viewMatrixPlayer, projectionMatrix, scene.testLights, true, camera_player);
 
 
-    Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
+    //Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
     DrawRays(gl, myShaders.SolidColor); // All raycasts
 
     

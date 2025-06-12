@@ -31,7 +31,7 @@ for (let i = 0; i < 512; i++) {
 
 export function generateSimplexNoise(x, y) {
 
-    // Vlues that make equalateral triangles fit together
+    // Values that make equalateral triangles fit together
     const F2 = 0.5 * (Math.sqrt(3) - 1);    // ~ 0.36602  // used to skew
     const G2 = (3 - Math.sqrt(3)) / 6;      // ~ 0.21132  // used to unskew
 

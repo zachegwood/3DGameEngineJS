@@ -1,11 +1,13 @@
 import { Entity } from '../entity.js'
 import { createTerrainMesh, loadTexture } from '../meshShapes.js';
 import { myShaders, workers } from '../main.js';
-import { generateSimplexNoise,  fractalNoise, fractalNoiseRaw } from './simplexNoise.js';
+//import { generateSimplexNoise,  fractalNoise, fractalNoiseRaw } from './simplexNoise.js';
 //import { biomeData, weightFunctions } from './TerrainBiome/biomes.js';
-import { BiomeBlender } from './biomeBlender.js';
+//import { BiomeBlender } from './biomeBlender.js';
 import { debugSettings } from '../debug.js';
-import { lerp, smoothstep } from '/utils.js';
+//import { lerp, smoothstep } from '/utils.js';
+
+//import { VoronoiRegions } from './Voronoi.js';
 
 
 // ProcGen Terrain
@@ -14,6 +16,10 @@ import { lerp, smoothstep } from '/utils.js';
 //#region Chunking
 
 const CHUNK_SIZE = 32; // 32x32 units
+const CHUNK_PIECES = 20;
+const halfPieces = CHUNK_PIECES / 2;
+const mapSize = CHUNK_PIECES * CHUNK_SIZE;
+
 
 const chunks = new Map();
 
@@ -24,14 +30,21 @@ function worldToChunkCoord(x,z) {
     ];
 }
 
+//const voronoi = new VoronoiRegions();
 
 
 //#region Build Terrain
 export async function buildTerrain(gl) {
 
-    const CHUNK_PIECES = 20;
-    const halfPieces = CHUNK_PIECES / 2;
     const texture = loadTexture(gl, "Art/testTile.png");
+
+
+    
+
+    // build Voronoi Regions map. 
+    //voronoi.generateSeeds(mapSize); // stores seeds in VoronoiRegions.seeds;
+    // moved this to workerFlatGrid
+
 
     for (let x = -halfPieces; x < halfPieces; x++) {
         for (let z = -halfPieces; z < halfPieces; z++){
@@ -39,7 +52,7 @@ export async function buildTerrain(gl) {
             const worldOffsetX = x * CHUNK_SIZE;
             const worldOffsetZ = z * CHUNK_SIZE;
 
-            const newMesh = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ);
+            const newMesh = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ); //meshShapes.js
 
             if (newMesh === undefined) { console.log(`undefined mesh in BuildTerrain - terrain.js`); return; }
 
@@ -71,6 +84,7 @@ export async function generateFlatGridAsync(width, depth, segmentsX, segmentsZ, 
 
     const worker = workers.worker_flatGrid;
 
+
     return new Promise((resolve) => {
         worker.onmessage = (e) => {
             const { positions, indices, uvs, biomes, biomeColors } = e.data;
@@ -90,7 +104,8 @@ export async function generateFlatGridAsync(width, depth, segmentsX, segmentsZ, 
             segmentsZ,
             offsetX,
             offsetZ,
-            debugBiomeColors: debugSettings.BIOME_COLORS
+            debugBiomeColors: debugSettings.BIOME_COLORS,
+            mapSize
         });
     });
 }
@@ -105,7 +120,7 @@ export function calculateNormalsAsync(positions, indices) {
         const worker = workers.worker_normals; 
 
         
-        console.log(`workers test: ${worker}`);
+        //console.log(`workers test: ${worker}`);
 
         //const worker = new Worker('./workerNormals.js', { type: 'module' });
 

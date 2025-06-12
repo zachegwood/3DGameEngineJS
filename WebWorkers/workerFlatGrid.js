@@ -1,16 +1,23 @@
 import { biomeData, weightFunctions } from "../TerrainBiome/biomes.js";
 import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
+import { VoronoiRegions } from "../TerrainBiome/Voronoi.js";
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
+const voronoi = new VoronoiRegions();
 
 onmessage = function (e) {
-    const { width, depth, segmentsX, segmentsZ, offsetX, offsetZ, debugBiomeColors } = e.data;
+    const { width, depth, segmentsX, segmentsZ, offsetX, offsetZ, debugBiomeColors, mapSize } = e.data;
 
     const positions = [];
     const indices = [];
     const uvs = [];
     const biomesArray = [];
     const colorsArray = [];    
+
+    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize);
+
+    //console.log(`map is ${mapSize}`);
+    //voroni.generateSeeds(mapSize);
 
      for (let z = 0; z <= segmentsZ; z++) {
             for (let x = 0; x <= segmentsX; x++) {
@@ -21,13 +28,32 @@ onmessage = function (e) {
                 let worldX = posX + offsetX;
                 let worldZ = posZ + offsetZ;
 
+
+                const y = voronoi.getHeight(worldX, worldZ);
+
+                //console.log(`workerFlatGrid => y is ${y}`);
+
+                // new version using Voronoi Regions
+               // const y = biomeBlender.getHeight(worldX, worldZ);
+
+
+/*
                 // Height + biome data
                 const { noise, amp } = biomeBlender.getHeight(worldX,worldZ);
-                const weights = biomeBlender.getBiomeWeights(worldX,worldZ);
                 const y = noise * amp;
+
+                const weights = biomeBlender.getBiomeWeights(worldX,worldZ);
+                
+
+*/
+
 
                 positions.push(posX, y, posZ);     
                 uvs.push(x / segmentsX, z / segmentsZ);    
+
+                continue;
+
+                const weights = biomeBlender.getBiomeWeights(worldX,worldZ);
 
                 // passed to shader for visualization. debug only
                 biomesArray.push(biomeBlender.getBiomeValue(worldX, worldZ));

@@ -1,5 +1,8 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
+console.log("debug.js loaded");
+
+
 const TILE_SIZE = 1;
 
 export const debugSettings = {
@@ -118,6 +121,8 @@ export function DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor) {
 // Define the Rays and add to the raysToDraw Array. The actual drawing happens below in DrawRays(gl, shader)
 export function Raycast(origin, direction, length, color) {
 
+    
+
 	const end = [
 		origin[0] + direction[0] * length,
 		origin[1] + direction[1] * length,
@@ -129,17 +134,26 @@ export function Raycast(origin, direction, length, color) {
 		end[0], end[1], end[2]
 	];
 
-    raysToDraw.push( {
+    const ray = {
         vertices: rayVertices,
-        color: color
-    } );
+        color: color,
+        origin: origin
+    }
+
+    console.log("in raycast with", ray);
+
+    raysToDraw.push( ray );
+
+    console.log(`raysToDraw length is ${raysToDraw.length}`);
+
+    return ray;
 }
 
 //#region Draw Rays
 
 export function DrawRays(gl, shader) {
 
-    if (!raysToDraw.length) console.log("no rays to draw")    ;
+    if (!raysToDraw.length) { console.log("no rays to draw"); } else { console.log(`drawing ray`); }
 
     if (!raysToDraw.length) return; // nothing to draw    
 
@@ -166,8 +180,10 @@ export function DrawRays(gl, shader) {
         
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
         gl.drawArrays(gl.LINES, 0, 2);
+
+        console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
     });    
 
-    raysToDraw.length = 0; // Clear for the next frame
+    //raysToDraw.length = 0; // Clear for the next frame
 
 }

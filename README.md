@@ -9,6 +9,45 @@ Change to a custom glTF to binary import format for Blender files. Preprocess gl
 
 
 
+Tracing Terrain Creation and Randomness ffs ugh
+
+-[TestLevel_Terrain.js]
+    const terrain2 = await buildTerrain(gl);
+
+-buildTerrain(gl) [terrain.js] (creates chunks)
+    const newMesh = 
+    await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ);
+    const terrainChunk = new Entity(
+        {
+            mesh: newMesh,
+            position: [worldOffsetX, 0, worldOffsetZ],
+            shader: myShaders.Lighting,
+            texture: texture,
+            id: `terrain_chunk_${x},${z}`,
+        });
+-createTerrainMesh [meshShapes.js] 
+(returns "terrainInfo" to create mesh for entity chunk)
+    generateFlatGridAsync()
+
+-generateFlatGridAsync [terrain.js]
+    worker_flatGrid
+
+-[workerFlatGrid.js] (gets height and biome values)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 NEW CHANGE:
