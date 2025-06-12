@@ -1,5 +1,5 @@
 import { generateSimplexNoise, fractalNoise } from "./simplexNoise.js";
-import { lerp, smoothstep } from '/utils.js';
+import { lerp, smoothstep } from '../utils.js';
 
 
 // called from inside workerFlatGrid.js

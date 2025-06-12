@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
-import { generateFlatGridAsync, calculateNormalsAsync } from './terrain.js';
+import { generateFlatGridAsync, calculateNormalsAsync } from './TerrainBiome/terrain.js';
 
 
 const TILE_SIZE = 1;

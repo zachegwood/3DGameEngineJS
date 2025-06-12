@@ -1,10 +1,10 @@
-import { Entity } from './entity.js'
-import { createTerrainMesh, loadTexture } from './meshShapes.js';
-import { myShaders, workers } from './main.js';
+import { Entity } from '../entity.js'
+import { createTerrainMesh, loadTexture } from '../meshShapes.js';
+import { myShaders, workers } from '../main.js';
 import { generateSimplexNoise,  fractalNoise, fractalNoiseRaw } from './simplexNoise.js';
-import { biomeData, weightFunctions } from './biomes.js';
+//import { biomeData, weightFunctions } from './TerrainBiome/biomes.js';
 import { BiomeBlender } from './biomeBlender.js';
-import { debugSettings } from './debug.js';
+import { debugSettings } from '../debug.js';
 import { lerp, smoothstep } from '/utils.js';
 
 

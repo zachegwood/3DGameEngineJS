@@ -1,5 +1,5 @@
-import { biomeData, weightFunctions } from "./biomes.js";
-import { BiomeBlender } from "./biomeBlender.js";
+import { biomeData, weightFunctions } from "../TerrainBiome/biomes.js";
+import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
 

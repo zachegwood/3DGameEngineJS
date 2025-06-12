@@ -3,7 +3,7 @@
 // This recursively runs on all children
 
 import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { extractFrustumPlanes, isAABBInFrustum } from './frustum.js'
+import { extractFrustumPlanes, isAABBInFrustum } from '../frustum.js'
 
 const entities = [];
 const visibleEntities = [];

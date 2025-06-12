@@ -1,9 +1,9 @@
 import { SceneNode } from "./scene.js";
-import { Entity } from "./entity.js";
-import { Light } from "./lights.js";
+import { Entity } from "../entity.js";
+import { Light } from "../lights.js";
 
-import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from './meshShapes.js';
-import { generateFlatGrid,  } from "./terrain.js";
+import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from '../meshShapes.js';
+import { generateFlatGrid,  } from "../TerrainBiome/terrain.js";
 
 
 export function buildLevel(gl, myShaders) {

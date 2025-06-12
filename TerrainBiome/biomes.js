@@ -1,4 +1,4 @@
-import { lerp, smoothstep } from './utils.js'
+import { smoothstep } from '../utils.js';
 
 
 //  Data for defining biomes. 

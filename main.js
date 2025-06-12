@@ -7,9 +7,9 @@ import { Camera } from './camera.js';
 import { Light } from './lights.js';
 import { Entity } from './entity.js';
 import { Player } from './player.js';
-import { SceneNode } from './scene.js';
+import { SceneNode } from './Levels/scene.js';
 
-import { buildLevel } from './testLevel_Terrain.js'; // currently changing this is how we change levels
+import { buildLevel } from './Levels/testLevel_Terrain.js'; // currently changing this is how we change levels
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
 
@@ -128,8 +128,8 @@ export const myShaders = CreateShaders(gl);
 //#region Web Workers
 // Async web workers
 export const workers = {
-    worker_normals: new Worker('./workerNormals.js', { type: 'module' }),   
-    worker_flatGrid: new Worker('./workerFlatGrid.js', { type: 'module' }),
+    worker_normals: new Worker('./WebWorkers/workerNormals.js', { type: 'module' }),   
+    worker_flatGrid: new Worker('./WebWorkers/workerFlatGrid.js', { type: 'module' }),
 }
 
 // add all game objects to scene
