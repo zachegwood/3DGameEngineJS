@@ -140,11 +140,11 @@ export function Raycast(origin, direction, length, color) {
         origin: origin
     }
 
-    console.log("in raycast with", ray);
+    //console.log("in raycast with", ray);
 
     raysToDraw.push( ray );
 
-    console.log(`raysToDraw length is ${raysToDraw.length}`);
+    //console.log(`raysToDraw length is ${raysToDraw.length}`);
 
     return ray;
 }
@@ -176,12 +176,12 @@ export function DrawRays(gl, shader) {
 
     raysToDraw.forEach( ray => {
 
-        shader.setColor(...ray.color); // js spread syntax, since ray.color is an array
+        shader.setColor(...ray.color, 1.0); // js spread syntax, since ray.color is an array
         
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
         gl.drawArrays(gl.LINES, 0, 2);
 
-        console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
+        //console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
     });    
 
     //raysToDraw.length = 0; // Clear for the next frame

@@ -61,7 +61,7 @@ export async function buildLevel(gl, myShaders) {
 
     const sunDir = [-0.5,-1,0.5];
     const sunColor = [.2, 0.8, 0.5];
-    const sunIntensity = 0.2;
+    const sunIntensity = 0.5;
     const sun = new Light([0, 9, 0], sunColor, 1.0); // pos is just to see the debug box
     sun.direction = sunDir;
     sun.isSun = true;

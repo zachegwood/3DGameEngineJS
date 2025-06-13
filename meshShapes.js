@@ -1,6 +1,7 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
 import { generateFlatGridAsync, calculateNormalsAsync } from './TerrainBiome/terrain.js';
+import { addToRaycast } from './main.js';
 
 
 const TILE_SIZE = 1;
@@ -12,7 +13,7 @@ class Mesh {
     constructor(
         gl, 
         vertices, vertexCount, uvs = null, normals = null, aabb = null, indices = null, 
-        biomes = null, biomeColors
+        biomes = null, biomeColors = null, seeds = null,
     ) {
         this.gl = gl;
         this.vertexCount = vertexCount;
@@ -67,6 +68,8 @@ class Mesh {
             gl.bindBuffer(gl.ARRAY_BUFFER, this.biomeColorsBuffer);
             gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(biomeColors), gl.STATIC_DRAW);
         }
+
+
     }
 
 
@@ -113,6 +116,7 @@ class Mesh {
             gl.vertexAttribPointer(shader.attribLocations.a_biomeColors, 3, gl.FLOAT, false, 0, 0);
             enabled.push(shader.attribLocations.a_biomeColors);
         }
+
 
         if (closeLights) shader.setLights(closeLights);
 
@@ -396,6 +400,8 @@ export async function loadModel(gl, url) {
 }
 
 
+let alreadyDrawnVoronoiSeedRays = false;
+
 //#region TerrainMesh
 export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
 
@@ -403,7 +409,7 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
     const terrainInfo = await generateFlatGridAsync(
         chunkSize, chunkSize, 
         10, 10,
-        worldOffsetX, worldOffsetZ 
+        worldOffsetX, worldOffsetZ
     ); // from terrain.js
     
     // calculate normals using a webworker (workerNormals.js)
@@ -411,11 +417,34 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
 
     const s = chunkSize/2; // size
 
+    // const aabb = {
+    //     min: [-s, -s, -s],
+    //     max: [ s,  s,  s],
+    //     colType: 'trigger'
+    // }
+    
+    //console.log(terrainInfo);
+   
     const aabb = {
-        min: [-s, -s, -s],
-        max: [ s,  s,  s],
+        min: [-s, terrainInfo.yMin, -s],
+        max: [ s,  terrainInfo.yMax,  s],
         colType: 'trigger'
     }
+
+    if (alreadyDrawnVoronoiSeedRays === false) {
+        alreadyDrawnVoronoiSeedRays = true;
+        for (let i = 0; i < terrainInfo.seeds.length; i++) {
+            console.log(terrainInfo.seeds.length)
+            const ray = {
+                origin: [terrainInfo.seeds[i].x, 0, terrainInfo.seeds[i].z],
+                direction: [0,1,0],
+                length: 1000,
+                color: [1,0,0],
+            }
+            addToRaycast(ray)
+        }
+    }
+
 
     return new Mesh(
         gl, 

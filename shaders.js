@@ -35,7 +35,6 @@ export class Shader {
 
             u_ambientStrength: gl.getUniformLocation(program, 'u_ambientStrength'),
 
-            
         };        
     }
 
@@ -284,6 +283,7 @@ export const shaders = {
     fs_lighting: `
         precision mediump float;
 
+
         #define MAX_LIGHTS 4
 
         varying float v_rawBiome;
@@ -310,17 +310,11 @@ export const shaders = {
         varying vec2 v_uv;
 
         void main () {
-        
-
 
             vec3 baseColor = texture2D(textureSampler, v_uv).rgb;
-
             vec3 normal = normalize(v_normal);
-            //vec3 baseColor = u_color.rgb;
-            //vec3 baseColor = vec3(1.0, 1.0, 1.0); // white
-
             vec3 color = baseColor * u_ambientStrength;
-            //vec3 color = baseColor;
+
 
             for (int i = 0; i < MAX_LIGHTS; i++) {
 
@@ -351,7 +345,12 @@ export const shaders = {
             }
 
 
-            color += v_biomeColors; // add biome heatmap over map
+            //color += v_biomeColors; // add biome heatmap over map
+
+
+
+
+
 
 
             // Clamp the final color so it doesn't blow out

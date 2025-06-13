@@ -13,6 +13,8 @@ onmessage = function (e) {
     const uvs = [];
     const biomesArray = [];
     const colorsArray = [];    
+    let yHighest = 0;
+    let yLowest = 0;
 
     if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize);
 
@@ -30,6 +32,11 @@ onmessage = function (e) {
 
 
                 const y = voronoi.getHeight(worldX, worldZ);
+
+                if (y < yLowest) yLowest = y;
+                if (y > yHighest) yHighest = y;
+
+
 
                 //console.log(`workerFlatGrid => y is ${y}`);
 
@@ -79,6 +86,6 @@ onmessage = function (e) {
             }
         }  
     
-        postMessage({ positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray });
+        postMessage({ positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray, yMax: yHighest, yMin: yLowest, seeds: voronoi.seeds});
     
 };

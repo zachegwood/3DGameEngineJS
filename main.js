@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4} from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { DrawGrid, debugSettings, DrawRays } from '/debug.js';
+import { DrawGrid, debugSettings, DrawRays, Raycast } from '/debug.js';
 import { CreateShaders } from './shaders.js';
 import { createSquare, createTriangle, loadTexture, loadModel, createCube} from './meshShapes.js';
 import { Camera } from './camera.js';
@@ -10,8 +10,10 @@ import { Player } from './player.js';
 import { SceneNode } from './Levels/scene.js';
 
 import { buildLevel } from './Levels/testLevel_Terrain.js'; // currently changing this is how we change levels
+//import { buildLevel } from './Levels/testLevel.js'; // currently changing this is how we change levels
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
+
 
 
 //#region GL and Canvas
@@ -160,17 +162,33 @@ const camPropertiesOverhead = {
     MIN_PITCH: -1.5,
     MAX_PITCH: -.5
 }
-const camera_player = new Camera(canvas, playerOne, {id: "camera_player"});
+
+const camPropertiesPlayer = {
+    id: "camera_player",
+    MIN_FOLLOW_DIST: 3,
+    MAX_FOLLOW_DIST: 100,
+    followDistance: 15,
+    position: vec3.fromValues(0, 30, 0),
+    MIN_PITCH: -1.5,
+    MAX_PITCH: -.5
+}
+
+const camera_player = new Camera(canvas, playerOne, camPropertiesPlayer);
 const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
 // camera_overhead.id = "camera_overhead";
 // camera_player.id = "camera_player";
 
-//console.log(camera_overhead.position);
+camera_player.updateProjection(canvas.width, canvas.height);
+camera_overhead.updateProjection(canvas.width, canvas.height);
 
-playerOne.camera = camera_player;
+
+
+//playerOne.camera = camera_player;
+playerOne.camera = camera_overhead;
+
 scene.add(playerOne);
 
-
+console.log(playerOne.camera.id);
 
 //printSceneNodeNames(scene);
 
@@ -213,6 +231,13 @@ function worldToScreen(pos, viewMatrix, projectionMatrix, canvas) {
     ];
 }
 
+
+
+
+export function addToRaycast(rays) {
+    console.log(rays);
+    Raycast(rays.origin, rays.direction, rays.lengh, rays.color);
+}
 
 
 
@@ -300,15 +325,17 @@ function render(elapsedTime) {
 
     const angle = elapsedTime * 0.001; // deterministic time step
    
-    const cameraPosition = camera_player.getCameraPosition();
+    const cameraPosition = playerOne.camera.getCameraPosition();
 
-    const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.5, 1000);
+    //const projectionMatrix = mat4.perspective(mat4.create(), Math.PI / 4, canvas.width / canvas.height, 0.5, 1000);
     //const rayTarget = getMouseWorldRayTarget(projectionMatrix, cameraPosition);
+    const projectionMatrix = playerOne.camera.getProjectionMatrix();
 
-    let rayTarget = camera_player.getLookRayTarget();
+    let rayTarget = playerOne.camera.getLookRayTarget();
 
     //const viewMatrix = mat4.lookAt(mat4.create(), cameraPosition, rayTarget, [0, 1, 0]);
-    const viewMatrix = camera_player.getViewMatrix();
+    const viewMatrix = playerOne.camera.getViewMatrix();
+
 
     // debugElement.innerText = `
     // Camera Position: (${cameraPosition.map(n => n.toFixed(2)).join(",")})
@@ -324,15 +351,14 @@ function render(elapsedTime) {
 
     scene.testTriangle.rotateY(0.05); // just spinning for fun for debugging. Move to entity's update if keeping for real
 
-    const viewMatrixOverhead = camera_overhead.getViewMatrix();
-    const viewMatrixPlayer = camera_player.getViewMatrix();
+    const viewMatrixPlayer = playerOne.camera.getViewMatrix();
 
     // Draw all game objects
-    scene.draw(gl, viewMatrixPlayer, projectionMatrix, scene.testLights, true, camera_player);
+    scene.draw(gl, viewMatrixPlayer, projectionMatrix, scene.testLights, true, camera_player); // KEEP AS CAMERA_PLAYER. THIS IS JUST CULLING CAMERA
 
 
     //Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
-    DrawRays(gl, myShaders.SolidColor); // All raycasts
+    DrawRays(gl, myShaders.SolidColor, viewMatrix, projectionMatrix); // All raycasts
 
     
 

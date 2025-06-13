@@ -1,6 +1,4 @@
 import { lerp } from "../utils.js";
-import { Raycast } from "/debug.js";
-
 
 export class VoronoiRegions {
     constructor() {
@@ -12,6 +10,7 @@ export class VoronoiRegions {
         this.seeds = [];            // all seed points
         this.buckets = new Map();   // spacial has buckets
 
+
     }
 
     generateSeeds(mapSize) {
@@ -22,11 +21,8 @@ export class VoronoiRegions {
             const z = Math.random() * mapSize - mapSize/2;
             const elevation = Math.random() * 50 + 1; // base elevation bias
             const seed = { x, z, elevation };
-
+      
             this.seeds.push(seed);
-
-            //const ray = Raycast([x,0,z], [0,1,0], 300, [1,0,0,1]); // reference line vert at 0,0,0
-            //console.log(`just drew:`, ray);
 
             // Place in spacial bucket
             const bx = Math.floor(x / this.bucketSize);

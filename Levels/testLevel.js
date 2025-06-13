@@ -3,7 +3,7 @@ import { Entity } from "../entity.js";
 import { Light } from "../lights.js";
 
 import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from '../meshShapes.js';
-import { generateFlatGrid,  } from "../TerrainBiome/terrain.js";
+
 
 
 export function buildLevel(gl, myShaders) {
@@ -74,31 +74,14 @@ export function buildLevel(gl, myShaders) {
     scene.add(square3);
 
 
-//  //#region Terrain
-//      const terrain = new Entity(
-//     {
-//         mesh: createTerrainMesh(gl), 
-//         position: [0, 0, 0],
-//         shader: myShaders.Lighting,
-//         texture: texture,
-//         id: `terrain_1`,
-//     });
-//     scene.add(terrain);
-//     console.log(terrain);
-
-
-
-
-
-
-    //const columnsArray = [];
+    const columnsArray = [];
     const columnCount = 16;
     let xSide = 1;
     let zDepth = 0;
 
     const colGroup = new SceneNode();
     colGroup.id = "columnGroupSceneNode";
-    //columnsArray.forEach(c => colGroup.add(c));
+    columnsArray.forEach(c => colGroup.add(c));
     scene.add(colGroup);
 
     for (let i = 0; i < columnCount; i++) {    
@@ -123,7 +106,7 @@ export function buildLevel(gl, myShaders) {
         if (i % 2 !== 0) zDepth -= 10; // move back a row every other loop    
     }
 
-
+console.log(colGroup);
 
 
 
@@ -153,6 +136,7 @@ export function buildLevel(gl, myShaders) {
     lights.forEach(
         (l, index) => { lightsGroup.add(l); 
         l.id = `light_${index}`;
+        console.log(l.id);
     const lightCube = new Entity(
                 {
                     mesh: createCube(gl, 0.25, 'trigger'), 

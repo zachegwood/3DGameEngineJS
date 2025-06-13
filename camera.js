@@ -13,6 +13,14 @@ export class Camera {
 
         this.canvas = canvas;
 
+        // Perspective Values
+        this.fov = Math.PI / 4;
+        this.near = 0.5;
+        this.far = 1000;
+
+        this.viewMatrix = mat4.create();
+        this.projectionMatrix = mat4.create();
+
         this.CAMERA_SPEED = config.CAMERA_SPEED ?? 2.0;
         this.MOUSE_SENSITIVITY = 0.002;
 
@@ -80,11 +88,17 @@ export class Camera {
         });
     }
 
-    //#region View Matrix
+    updateProjection(width, height) {
+        const aspect = width / height;
+        mat4.perspective(this.projectionMatrix, this.fov, aspect, this.near, this.far);
+    }
+
+    getProjectionMatrix() {
+        return this.projectionMatrix;
+    }
+
     getViewMatrix() {
-        const target = this.getLookRayTarget();
-        const up = [0, 1, 0];
-        return mat4.lookAt(mat4.create(), this.position, target, up);
+        return this.viewMatrix;
     }
 
     //#region Get Ray Target
@@ -130,6 +144,11 @@ export class Camera {
         vec3.scale(offset, offset, -this.followDistance); // subtract follow distance
 
         vec3.add(this.position, targetPos, offset);
+
+        const target = this.getLookRayTarget();
+        const up = [0, 1, 0];
+        mat4.lookAt(this.viewMatrix, this.position, target, up);
+
     }
 
     getCameraPosition() {
