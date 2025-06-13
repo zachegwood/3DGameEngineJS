@@ -1,16 +1,22 @@
 import { mat4, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
+let planes = [];
+
+export function setFrustumPlanes(newPlanes) { // called from SceneNode.
+    planes = newPlanes;
+}
+
 export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
 
     const vpMatrix = mat4.create();
     mat4.multiply(vpMatrix, projectionMatrix, viewMatrix); // P * V
 
-    const planes = [];
+    const newPlanes = [];
 
     // Plane: [A, B, C, D] = ax + by + cz + d = 0
 
     // Left
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] + vpMatrix[0],
         vpMatrix[7] + vpMatrix[4],
         vpMatrix[11] + vpMatrix[8],
@@ -18,7 +24,7 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
     ]);
 
     // Right
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] - vpMatrix[0],
         vpMatrix[7] - vpMatrix[4],
         vpMatrix[11] - vpMatrix[8],
@@ -26,7 +32,7 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
     ]);
 
     // Bottom
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] + vpMatrix[1],
         vpMatrix[7] + vpMatrix[5],
         vpMatrix[11] + vpMatrix[9],
@@ -34,7 +40,7 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
     ]);
 
     // Top
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] - vpMatrix[1],
         vpMatrix[7] - vpMatrix[5],
         vpMatrix[11] - vpMatrix[9],
@@ -42,7 +48,7 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
     ]);
 
     // Near
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] + vpMatrix[2],
         vpMatrix[7] + vpMatrix[6],
         vpMatrix[11] + vpMatrix[10],
@@ -50,7 +56,7 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
     ]);
 
     // Far
-    planes.push([
+    newPlanes.push([
         vpMatrix[3] - vpMatrix[2],
         vpMatrix[7] - vpMatrix[6],
         vpMatrix[11] - vpMatrix[10],
@@ -59,12 +65,12 @@ export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
 
     // Normalize the planes
     for (let i = 0; i < 6; i++) {
-        const [a, b, c, d] = planes[i];
+        const [a, b, c, d] = newPlanes[i];
         const len = Math.hypot(a, b, c);
-        planes[i] = [a / len, b / len, c / len, d / len];
+        newPlanes[i] = [a / len, b / len, c / len, d / len];
     }
 
-    return planes;
+    return newPlanes;
 
 }
 
@@ -86,5 +92,24 @@ export function isAABBInFrustum(aabb, frustumPlanes) {
     for (const plane of frustumPlanes) {
         if (isAABBOutsidePlane(plane, aabb)) return false; // culled
     }
+    return true;
+}
+
+
+//#region RaycastFrustum
+function pointOutsidePlane(plane, point) {
+    const [a, b, c, d] = plane;
+    return a * point[0] + b * point[1] + c * point[2] + d < 0;
+}
+
+export function rayInFrustum(origin, end) {    
+
+    for (const plane of planes) {
+        const originOutside = pointOutsidePlane(plane, origin);
+        const endOutside = pointOutsidePlane(plane, end);
+
+        if (originOutside && endOutside) return false; // Fully outside one plane
+    }
+
     return true;
 }

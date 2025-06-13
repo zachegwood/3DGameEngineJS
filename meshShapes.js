@@ -441,7 +441,7 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
                 length: 1000,
                 color: [1,0,0],
             }
-            addToRaycast(ray)
+            addToRaycast(ray);
         }
     }
 

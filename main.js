@@ -122,6 +122,18 @@ export function unPauseGame() {
 }
 
 
+//#region Raycast
+const raysToDraw = []
+export function addToRaycast(rays) {
+    console.log(rays);
+    raysToDraw.push(rays);
+}
+const newRay = {origin: [5,5,5], direction: [1,1,1], length: 10, color: [0,1,0,1]}
+addToRaycast(newRay);
+
+
+
+
 //#region Build Level
 export const collisionSystem = new CollisionSystem();
 
@@ -182,9 +194,9 @@ camera_player.updateProjection(canvas.width, canvas.height);
 camera_overhead.updateProjection(canvas.width, canvas.height);
 
 
-
-//playerOne.camera = camera_player;
-playerOne.camera = camera_overhead;
+                                         //   < == THIS IS WHERE YOU CHANGE THE CAMERA
+playerOne.camera = camera_player;
+//playerOne.camera = camera_overhead;
 
 scene.add(playerOne);
 
@@ -233,11 +245,6 @@ function worldToScreen(pos, viewMatrix, projectionMatrix, canvas) {
 
 
 
-
-export function addToRaycast(rays) {
-    console.log(rays);
-    Raycast(rays.origin, rays.direction, rays.lengh, rays.color);
-}
 
 
 
@@ -323,6 +330,21 @@ function render(elapsedTime) {
     gl.clearColor(.01, 0.1, 0.1, 1.0);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+
+    // HOW TO RAYCAST
+    const originRay = {origin: [0,0,0], direction: [0,1,0], length: 5, color: [1,1,1,1]};
+    Raycast(originRay); // reference line vert at 0,0,0
+    //Raycast(ray.origin, ray.direction, ray.length, ray.color);    // <- if ray = etc
+
+    console.log(` rays arrays says ` + raysToDraw.length);
+    for (let x = 0; x < raysToDraw.length; x++) {
+        const ray = raysToDraw[x];
+        Raycast(ray);
+        console.log(`from main with ray ${ray}`);
+    }
+
+    
+
     const angle = elapsedTime * 0.001; // deterministic time step
    
     const cameraPosition = playerOne.camera.getCameraPosition();
@@ -358,7 +380,7 @@ function render(elapsedTime) {
 
 
     //Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
-    DrawRays(gl, myShaders.SolidColor, viewMatrix, projectionMatrix); // All raycasts
+    DrawRays(gl, viewMatrix, projectionMatrix, myShaders.SolidColor); // All raycasts
 
     
 

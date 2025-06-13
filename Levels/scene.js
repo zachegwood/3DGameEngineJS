@@ -3,7 +3,7 @@
 // This recursively runs on all children
 
 import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { extractFrustumPlanes, isAABBInFrustum } from '../frustum.js'
+import { extractFrustumPlanes, isAABBInFrustum, setFrustumPlanes } from '../frustum.js'
 
 const entities = [];
 const visibleEntities = [];
@@ -55,7 +55,10 @@ export class SceneNode {
 
         let frustumPlanes = null;
         
-        if (cullingCamera) frustumPlanes = extractFrustumPlanes(cullingCamera.getViewMatrix(), projectionMatrix);
+        if (cullingCamera) {
+            frustumPlanes = extractFrustumPlanes(cullingCamera.getViewMatrix(), projectionMatrix);
+            setFrustumPlanes(frustumPlanes);
+        }
 
         for (let child of this.children) {
 
@@ -67,7 +70,7 @@ export class SceneNode {
 
             let shouldDraw = false;
 
-            if (typeof child.draw === 'function') {
+            //if (typeof child.draw === 'function') {
 
                 // Draw even if there's no mesh or anything, bc why not.
                 // Also don't cull the player
@@ -76,8 +79,10 @@ export class SceneNode {
                     shouldDraw = true;
                 } else if (isAABBInFrustum(child.worldAABB, frustumPlanes)) {
                     shouldDraw = true;
+                } else {
+                    //console.log(`culling this: ${child.id}`);
                 }
-            }
+            //}
 
             if (shouldDraw === true) { 
                 child.isVisible = true;
@@ -85,10 +90,11 @@ export class SceneNode {
                 child.draw(gl, viewMatrix, projectionMatrix, lights);
                 
             } 
-
-            //console.log(`test1 < ${visibleEntities.length} >`);
         }
 
-         //console.log(`[ ${visibleEntities.length} ] visible entities`);
+        // console.log(`[ ${visibleEntities.length}/${this.children.length} ] visible entities.`);
+        //for (let x = 0; x < visibleEntities.length; x++) console.log(visibleEntities[x].id);
+        
+         
     }
 }

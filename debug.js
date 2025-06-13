@@ -1,4 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
+import { rayInFrustum } from './frustum.js';
 
 console.log("debug.js loaded");
 
@@ -16,6 +17,8 @@ const raysToDraw = [];
 let rayBuffer = null;
 let attribLocation = null;
 let grid = null;
+
+const positions = [];
 
 
 //#region Create Grid
@@ -104,24 +107,28 @@ export function DrawGrid(gl, viewMatrix, projectionMatrix, shaderSolidColor) {
     // Reset to identity before drawing ray
     gl.uniformMatrix4fv(shaderSolidColor.uniformLocations.model, false, mat4.create());
 
-    // // Change debug color -- red
-    // shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
+    // Change debug color -- red
+    shaderSolidColor.setColor(1.0, 0.0, 0.0, 1.0);
 
-    // // Draw Origin Ray
-    // gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-    // gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
-    // gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
-    // gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
+    // Draw Origin Ray
+    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    gl.enableVertexAttribArray(shaderSolidColor.attribLocations.position);
+    gl.vertexAttribPointer(shaderSolidColor.attribLocations.position, 3, gl.FLOAT, false, 0, 0,);
+    gl.drawArrays(gl.LINES, 0, 2); // draw the two verticies as 1 line
 
-     //Raycast([0,0,0], [0,1,0], 3, [1,0,0,1]); // reference line vert at 0,0,0
+    const testRay = {origin: [0,0,0], direction: [0,1,0], length: 3, color: [1,0,0,1]};
+    Raycast(testRay); // reference line vert at 0,0,0
 }
 
 //#region Raycast 
 
 // Define the Rays and add to the raysToDraw Array. The actual drawing happens below in DrawRays(gl, shader)
-export function Raycast(origin, direction, length, color) {
+export function Raycast( ray ) {    
 
-    
+    let origin = ray.origin;
+    let direction = ray.direction;
+    let length = ray.length;
+    let color = ray.color;
 
 	const end = [
 		origin[0] + direction[0] * length,
@@ -129,33 +136,38 @@ export function Raycast(origin, direction, length, color) {
 		origin[2] + direction[2] * length
 	];
 
+    // Frustum Test
+    if (!rayInFrustum(origin, end)) return;
+
 	const rayVertices = [
 		origin[0], origin[1], origin[2],
 		end[0], end[1], end[2]
 	];
 
-    const ray = {
+    const rayToCast = {
         vertices: rayVertices,
+        end: end,
         color: color,
         origin: origin
     }
 
     //console.log("in raycast with", ray);
 
-    raysToDraw.push( ray );
+    positions.push(...rayVertices);
+
+    //raysToDraw.push( rayToCast );
 
     //console.log(`raysToDraw length is ${raysToDraw.length}`);
 
-    return ray;
+    //return rayToCast;
 }
 
 //#region Draw Rays
 
-export function DrawRays(gl, shader) {
+export function DrawRays(gl, viewMatrix, projectionMatrix, shader) {
 
-    if (!raysToDraw.length) { console.log("no rays to draw"); } else { console.log(`drawing ray`); }
-
-    if (!raysToDraw.length) return; // nothing to draw    
+    //if (!raysToDraw.length) { console.log("no rays to draw"); return; }
+    if (!positions.length) { console.log("no rays to draw"); return; }
 
     // console.log(`ray to draw is:  ` +
     //     `(${raysToDraw[0].vertices[0]}, ${raysToDraw[0].vertices[1]}, ${raysToDraw[0].vertices[2]}) -> ` + 
@@ -164,25 +176,52 @@ export function DrawRays(gl, shader) {
 
     if (rayBuffer === null) rayBuffer = gl.createBuffer(); // setup ray buffer ONCE
 
-    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    //raysToDraw.forEach( ray => {
 
-    if (shader.attribLocations.position !== -1) {
-        gl.enableVertexAttribArray(shader.attribLocations.position);
-        gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
-    }
+        // const [ox, oy, oz] = ray.origin;
+        // const [dx, dy, dz] = ray.direction;
+        // const end = [
+        //     ox + dx * ray.length,
+        //     oy + dy * ray.length,
+        //     oz + dz * ray.length
+        // ];
 
-    shader.setModelMatrix(mat4.create()); // identity matrix, cancels out previous model transform
+        // positions.push(ox, oy, oz, ...end);
 
-
-    raysToDraw.forEach( ray => {
-
-        shader.setColor(...ray.color, 1.0); // js spread syntax, since ray.color is an array
+        // shader.setColor(...ray.color, 1.0); // js spread syntax, since ray.color is an array
         
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
-        gl.drawArrays(gl.LINES, 0, 2);
+        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
+        // gl.drawArrays(gl.LINES, 0, 2);
 
-        //console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
-    });    
+        // console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
+   // });    
+
+    shader.use();
+    shader.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 0.0, 1.0]);
+
+     // Bind the grid buffer
+    gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(positions), gl.DYNAMIC_DRAW);
+    gl.enableVertexAttribArray(shader.attribLocations.position);
+    gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+    
+    // Identity model matrix for
+    gl.uniformMatrix4fv(shader.uniformLocations.model, false, mat4.create());
+
+    const numVerticies = positions.length / 3;
+    gl.drawArrays(gl.LINES, 0, numVerticies);
+
+    // gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
+
+    // if (shader.attribLocations.position !== -1) {
+    //     gl.enableVertexAttribArray(shader.attribLocations.position);
+    //     gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
+    // }
+
+    // shader.setModelMatrix(mat4.create()); // identity matrix, cancels out previous model transform
+
+
+    positions.length = 0;
 
     //raysToDraw.length = 0; // Clear for the next frame
 

@@ -14,7 +14,7 @@ const SPEED = 100;
 const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 const SPHERE_RADIUS = 0.8;
-const PLAYER_START = vec3.fromValues(0, PLAYER_HEIGHT + 50, 0);
+const PLAYER_START = vec3.fromValues(0, PLAYER_HEIGHT+50, 0);
 const GRAVITY = 0;
 
 

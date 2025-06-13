@@ -98,15 +98,13 @@ export function buildLevel(gl, myShaders) {
         colCube.translate((xSide * 10), randHeight/2, zDepth);
         colCube.scale(1.0, randHeight, 1.0);
 
-        //columnsArray.push(colCube);
-
         colGroup.add(colCube);
 
         xSide *= -1; // flip sides
         if (i % 2 !== 0) zDepth -= 10; // move back a row every other loop    
     }
 
-console.log(colGroup);
+
 
 
 
@@ -132,12 +130,17 @@ console.log(colGroup);
 
     const lightsGroup = new SceneNode();
     const lightCubes = new SceneNode();
+
     lightsGroup.id = `LightsGroupSceneNode`;
+    lightCubes.id = 'LightCubeSceneNode';
+
+    //#region Light Cubes
     lights.forEach(
-        (l, index) => { lightsGroup.add(l); 
-        l.id = `light_${index}`;
-        console.log(l.id);
-    const lightCube = new Entity(
+        (l, index) => { 
+            lightsGroup.add(l); 
+            l.id = `light_${index}`;
+
+            const lightCube = new Entity(
                 {
                     mesh: createCube(gl, 0.25, 'trigger'), 
                     position: l.position, 
