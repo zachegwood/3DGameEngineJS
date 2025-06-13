@@ -1,9 +1,10 @@
 import { lerp } from "../utils.js";
 
+import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION } from '/config.js'
+
 export class VoronoiRegions {
     constructor() {
 
-        this.seedCount = 800;
         this.bucketSize = 64;
         this.regionSize = 64;
 
@@ -16,10 +17,10 @@ export class VoronoiRegions {
     generateSeeds(mapSize) {
 
         // fill a square area centered on (0.0)
-        for (let i = 0; i < this.seedCount; i++) {
+        for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
             const x = Math.random() * mapSize - mapSize/2; // center on 0,0
             const z = Math.random() * mapSize - mapSize/2;
-            const elevation = Math.random() * 100 + 20; // base elevation bias
+            const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
             const seed = { x, z, elevation };
       
             this.seeds.push(seed);

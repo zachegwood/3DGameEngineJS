@@ -9,6 +9,8 @@ import { debugSettings } from '../debug.js';
 
 //import { VoronoiRegions } from './Voronoi.js';
 
+import { WORLD_SCALE } from '/config.js'
+
 
 // ProcGen Terrain
 
@@ -19,8 +21,6 @@ const CHUNK_SIZE = 32; // 32x32 units
 const CHUNK_PIECES = 20;
 const halfPieces = CHUNK_PIECES / 2;
 const mapSize = CHUNK_PIECES * CHUNK_SIZE;
-
-const anotherScaleButTheresOneInWorkerToo = 4;
 
 
 const chunks = new Map();
@@ -51,8 +51,8 @@ export async function buildTerrain(gl) {
     for (let x = -halfPieces; x < halfPieces; x++) {
         for (let z = -halfPieces; z < halfPieces; z++){
 
-            const worldOffsetX = x * CHUNK_SIZE * anotherScaleButTheresOneInWorkerToo;
-            const worldOffsetZ = z * CHUNK_SIZE * anotherScaleButTheresOneInWorkerToo;
+            const worldOffsetX = x * CHUNK_SIZE * WORLD_SCALE;
+            const worldOffsetZ = z * CHUNK_SIZE * WORLD_SCALE;
 
             const newMesh = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ); //meshShapes.js
 

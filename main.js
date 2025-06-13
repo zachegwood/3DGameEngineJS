@@ -14,6 +14,8 @@ import { buildLevel } from './Levels/testLevel_Terrain.js'; // currently changin
 
 import { drawWireFrameCube, findWireFrameCube, CollisionSystem } from './collisions.js';
 
+import { CURRENT_CAMERA } from '/config.js'
+
 
 
 //#region GL and Canvas
@@ -190,13 +192,20 @@ const camera_overhead = new Camera(canvas, playerOne, camPropertiesOverhead);
 // camera_overhead.id = "camera_overhead";
 // camera_player.id = "camera_player";
 
+
+
 camera_player.updateProjection(canvas.width, canvas.height);
 camera_overhead.updateProjection(canvas.width, canvas.height);
 
 
                                          //   < == THIS IS WHERE YOU CHANGE THE CAMERA
-playerOne.camera = camera_player;
-//playerOne.camera = camera_overhead;
+if (CURRENT_CAMERA === 'PLAYER_THIRD_PERSON') {
+    playerOne.camera = camera_player;
+} else if (CURRENT_CAMERA === 'OVERHEAD') {
+    playerOne.camera = camera_overhead;
+} else {
+    console.error('NO CAMERA SET IN CONFIG FOR MAIN TO USE');
+}
 
 scene.add(playerOne);
 

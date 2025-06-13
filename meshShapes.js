@@ -2,12 +2,9 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
 import { generateFlatGridAsync, calculateNormalsAsync } from './TerrainBiome/terrain.js';
 import { addToRaycast } from './main.js';
-
+import { WORLD_SCALE } from '/config.js'
 
 const TILE_SIZE = 1;
-
-const aThirdWorldScaleLikeWorkerAndTerrain = 4;
-
 
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
@@ -417,7 +414,7 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
     // calculate normals using a webworker (workerNormals.js)
     const normals = await calculateNormalsAsync(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
-    const s = chunkSize*aThirdWorldScaleLikeWorkerAndTerrain/2; // size
+    const s = (chunkSize * WORLD_SCALE) / 2; // size
    
     const aabb = {
         min: [-s, terrainInfo.yMin, -s],

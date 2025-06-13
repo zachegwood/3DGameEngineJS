@@ -1,5 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { rayInFrustum } from './frustum.js';
+import { VORONOI_RAYS_TOGGLE } from './config.js';
 
 console.log("debug.js loaded");
 
@@ -10,6 +11,7 @@ export const debugSettings = {
     GRID: false,
     COLLIDERS: false,
     BIOME_COLORS: true,
+    RAYCASTS: false,
 }
 
 const raysToDraw = [];
@@ -155,6 +157,8 @@ export function Raycast( ray ) {
 //#region Draw Rays
 
 export function DrawRays(gl, viewMatrix, projectionMatrix, shader) {
+
+    if (debugSettings.RAYCASTS === false) return;
 
     if (!positions.length) { console.log("no rays to draw"); return; }
 

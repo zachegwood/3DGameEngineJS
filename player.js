@@ -6,16 +6,18 @@ import { collisionSystem } from './main.js';
 import { aabbIntersects,  } from './collisions.js';
 import { createSphere } from './meshShapes.js';
 
+import { PLAYER_START_POS, PLAYER_SPEED, GRAVITY } from '/config.js'
+
 
 // Player inherits from Entity for Draw()
 
 
-const SPEED = 100;
-const PLAYER_HEIGHT = 1; // size of mesh
+//const PLAYER_SPEED = 100;
+//const PLAYER_HEIGHT = 1; // size of mesh
 const ROTATE_SPEED = 10; // radians per second
 const SPHERE_RADIUS = 0.8;
-const PLAYER_START = vec3.fromValues(0, PLAYER_HEIGHT+100, 0);
-const GRAVITY = 0;
+//const PLAYER_START_POS = vec3.fromValues(0, PLAYER_HEIGHT+100, 0);
+//const GRAVITY = 0;
 
 
 
@@ -32,7 +34,7 @@ export class Player extends Entity {
         aabb,
     }) {
         //const startPos = vec3.fromValues(-5, PLAYER_HEIGHT, -10);
-        const startPos = PLAYER_START;
+        const startPos = PLAYER_START_POS;
 
         // Call Entity constructor
         super({
@@ -104,7 +106,7 @@ export class Player extends Entity {
         if (vec3.length(inputVector) > 0.001) {
             vec3.normalize(inputVector, inputVector);
             const moveVelocity = vec3.create();
-            vec3.scale(moveVelocity, inputVector, SPEED);
+            vec3.scale(moveVelocity, inputVector, PLAYER_SPEED);
             
             // Set horizontal velocity (keep vertical velocity)
             this.velocity[0] = moveVelocity[0];

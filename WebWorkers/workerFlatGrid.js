@@ -2,11 +2,10 @@ import { biomeData, weightFunctions } from "../TerrainBiome/biomes.js";
 import { fractalNoise } from "../TerrainBiome/simplexNoise.js";
 import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
 import { VoronoiRegions } from "../TerrainBiome/Voronoi.js";
+import { WORLD_SCALE } from '/config.js'
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
 const voronoi = new VoronoiRegions();
-
-const VERTEX_SPACING = 4.0; // or 8.0 for really wide terrain
 
 
 onmessage = function (e) {
@@ -20,7 +19,7 @@ onmessage = function (e) {
     let yHighest = 0;
     let yLowest = 0;
 
-    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize * VERTEX_SPACING);
+    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize * WORLD_SCALE);
 
     //console.log(`map is ${mapSize}`);
     //voroni.generateSeeds(mapSize);
@@ -29,8 +28,8 @@ onmessage = function (e) {
             for (let x = 0; x <= segmentsX; x++) {
 
                 // center at (0,0)
-                let posX = ((x / segmentsX) * width - (width / 2)) * VERTEX_SPACING; // changing unit scale
-                let posZ = ((z / segmentsZ) * depth - (depth / 2)) * VERTEX_SPACING;
+                let posX = ((x / segmentsX) * width - (width / 2)) * WORLD_SCALE; // changing unit scale
+                let posZ = ((z / segmentsZ) * depth - (depth / 2)) * WORLD_SCALE;
     
                 let worldX = posX + offsetX;
                 let worldZ = posZ + offsetZ;
