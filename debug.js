@@ -64,9 +64,7 @@ export function createGrid(gl, halfCount = 25, gridSquareSize = TILE_SIZE) {
 
     const buffer = gl.createBuffer();
     gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...lines, ...centerLines]), gl.STATIC_DRAW);
-
-   
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([...lines, ...centerLines]), gl.STATIC_DRAW);  
 
     return {
         buffer,
@@ -151,50 +149,16 @@ export function Raycast( ray ) {
         origin: origin
     }
 
-    //console.log("in raycast with", ray);
-
     positions.push(...rayVertices);
-
-    //raysToDraw.push( rayToCast );
-
-    //console.log(`raysToDraw length is ${raysToDraw.length}`);
-
-    //return rayToCast;
 }
 
 //#region Draw Rays
 
 export function DrawRays(gl, viewMatrix, projectionMatrix, shader) {
 
-    //if (!raysToDraw.length) { console.log("no rays to draw"); return; }
     if (!positions.length) { console.log("no rays to draw"); return; }
 
-    // console.log(`ray to draw is:  ` +
-    //     `(${raysToDraw[0].vertices[0]}, ${raysToDraw[0].vertices[1]}, ${raysToDraw[0].vertices[2]}) -> ` + 
-    //     `(${raysToDraw[0].vertices[3]}, ${raysToDraw[0].vertices[4]}, ${raysToDraw[0].vertices[5]})
-    //        color: ${raysToDraw[0].color}` );
-
     if (rayBuffer === null) rayBuffer = gl.createBuffer(); // setup ray buffer ONCE
-
-    //raysToDraw.forEach( ray => {
-
-        // const [ox, oy, oz] = ray.origin;
-        // const [dx, dy, dz] = ray.direction;
-        // const end = [
-        //     ox + dx * ray.length,
-        //     oy + dy * ray.length,
-        //     oz + dz * ray.length
-        // ];
-
-        // positions.push(ox, oy, oz, ...end);
-
-        // shader.setColor(...ray.color, 1.0); // js spread syntax, since ray.color is an array
-        
-        // gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(ray.vertices), gl.DYNAMIC_DRAW);
-        // gl.drawArrays(gl.LINES, 0, 2);
-
-        // console.log(`Ray at, ${ray.origin}. total amount is ${raysToDraw.length}`);
-   // });    
 
     shader.use();
     shader.setUniforms(viewMatrix, projectionMatrix, null, [0.0, 1.0, 0.0, 1.0]);
@@ -211,18 +175,5 @@ export function DrawRays(gl, viewMatrix, projectionMatrix, shader) {
     const numVerticies = positions.length / 3;
     gl.drawArrays(gl.LINES, 0, numVerticies);
 
-    // gl.bindBuffer(gl.ARRAY_BUFFER, rayBuffer);
-
-    // if (shader.attribLocations.position !== -1) {
-    //     gl.enableVertexAttribArray(shader.attribLocations.position);
-    //     gl.vertexAttribPointer(shader.attribLocations.position, 3, gl.FLOAT, false, 0, 0);
-    // }
-
-    // shader.setModelMatrix(mat4.create()); // identity matrix, cancels out previous model transform
-
-
     positions.length = 0;
-
-    //raysToDraw.length = 0; // Clear for the next frame
-
 }

@@ -1,9 +1,13 @@
 import { biomeData, weightFunctions } from "../TerrainBiome/biomes.js";
+import { fractalNoise } from "../TerrainBiome/simplexNoise.js";
 import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
 import { VoronoiRegions } from "../TerrainBiome/Voronoi.js";
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
 const voronoi = new VoronoiRegions();
+
+const VERTEX_SPACING = 4.0; // or 8.0 for really wide terrain
+
 
 onmessage = function (e) {
     const { width, depth, segmentsX, segmentsZ, offsetX, offsetZ, debugBiomeColors, mapSize } = e.data;
@@ -16,44 +20,41 @@ onmessage = function (e) {
     let yHighest = 0;
     let yLowest = 0;
 
-    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize);
+    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize * VERTEX_SPACING);
 
     //console.log(`map is ${mapSize}`);
     //voroni.generateSeeds(mapSize);
 
      for (let z = 0; z <= segmentsZ; z++) {
             for (let x = 0; x <= segmentsX; x++) {
-    
-                let posX = (x / segmentsX) * width - (width / 2); // center at (0,0)
-                let posZ = (z / segmentsZ) * depth - (depth / 2);
+
+                // center at (0,0)
+                let posX = ((x / segmentsX) * width - (width / 2)) * VERTEX_SPACING; // changing unit scale
+                let posZ = ((z / segmentsZ) * depth - (depth / 2)) * VERTEX_SPACING;
     
                 let worldX = posX + offsetX;
                 let worldZ = posZ + offsetZ;
 
+                const macroElevation = voronoi.getHeight(worldX, worldZ);
 
-                const y = voronoi.getHeight(worldX, worldZ);
+                // set up variation
+                const fractalParams = {
+                    x: worldX, z: worldZ,
+                    octaves: 4,
+                    freq: 0.01,
+                    amp: 1.0,
+                    lacunarity: 2.0,
+                    gain: 0.5,
+                }
+                
+                const microVariation = fractalNoise(fractalParams); // additional terrain...ness
 
+                const y = macroElevation + microVariation * 0.25; // final height. voronoi + fractalNoise
+                //const y = macroElevation;
+
+                // change AABB shape based on new chunk terrain height
                 if (y < yLowest) yLowest = y;
                 if (y > yHighest) yHighest = y;
-
-
-
-                //console.log(`workerFlatGrid => y is ${y}`);
-
-                // new version using Voronoi Regions
-               // const y = biomeBlender.getHeight(worldX, worldZ);
-
-
-/*
-                // Height + biome data
-                const { noise, amp } = biomeBlender.getHeight(worldX,worldZ);
-                const y = noise * amp;
-
-                const weights = biomeBlender.getBiomeWeights(worldX,worldZ);
-                
-
-*/
-
 
                 positions.push(posX, y, posZ);     
                 uvs.push(x / segmentsX, z / segmentsZ);    

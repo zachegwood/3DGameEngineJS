@@ -6,6 +6,8 @@ import { addToRaycast } from './main.js';
 
 const TILE_SIZE = 1;
 
+const aThirdWorldScaleLikeWorkerAndTerrain = 4;
+
 
 //#region Mesh Class
 // Class: Holds a vertex buffer and model transform
@@ -415,15 +417,7 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
     // calculate normals using a webworker (workerNormals.js)
     const normals = await calculateNormalsAsync(terrainInfo.positions, terrainInfo.indices); // from terrain.js
 
-    const s = chunkSize/2; // size
-
-    // const aabb = {
-    //     min: [-s, -s, -s],
-    //     max: [ s,  s,  s],
-    //     colType: 'trigger'
-    // }
-    
-    //console.log(terrainInfo);
+    const s = chunkSize*aThirdWorldScaleLikeWorkerAndTerrain/2; // size
    
     const aabb = {
         min: [-s, terrainInfo.yMin, -s],
