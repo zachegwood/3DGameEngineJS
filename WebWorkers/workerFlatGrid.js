@@ -2,10 +2,19 @@ import { biomeData, weightFunctions } from "../TerrainBiome/biomes.js";
 import { fractalNoise } from "../TerrainBiome/simplexNoise.js";
 import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
 import { VoronoiRegions } from "../TerrainBiome/Voronoi.js";
-import { WORLD_SCALE } from '/config.js'
+import { WORLD_SCALE, CHUNK_SIZE } from '/config.js'
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
 const voronoi = new VoronoiRegions();
+
+/*
+
+    STEP ONE: Get continent noise. This happens in "Genreate Voronoi Seeds" below using Simplex Noise
+    STEP TWO: Generate Voronoi Seeds (heights multiplied by that continent noise)
+    STEP THREE: Interoplate between seeds (macro elevation)
+    STEP FOUR: Fractal noise the result (micro elevation)
+
+*/
 
 
 onmessage = function (e) {

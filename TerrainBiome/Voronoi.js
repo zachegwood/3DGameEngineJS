@@ -1,6 +1,8 @@
 import { lerp } from "../utils.js";
 
-import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION } from '/config.js'
+import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.js'
+import { generateSimplexNoise } from "./simplexNoise.js";
+
 
 export class VoronoiRegions {
     constructor() {
@@ -10,9 +12,9 @@ export class VoronoiRegions {
 
         this.seeds = [];            // all seed points
         this.buckets = new Map();   // spacial has buckets
-
-
     }
+
+
 
     generateSeeds(mapSize) {
 
@@ -20,7 +22,23 @@ export class VoronoiRegions {
         for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
             const x = Math.random() * mapSize - mapSize/2; // center on 0,0
             const z = Math.random() * mapSize - mapSize/2;
-            const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
+
+
+    // Generate Simplex Noise. Probably change this later to ref a stored version
+    const CONTINENT_FREQ = 0.0008;
+    let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
+
+    // debug -- disables continent map
+    //continentValue = 1;
+
+            //const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
+
+            let elevation = Math.random() * VORONOI_BASE_ELEVATION * continentValue;
+
+    // debug -- disables voronoi regions
+    //elevation = continentValue * VORONOI_BASE_ELEVATION;
+
+
             const seed = { x, z, elevation };
       
             this.seeds.push(seed);

@@ -9,7 +9,7 @@ import { debugSettings } from '../debug.js';
 
 //import { VoronoiRegions } from './Voronoi.js';
 
-import { WORLD_SCALE } from '/config.js'
+import { WORLD_SCALE, CHUNK_SIZE, CHUNK_PIECES } from '/config.js'
 
 
 // ProcGen Terrain
@@ -17,8 +17,7 @@ import { WORLD_SCALE } from '/config.js'
 
 //#region Chunking
 
-const CHUNK_SIZE = 32; // 32x32 units
-const CHUNK_PIECES = 20;
+
 const halfPieces = CHUNK_PIECES / 2;
 const mapSize = CHUNK_PIECES * CHUNK_SIZE;
 
