@@ -20,15 +20,18 @@ export class VoronoiRegions {
     }
 
 
-
+    //#region Gen Seeds
     generateSeeds(mapSize) {
 
         const margin = this.bucketSize;
+        
 
         // fill a square area centered on (0.0)
         for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
-            const x = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin); // center on 0,0
-            const z = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin);
+            // const x = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin); // center on 0,0
+            // const z = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin);
+            const x = Math.random() * mapSize - mapSize/2; // center on 0,0
+            const z = Math.random() * mapSize - mapSize/2;
 
 
     // Generate Simplex Noise. Probably change this later to ref a stored version
@@ -42,8 +45,6 @@ export class VoronoiRegions {
             let elevation = Math.random() * VORONOI_BASE_ELEVATION * continentValue;
 //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
 
-
-
             const slope = this.getSlope(x,z); // partial derivitive of continent. gets rain shadow
 
             // if Wind is blowing from +X, check if slope is -X.
@@ -54,25 +55,10 @@ export class VoronoiRegions {
 
     // debug -- disables voronoi regions
     //elevation = continentValue * VORONOI_BASE_ELEVATION;
-
-
-
-
-
     
-                const temperature = 1; // fix later
-
-
+            const temperature = 1; // fix later
             const biome = this.getBiome(elevation, moisture, temperature);
-
-
-
-
-
-
-
             const color = this.getBiomeColor(biome);
-
 
             const seed = { 
                 x, z, 
@@ -100,12 +86,13 @@ export class VoronoiRegions {
             this.buckets.get(key).push(seed);
         }
 
-        console.log("Total buckets:", this.buckets.size);
+        //console.log("Total buckets:", this.buckets.size);
 
 
         
     }
 
+    //#region Get Biome
     getBiome(elevation, moisture, temperature) {
 
         if (elevation > 0.85) {
@@ -128,7 +115,7 @@ export class VoronoiRegions {
         return 'coastal' // fallback
     }
 
-
+    //#region Biome Color
     getBiomeColor(biome) {
 
         switch (biome) {
@@ -149,7 +136,7 @@ export class VoronoiRegions {
     }
         
     
-
+    //#region GetSeedInfo
     getSeedInfo(x,z) {
 
         const bx = Math.floor(x / this.bucketSize);
@@ -197,6 +184,7 @@ export class VoronoiRegions {
         return { y: elevationBias, closestSeed: closestSeed};
     }
 
+    //#region Slope
     getSlope(x,z) { // used to calculate rain shadow (ie, blocked by wind?)
 
         const delta = 10; // or chunk/grid scale

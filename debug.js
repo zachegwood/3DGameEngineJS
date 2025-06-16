@@ -10,7 +10,7 @@ const TILE_SIZE = 1;
 export const debugSettings = {
     GRID: false,
     COLLIDERS: false,
-    BIOME_COLORS: true,
+    BIOME_COLORS: false,
     RAYCASTS: true,
 }
 

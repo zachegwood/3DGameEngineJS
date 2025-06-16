@@ -5,7 +5,7 @@ export const GRAVITY = 0;
 
 export const CURRENT_CAMERA = 'OVERHEAD'; // PLAYER_THIRD_PERSON, OVERHEAD
 export const PLAYER_START_POS = vec3.fromValues(0, 100, 0);
-export const PLAYER_SPEED = 100;
+export const PLAYER_SPEED = 250;
 
 export const VORONOI_SEED_COUNT = 200;
 export const VORONOI_BASE_ELEVATION = 100 + 50; // this gets multiplied. IE elevation * (100 + 20)

@@ -31,9 +31,11 @@ onmessage = function (e) {
     let yHighest = 0;
     let yLowest = 0;
 
-    const seedBuffer = 64;
+    //const seedBuffer = 64;
 
-    if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE) - seedBuffer);
+    //if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE) - seedBuffer);
+    if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE));
+
 
     //console.log(`map is ${mapSize}`);
     //voroni.generateSeeds(mapSize);
@@ -51,9 +53,7 @@ onmessage = function (e) {
 
                 const seedInfo = voronoi.getSeedInfo(worldX, worldZ);
 
-                if (!seedInfo) { 
-                    //console.log("no seeds????"); 
-                    continue; }
+
 
                 // returns lerped elevation and closest biome
                 //const macroElevation = seedInfo.y; 
@@ -70,8 +70,13 @@ onmessage = function (e) {
                 
                 const microVariation = fractalNoise(fractalParams); // additional terrain...ness
 
-                const y = seedInfo.y + microVariation * 0.25; // final height. voronoi + fractalNoise
-                //const y = macroElevation;
+                //const y = seedInfo.y + microVariation * 0.25; // final height. voronoi + fractalNoise
+                //const y = seedInfo.y;
+                let y = microVariation;
+                if (seedInfo) {                     
+                    y = seedInfo.y + microVariation;
+                }
+                
 
 
                 // change AABB shape based on new chunk terrain height
