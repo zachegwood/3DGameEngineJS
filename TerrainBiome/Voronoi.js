@@ -4,6 +4,7 @@ import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.
 import { generateSimplexNoise } from "./simplexNoise.js";
 
 
+
 export class VoronoiRegions {
     constructor() {
 

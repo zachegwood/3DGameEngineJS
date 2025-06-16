@@ -17,6 +17,8 @@ const voronoi = new VoronoiRegions();
 */
 
 
+
+
 onmessage = function (e) {
     const { width, depth, segmentsX, segmentsZ, offsetX, offsetZ, debugBiomeColors, mapSize } = e.data;
 
@@ -59,6 +61,7 @@ onmessage = function (e) {
 
                 const y = macroElevation + microVariation * 0.25; // final height. voronoi + fractalNoise
                 //const y = macroElevation;
+
 
                 // change AABB shape based on new chunk terrain height
                 if (y < yLowest) yLowest = y;
