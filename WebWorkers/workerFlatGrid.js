@@ -31,7 +31,9 @@ onmessage = function (e) {
     let yHighest = 0;
     let yLowest = 0;
 
-    if (voronoi.seeds.length === 0) voronoi.generateSeeds(mapSize * WORLD_SCALE);
+    const seedBuffer = 64;
+
+    if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE) - seedBuffer);
 
     //console.log(`map is ${mapSize}`);
     //voroni.generateSeeds(mapSize);
@@ -46,8 +48,16 @@ onmessage = function (e) {
                 let worldX = posX + offsetX;
                 let worldZ = posZ + offsetZ;
 
-                const macroElevation = voronoi.getHeight(worldX, worldZ);
 
+                const seedInfo = voronoi.getSeedInfo(worldX, worldZ);
+
+                if (!seedInfo) { 
+                    //console.log("no seeds????"); 
+                    continue; }
+
+                // returns lerped elevation and closest biome
+                //const macroElevation = seedInfo.y; 
+                
                 // set up variation
                 const fractalParams = {
                     x: worldX, z: worldZ,
@@ -60,7 +70,7 @@ onmessage = function (e) {
                 
                 const microVariation = fractalNoise(fractalParams); // additional terrain...ness
 
-                const y = macroElevation + microVariation * 0.25; // final height. voronoi + fractalNoise
+                const y = seedInfo.y + microVariation * 0.25; // final height. voronoi + fractalNoise
                 //const y = macroElevation;
 
 
@@ -76,16 +86,28 @@ onmessage = function (e) {
                 // color map for debug rendering
                 if (debugBiomeColors) {
 
+
+// new verstion
+//seedInfo.biome
+                    let color = [1,1,1];
+
+                    if (seedInfo) {
+                        //console.log(seedInfo.closestSeed.color);
+                        color = seedInfo.closestSeed.color;
+                    }
+
+                    //console.log(`color is ${color}`);
+
                     // Biome coloring is based on the initial continental function (in Voronoi). Here we run it again
                     const CONTINENT_FREQ = 0.0008;
                     let continentValue = (
                         generateSimplexNoise(worldX * CONTINENT_FREQ, worldZ * CONTINENT_FREQ) + 1) / 2;
 
-                    let  color = [1,1,1];
-                    if (continentValue > 0.6) { color = [1,0,0]; } // mountains
-                    else { color = [0,1,0]; }
+                    //let  color = [1,1,1];
+                    // if (continentValue > 0.6) { color = [1,0,0]; } // mountains
+                    // else { color = [0,1,0]; }
 
-                        //console.log("color = " + color);
+                        console.log("color = " + color);
                    // const color = biomeBlender.getColorMap(weights);
                     colorsArray.push(...color);
                 }   
@@ -123,3 +145,4 @@ onmessage = function (e) {
         postMessage({ positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray, yMax: yHighest, yMin: yLowest, seeds: voronoi.seeds});
     
 };
+
