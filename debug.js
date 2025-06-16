@@ -2,7 +2,7 @@ import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/e
 import { rayInFrustum } from './frustum.js';
 import { VORONOI_RAYS_TOGGLE } from './config.js';
 
-console.log("debug.js loaded");
+//console.log("debug.js loaded");
 
 
 const TILE_SIZE = 1;
@@ -10,8 +10,8 @@ const TILE_SIZE = 1;
 export const debugSettings = {
     GRID: false,
     COLLIDERS: false,
-    BIOME_COLORS: false,
-    RAYCASTS: true,
+    BIOME_COLORS: true,
+    RAYCASTS: false,
 }
 
 const raysToDraw = [];

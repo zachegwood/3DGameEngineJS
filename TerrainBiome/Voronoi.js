@@ -42,7 +42,9 @@ export class VoronoiRegions {
 
             //const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
 
-            let elevation = Math.random() * VORONOI_BASE_ELEVATION * continentValue;
+let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
+let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+
 //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
 
             const slope = this.getSlope(x,z); // partial derivitive of continent. gets rain shadow
@@ -53,12 +55,14 @@ export class VoronoiRegions {
             const moisture = slope.x < 0 ? 0.2 : 1.0; // drier if in rain shadow
 
 
-    // debug -- disables voronoi regions
-    //elevation = continentValue * VORONOI_BASE_ELEVATION;
+    // // debug -- disables voronoi regions
+    // //elevation = continentValue * VORONOI_BASE_ELEVATION;
     
             const temperature = 1; // fix later
             const biome = this.getBiome(elevation, moisture, temperature);
             const color = this.getBiomeColor(biome);
+
+            console.log(`this biome is ${biome}. moisture is ${moisture}. Temperature is ${temperature}`);
 
             const seed = { 
                 x, z, 
@@ -70,6 +74,7 @@ export class VoronoiRegions {
                 color
              };
 
+            //const seed = { x, z, elevation };
 
 
             // print out every 20th seed to console
@@ -92,10 +97,20 @@ export class VoronoiRegions {
         
     }
 
+
+    /*
+    
+        elevation: continent value (original simplex noise before anything else) [mult by voronoi height]
+    
+    */
+
     //#region Get Biome
     getBiome(elevation, moisture, temperature) {
 
-        if (elevation > 0.85) {
+        // normalize
+        elevation = elevation / VORONOI_BASE_ELEVATION;
+
+        if (elevation > 0.80) {
             if (moisture < 0.3) return "plateau"; // high and dry
             return 'mountain';
         }
@@ -104,7 +119,7 @@ export class VoronoiRegions {
             return 'forest';
         }
 
-        if (elevation > 0.3) {
+        if (elevation > 0.2) {
             if (moisture < 0.2) return `desert`;
             if (temperature < 0.3) return 'tundra';
             else return 'plains';
@@ -119,45 +134,63 @@ export class VoronoiRegions {
     getBiomeColor(biome) {
 
         switch (biome) {
-            case `plateau`: return [0.4, 0.4, 0.4];
-            case `mountain`: return [0.8, 0.6, 0.6];
+            case `mountains`: return [0.4, 0.4, 0.4];
+            case `plateau`: return [0.1, 0.5, 0.2];
 
-            case 'forest': return [0.1, 0.5, 0.2];
+            case 'forest': return [0.8, 0.6, 0.6];      // this is about half the map. lower elev
 
             case 'desert': return [1.0, 1.0, 0.4];
             case 'tundra': return [0.8, 0.8, 1.0];
-            case 'plains': return [0.3, 0.8, 0.3];            
+            case 'plains': return [0.3, 0.3, 0.3];            
 
             case 'swamp': return [0.0, 0.6, 0.0];
             case 'coastal': return [0.0, 0.0, 0.6];
 
-            default: return [1.0, 0.0, 1.0]; // magenta = unknown
+            default: return [1.0, 1.0, 1.0]; // white = unknown
         }
+    }
+
+    // search each seed bucket to find closest seeds
+    findCandidates(x, z, sizeOfBucket) {
+
+        let newCandidates = [];
+
+        const bx = Math.floor(x / sizeOfBucket);
+        const bz = Math.floor(z / sizeOfBucket);
+
+         // Search surrounding buckets
+        for (let dz = -1; dz <= 1; dz++) {
+            for (let dx = -1; dx <= 1; dx++) {
+                const key = `${bx+dx},${bz+dz}`;
+
+                if (this.buckets.has(key)) {
+                    newCandidates.push(...this.buckets.get(key));
+                }
+            }
+        }        
+
+        return newCandidates;
     }
         
     
     //#region GetSeedInfo
     getSeedInfo(x,z) {
 
-        const bx = Math.floor(x / this.bucketSize);
-        const bz = Math.floor(z / this.bucketSize);
+        let candidates = this.findCandidates(x, z, this.bucketSize);
+
+        // bug fix. if you couldn't find any close seeds, look farther
+        if (candidates.length === 0) {
+            candidates = this.findCandidates(x, z, this.bucketSize * 2);
+        }
+        
 
         //console.log(`x,z (${x},${z}) : bx,bz (${bx},${bz}) -- bucketSize is ${this.bucketSize}`);
 
-        let candidates = [];
+        
 
-        // Search surrounding buckets
-        for (let dz = -1; dz <= 1; dz++) {
-            for (let dx = -1; dx <= 1; dx++) {
-                const key = `${bx+dx},${bz+dz}`;
-
-                if (this.buckets.has(key)) {
-                    candidates.push(...this.buckets.get(key));
-                }
-            }
-        }        
-
-        if (candidates.length === 0) {  return 0;}
+       
+        // this shouldn't get triggered anymore
+        if (candidates.length === 0) {  return 0; }
 
         // Find 2 closest seeds
         candidates.sort((a,b) => {

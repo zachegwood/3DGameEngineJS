@@ -72,7 +72,8 @@ onmessage = function (e) {
 
                 //const y = seedInfo.y + microVariation * 0.25; // final height. voronoi + fractalNoise
                 //const y = seedInfo.y;
-                let y = microVariation;
+
+                let y = 0; // bugcatch, in case there's no seed
                 if (seedInfo) {                     
                     y = seedInfo.y + microVariation;
                 }
@@ -112,7 +113,7 @@ onmessage = function (e) {
                     // if (continentValue > 0.6) { color = [1,0,0]; } // mountains
                     // else { color = [0,1,0]; }
 
-                        console.log("color = " + color);
+                        //console.log("color = " + color);
                    // const color = biomeBlender.getColorMap(weights);
                     colorsArray.push(...color);
                 }   
