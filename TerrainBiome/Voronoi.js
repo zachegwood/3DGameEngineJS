@@ -35,12 +35,23 @@ export class VoronoiRegions {
             //const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
 
             let elevation = Math.random() * VORONOI_BASE_ELEVATION * continentValue;
+//let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
+
+
+
+
+
 
     // debug -- disables voronoi regions
     //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
 
             const seed = { x, z, elevation };
+
+
+
+            // print out every 20th seed to console
+            if (i % 20 === 0) console.log(`continentValue ${continentValue.toFixed(2)}. seed # ${i}: `, seed);
       
             this.seeds.push(seed);
 

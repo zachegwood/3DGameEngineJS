@@ -17,6 +17,7 @@ export class BiomeBlender {
         //const voronoi = new VoronoiRegions();
     }
 
+    //#region Height
     getHeight(x, z) {
 
 
@@ -87,6 +88,7 @@ export class BiomeBlender {
         return blendedColor;
     }
 
+    //#region Interp Params
     getInterpolatedParams(x,z, biomeParams) {
 
         let weights = this.getBiomeWeights(x, z);
@@ -123,6 +125,7 @@ export class BiomeBlender {
 
     }
 
+    //#region BiomeValue
     getBiomeValue(x,z) {
 
         // 1) continent mask: huge landmass
@@ -140,6 +143,7 @@ export class BiomeBlender {
         return blendedValue;
     }
 
+    //#region BiomeWeights
     getBiomeWeights(x,z) {
         const v = this.getBiomeValue(x,z);
         let weights = {};

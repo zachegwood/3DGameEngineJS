@@ -345,7 +345,7 @@ export const shaders = {
             }
 
 
-            //color += v_biomeColors; // add biome heatmap over map
+            color += v_biomeColors * 0.1; // add biome heatmap over map
 
 
 

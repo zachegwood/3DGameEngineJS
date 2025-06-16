@@ -127,7 +127,7 @@ export function unPauseGame() {
 //#region Raycast
 const raysToDraw = []
 export function addToRaycast(rays) {
-    console.log(rays);
+    //console.log(rays);
     raysToDraw.push(rays);
 }
 const newRay = {origin: [5,5,5], direction: [1,1,1], length: 10, color: [0,1,0,1]}
@@ -345,11 +345,11 @@ function render(elapsedTime) {
     Raycast(originRay); // reference line vert at 0,0,0
     //Raycast(ray.origin, ray.direction, ray.length, ray.color);    // <- if ray = etc
 
-    console.log(` rays arrays says ` + raysToDraw.length);
+    //console.log(` rays arrays says ` + raysToDraw.length);
     for (let x = 0; x < raysToDraw.length; x++) {
         const ray = raysToDraw[x];
         Raycast(ray);
-        console.log(`from main with ray ${ray}`);
+        //console.log(`from main with ray ${ray}`);
     }
 
     

@@ -3,6 +3,7 @@ import { fractalNoise } from "../TerrainBiome/simplexNoise.js";
 import { BiomeBlender } from "../TerrainBiome/biomeBlender.js";
 import { VoronoiRegions } from "../TerrainBiome/Voronoi.js";
 import { WORLD_SCALE, CHUNK_SIZE } from '/config.js'
+import { generateSimplexNoise } from "../TerrainBiome/simplexNoise.js";
 
 const biomeBlender = new BiomeBlender(biomeData, weightFunctions);
 const voronoi = new VoronoiRegions();
@@ -69,6 +70,27 @@ onmessage = function (e) {
 
                 positions.push(posX, y, posZ);     
                 uvs.push(x / segmentsX, z / segmentsZ);    
+
+
+
+                // color map for debug rendering
+                if (debugBiomeColors) {
+
+                    // Biome coloring is based on the initial continental function (in Voronoi). Here we run it again
+                    const CONTINENT_FREQ = 0.0008;
+                    let continentValue = (
+                        generateSimplexNoise(worldX * CONTINENT_FREQ, worldZ * CONTINENT_FREQ) + 1) / 2;
+
+                    let  color = [1,1,1];
+                    if (continentValue > 0.6) { color = [1,0,0]; } // mountains
+                    else { color = [0,1,0]; }
+
+                        //console.log("color = " + color);
+                   // const color = biomeBlender.getColorMap(weights);
+                    colorsArray.push(...color);
+                }   
+
+
 
                 continue;
 
