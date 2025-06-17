@@ -33,6 +33,16 @@ function worldToChunkCoord(x,z) {
 
 //const voronoi = new VoronoiRegions();
 
+async function safeCreateLOD(gl, size, x, z, level) {
+    try {
+        return await createTerrainMesh(gl, size, x, z, level);
+    } catch (err) {
+        console.error(`LOD ${level} failed at (${x}, ${z})`, err);
+        return null;
+    }
+}
+
+
 
 //#region Build Terrain
 export async function buildTerrain(gl) {
@@ -53,10 +63,18 @@ export async function buildTerrain(gl) {
             const worldOffsetX = x * CHUNK_SIZE * WORLD_SCALE;
             const worldOffsetZ = z * CHUNK_SIZE * WORLD_SCALE;
 
+            //#region LODs
             // Create three Meshes of Levels of Detail, 0, 1, 2
             const lod0 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 0); //meshShapes.js
-            const lod1 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 1); //meshShapes.js
-            const lod2 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 2); //meshShapes.js
+            // const lod1 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 1); //meshShapes.js
+            // const lod2 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 2); //meshShapes.js
+
+//             const [lod0, lod1, lod2] = await Promise.all([
+//     safeCreateLOD(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 0),
+//     safeCreateLOD(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 1),
+//     safeCreateLOD(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 2),
+// ]);
+
 
             if (lod0 === undefined) { console.log(`undefined mesh in BuildTerrain - terrain.js`); return; }
 
@@ -69,7 +87,8 @@ export async function buildTerrain(gl) {
                     id: `terrain_chunk_${x},${z}`,
                 });
             
-                terrainChunk.setLODs([lod0, lod1, lod2]);
+                //terrainChunk.setLODs([lod0, lod1, lod2]);
+                terrainChunk.setLODs([lod0]);
 
             chunks.set(`${x},${z}`, terrainChunk);
 

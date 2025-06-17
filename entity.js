@@ -129,7 +129,7 @@ export class Entity {
 
         if (lod && this.lods.length > 0) {
             this.mesh = this.lods[lod];
-            //console.log(`LOD is ${lod}`);
+            console.log(`LOD is ${lod}`);
         }
 
         this.shader.use();  

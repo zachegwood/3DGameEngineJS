@@ -72,9 +72,9 @@ export class SceneNode {
                 const camDz = child.position[2] - cullingCamera.position[2];
                 const camDist = Math.sqrt(camDx * camDx + camDz * camDz);                
 
-                if (camDist > 800) lod = 2;
-                else if (camDist > 400) lod = 1;
-                else lod = 0; // full detail
+                // if (camDist > 800) lod = 2;
+                // else if (camDist > 400) lod = 1;
+                // else lod = 0; // full detail
 
             }
 
