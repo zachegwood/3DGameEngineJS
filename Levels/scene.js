@@ -62,6 +62,22 @@ export class SceneNode {
 
         for (let child of this.children) {
 
+            //#region LODs
+
+            let lod = 0; // full size. options 0, 1, 2
+
+            if (cullingCamera && child.position) {
+
+                const camDx = child.position[0] - cullingCamera.position[0];
+                const camDz = child.position[2] - cullingCamera.position[2];
+                const camDist = Math.sqrt(camDx * camDx + camDz * camDz);                
+
+                if (camDist > 800) lod = 2;
+                else if (camDist > 400) lod = 1;
+                else lod = 0; // full detail
+
+            }
+
             child.isVisible = false; // will turn on after check below. makes debug colliders turn off
 
             //console.log(`${this.children.indexOf(child)} --< ${child.id}`);
@@ -87,7 +103,7 @@ export class SceneNode {
             if (shouldDraw === true) { 
                 child.isVisible = true;
                 visibleEntities.push(child);
-                child.draw(gl, viewMatrix, projectionMatrix, lights);
+                child.draw(gl, viewMatrix, projectionMatrix, lights, lod);
                 
             } 
         }

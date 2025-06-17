@@ -28,6 +28,7 @@ export class Entity {
         type, // used by light preview cubes for debug
     }) {
         this.mesh = mesh;
+        this.lods = []; // LOD
         this.shader = shader;
         this.color = color;
         this.texture = texture;
@@ -68,6 +69,11 @@ export class Entity {
 
             collisionSystem.add(this); // add this entity to the list of colliders to check against
         }
+    }
+
+    //#region LODs
+    setLODs(loadArray) {
+        this.lods = loadArray;
     }
 
     // Called from Collisions.js
@@ -117,9 +123,14 @@ export class Entity {
     }
 
     //#region Draw()
-    draw(gl, view, projection, allLights) {
+    draw(gl, view, projection, allLights, lod) {
 
         if (!this.shader) return;
+
+        if (lod && this.lods.length > 0) {
+            this.mesh = this.lods[lod];
+            //console.log(`LOD is ${lod}`);
+        }
 
         this.shader.use();  
         this.shader.setUniforms(view, projection, this.modelMatrix, this.color, this.texture);

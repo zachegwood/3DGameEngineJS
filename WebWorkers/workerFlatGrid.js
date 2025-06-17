@@ -40,6 +40,8 @@ onmessage = function (e) {
     //console.log(`map is ${mapSize}`);
     //voroni.generateSeeds(mapSize);
 
+    // btw, mapsize is CHUNK_PIECES * CHUNK_SIZE
+
      for (let z = 0; z <= segmentsZ; z++) {
             for (let x = 0; x <= segmentsX; x++) {
 
@@ -50,7 +52,7 @@ onmessage = function (e) {
                 let worldX = posX + offsetX;
                 let worldZ = posZ + offsetZ;
 
-
+                //#region SeedInfo
                 const seedInfo = voronoi.getSeedInfo(worldX, worldZ);
 
 
@@ -88,7 +90,7 @@ onmessage = function (e) {
                 uvs.push(x / segmentsX, z / segmentsZ);    
 
 
-
+                //#region Biome Colors
                 // color map for debug rendering
                 if (debugBiomeColors) {
 

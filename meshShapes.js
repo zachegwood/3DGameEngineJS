@@ -402,12 +402,19 @@ export async function loadModel(gl, url) {
 let alreadyDrawnVoronoiSeedRays = false;
 
 //#region TerrainMesh
-export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ) {
+export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffsetZ, lod) {
+
+    let segments = 10;
+
+    if (lod) {
+        if (lod === 1) segments = Math.floor(segments / 2);
+        else if (lod === 2) segments = Math.floor(segments / 4);
+    }
 
     // generate flat terrain using a webworker (workerFlatGrid.js)
     const terrainInfo = await generateFlatGridAsync(
         chunkSize, chunkSize, 
-        10, 10,
+        segments, segments,
         worldOffsetX, worldOffsetZ
     ); // from terrain.js
     

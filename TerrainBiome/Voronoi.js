@@ -7,6 +7,7 @@ import { generateSimplexNoise } from "./simplexNoise.js";
 const CONTINENT_FREQ = 0.0008
 
 
+
 export class VoronoiRegions {
     constructor() {
 
@@ -18,6 +19,9 @@ export class VoronoiRegions {
 
 
     }
+
+
+    // btw, mapsize is CHUNK_PIECES * CHUNK_SIZE
 
 
     //#region Gen Seeds
@@ -58,7 +62,16 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
     // // debug -- disables voronoi regions
     // //elevation = continentValue * VORONOI_BASE_ELEVATION;
     
-            const temperature = 1; // fix later
+            
+            //#region temperature
+            const zNormalized = (z / mapSize) + 0.5; // between 0 - 1
+            const temperature = zNormalized.toFixed(2); // warmer north, colder south
+
+
+
+
+
+
             const biome = this.getBiome(elevation, moisture, temperature);
             const color = this.getBiomeColor(biome);
 
@@ -92,8 +105,6 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         }
 
         //console.log("Total buckets:", this.buckets.size);
-
-
         
     }
 
@@ -221,7 +232,7 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
     getSlope(x,z) { // used to calculate rain shadow (ie, blocked by wind?)
 
         const delta = 10; // or chunk/grid scale
-        const left = (generateSimplexNoise((x - delta) * CONTINENT_FREQ, z * CONTINENT_FREQ) +1 / 2);
+        const left = (generateSimplexNoise((x - delta) * CONTINENT_FREQ, z * CONTINENT_FREQ) +1) / 2;
         const right = (generateSimplexNoise((x + delta) * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
         const down  = (generateSimplexNoise(x * CONTINENT_FREQ, (z - delta) * CONTINENT_FREQ) + 1) / 2;
         const up    = (generateSimplexNoise(x * CONTINENT_FREQ, (z + delta) * CONTINENT_FREQ) + 1) / 2;  

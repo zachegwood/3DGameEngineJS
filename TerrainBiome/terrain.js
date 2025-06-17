@@ -53,18 +53,23 @@ export async function buildTerrain(gl) {
             const worldOffsetX = x * CHUNK_SIZE * WORLD_SCALE;
             const worldOffsetZ = z * CHUNK_SIZE * WORLD_SCALE;
 
-            const newMesh = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ); //meshShapes.js
+            // Create three Meshes of Levels of Detail, 0, 1, 2
+            const lod0 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 0); //meshShapes.js
+            const lod1 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 1); //meshShapes.js
+            const lod2 = await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ, 2); //meshShapes.js
 
-            if (newMesh === undefined) { console.log(`undefined mesh in BuildTerrain - terrain.js`); return; }
+            if (lod0 === undefined) { console.log(`undefined mesh in BuildTerrain - terrain.js`); return; }
 
             const terrainChunk = new Entity(
                 {
-                    mesh: newMesh,
+                    mesh: lod0,
                     position: [worldOffsetX, 0, worldOffsetZ],
                     shader: myShaders.Lighting,
                     texture: texture,
                     id: `terrain_chunk_${x},${z}`,
                 });
+            
+                terrainChunk.setLODs([lod0, lod1, lod2]);
 
             chunks.set(`${x},${z}`, terrainChunk);
 
