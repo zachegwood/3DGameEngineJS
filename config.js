@@ -7,9 +7,9 @@ export const CURRENT_CAMERA = 'OVERHEAD'; // PLAYER_THIRD_PERSON, OVERHEAD
 export const PLAYER_START_POS = vec3.fromValues(0, 100, 0);
 export const PLAYER_SPEED = 250;
 
-export const VORONOI_SEED_COUNT = 220;
+export const VORONOI_SEED_COUNT = 400;
 export const VORONOI_BASE_ELEVATION = 100 + 50; // this gets multiplied. IE elevation * (100 + 20)
 export const VORONOI_RAYS_TOGGLE = true;
 
 export const CHUNK_SIZE = 32; // 32x32 units
-export const CHUNK_PIECES = 20;
+export const CHUNK_PIECES = 30;

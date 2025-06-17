@@ -1,9 +1,12 @@
 import { mat4, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
+console.log("frustum.js loaded", new Error().stack);
+
+
 let planes = [];
 
 export function setFrustumPlanes(newPlanes) { // called from SceneNode.
-    planes = newPlanes;
+        planes = newPlanes;
 }
 
 export function extractFrustumPlanes(viewMatrix, projectionMatrix) {
@@ -102,7 +105,14 @@ function pointOutsidePlane(plane, point) {
     return a * point[0] + b * point[1] + c * point[2] + d < 0;
 }
 
-export function rayInFrustum(origin, end) {    
+export function rayInFrustum(origin, end) {   
+
+    //if (planes.length === 0) return false; // bugfix. scene.js has its own frustrum drwaing setup
+
+    // if (!planes || planes.length !== 6) {
+    //     console.warn("Frustum planes not set or incomplete");
+    //     return true; // fallback: don't cull
+    // }
 
     for (const plane of planes) {
         const originOutside = pointOutsidePlane(plane, origin);

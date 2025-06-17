@@ -425,7 +425,6 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
     if (alreadyDrawnVoronoiSeedRays === false) {
         alreadyDrawnVoronoiSeedRays = true;
         for (let i = 0; i < terrainInfo.seeds.length; i++) {
-            console.log(terrainInfo.seeds.length)
             const ray = {
                 origin: [terrainInfo.seeds[i].x, 0, terrainInfo.seeds[i].z],
                 direction: [0,1,0],

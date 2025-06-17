@@ -57,7 +57,7 @@ export class SceneNode {
         
         if (cullingCamera) {
             frustumPlanes = extractFrustumPlanes(cullingCamera.getViewMatrix(), projectionMatrix);
-            //setFrustumPlanes(frustumPlanes);
+            setFrustumPlanes(frustumPlanes);
         }
 
         for (let child of this.children) {

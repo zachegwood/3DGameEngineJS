@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { rayInFrustum } from './frustum.js';
+import { rayInFrustum } from '../frustum.js';
 import { VORONOI_RAYS_TOGGLE } from './config.js';
 
 //console.log("debug.js loaded");
@@ -137,7 +137,7 @@ export function Raycast( ray ) {
 	];
 
     // Frustum Test
-    if (!rayInFrustum(origin, end)) return;
+    if (rayInFrustum(origin, end) === false) { return; }
 
 	const rayVertices = [
 		origin[0], origin[1], origin[2],

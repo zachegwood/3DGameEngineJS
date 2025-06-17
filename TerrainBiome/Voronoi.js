@@ -62,7 +62,7 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
             const biome = this.getBiome(elevation, moisture, temperature);
             const color = this.getBiomeColor(biome);
 
-            console.log(`this biome is ${biome}. moisture is ${moisture}. Temperature is ${temperature}`);
+            //console.log(`this biome is ${biome}. moisture is ${moisture}. Temperature is ${temperature}`);
 
             const seed = { 
                 x, z, 
