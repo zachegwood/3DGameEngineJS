@@ -1,6 +1,6 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { rayInFrustum, cullRaysToggle } from '../frustum.js';
-import { VORONOI_RAYS_TOGGLE } from './config.js';
+import { VORONOI_RAYS_TOGGLE } from '/config.js';
 
 //console.log("debug.js loaded");
 

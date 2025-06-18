@@ -13,3 +13,7 @@ export const VORONOI_RAYS_TOGGLE = true;
 
 export const CHUNK_SIZE = 32; // 32x32 units
 export const CHUNK_PIECES = 30;
+
+export const WORLD_SEED = 120;
+
+console.log(`WORLD_SEED: ${WORLD_SEED}`);

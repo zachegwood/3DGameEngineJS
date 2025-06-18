@@ -1,7 +1,7 @@
 import { lerp } from "../utils.js";
 
 import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.js'
-import { generateSimplexNoise } from "./simplexNoise.js";
+import { generateSimplexNoise, rng } from "./simplexNoise.js";
 
 
 const CONTINENT_FREQ = 0.0008
@@ -34,8 +34,8 @@ export class VoronoiRegions {
 
         // fill a square area centered on (0.0)
         for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
-            const x = Math.random() * mapSize - mapSize/2; // center on 0,0
-            const z = Math.random() * mapSize - mapSize/2;
+            const x = rng() * mapSize - mapSize/2; // center on 0,0
+            const z = rng() * mapSize - mapSize/2;
 
             // Generate Simplex Noise. Probably change this later to ref a stored version
             let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
@@ -46,7 +46,7 @@ export class VoronoiRegions {
             //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
             let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
-            let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
 
             //#region Biome Values
@@ -97,7 +97,17 @@ export class VoronoiRegions {
             this.buckets.get(key).push(seed);
         }
 
-        //console.log("Total buckets:", this.buckets.size);
+        for (let i = 0; i < 30; i++) this.setErosion();
+
+     
+
+
+
+        console.log(this.biomeCount);
+    }
+
+    setErosion() {
+   //console.log("Total buckets:", this.buckets.size);
 
         // Follow flow map to link seeds together
         // find seed downstream
@@ -115,14 +125,14 @@ export class VoronoiRegions {
         }
 
         for (const seed of this.seeds) {
-            const erosion = seed.water * seed.flow.magnitude * 0.01; // tune constant
-            seed.elevation -= erosion; 
-            console.log(`seed water is ${seed.water}`)
+            const erosion = seed.water * seed.flow.magnitude * 100 // tune constant
+            
+
+            if (seed.downstreamSeed && erosion > 0) {
+                seed.elevation -= erosion; 
+                seed.downstreamSeed.elevation += erosion * 0.5; // deposit a portion
+            }
         }
-
-
-
-        console.log(this.biomeCount);
     }
 
     //#region Downstream Sd
@@ -278,8 +288,7 @@ export class VoronoiRegions {
         const left = (generateSimplexNoise((x - delta) * CONTINENT_FREQ, z * CONTINENT_FREQ) +1) / 2;
         const right = (generateSimplexNoise((x + delta) * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
         const down  = (generateSimplexNoise(x * CONTINENT_FREQ, (z - delta) * CONTINENT_FREQ) + 1) / 2;
-        const up    = (generateSimplexNoise(x * CONTINENT_FREQ, (z + delta) * CONTINENT_FREQ) + 1) / 2;  
-        
+        const up    = (generateSimplexNoise(x * CONTINENT_FREQ, (z + delta) * CONTINENT_FREQ) + 1) / 2;          
 
         const dx = right - left;
         const dz = up - down;

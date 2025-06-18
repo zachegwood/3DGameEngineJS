@@ -1,7 +1,5 @@
 import { mat4, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 
-console.log("frustum.js loaded", new Error().stack);
-
 let planes = [];
 
 let cullRays = false;

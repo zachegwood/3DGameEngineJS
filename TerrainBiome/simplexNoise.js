@@ -1,7 +1,21 @@
+import { WORLD_SEED } from "/config.js";
 
 
 const perm = new Uint8Array(512);
 const p = new Uint8Array(256);
+
+export const rng = mulberry32(WORLD_SEED);
+
+//#region Mulberry
+export function mulberry32(seed) {
+    return function() {
+        seed |= 0; seed = seed + 0x6D2B79F5 | 0;
+        var t = Math.imul(seed ^ seed >>> 15, 1 | seed);
+        t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    };
+}
+
 
 //     const grad3 = [
 //     [1,1], [-1,1], [1,-1], [-1,-1],
@@ -19,7 +33,7 @@ for (let i = 0; i < 12; i++) {
 
 for (let i = 0; i < 256; i++) p[i] = i; // fill with 1,2,3...255
 for (let i = 0; i < 256; i++) {
-    const j = Math.floor(Math.random() * 256);
+    const j = Math.floor(rng() * 256);
     [p[i], p[j]] = [p[j], p[i]]; // shuffle
 }
 for (let i = 0; i < 512; i++) {
