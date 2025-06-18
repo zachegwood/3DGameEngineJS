@@ -99,7 +99,7 @@ export class VoronoiRegions {
 
         for (let i = 0; i < 30; i++) this.setErosion();
 
-     
+        this.setRivers();
 
 
 
@@ -114,19 +114,24 @@ export class VoronoiRegions {
         for (const seed of this.seeds) {
             seed.downstreamSeed = this.getDownstreamSeed(seed);
             seed.water = 1; // init, used below to accumulate
-        }        
+        }      
+        
+   
 
         for (const seed of this.seeds) {
             let ds = seed.downstreamSeed;
             while (ds) {
                 ds.water += 1;
-                ds = ds.downstreamSeed;
+
+                if (!ds.upstreamSeed) ds.upstreamSeed = seed; // for tracing rivers
+
+                // next iteration
+                ds = ds.downstreamSeed;                
             }
         }
 
         for (const seed of this.seeds) {
-            const erosion = seed.water * seed.flow.magnitude * 100 // tune constant
-            
+            const erosion = seed.water * seed.flow.magnitude * 100 // tune constant            
 
             if (seed.downstreamSeed && erosion > 0) {
                 seed.elevation -= erosion; 
@@ -134,6 +139,35 @@ export class VoronoiRegions {
             }
         }
     }
+
+    
+
+    setRivers() {
+        for (const seed of this.seeds) {
+            if (seed.water > 15) {
+                //console.log(`should be a river -- ${seed.water}`);
+
+                let s = seed;
+
+                // if (s.upstreamSeed === s) {console.log("same"); continue; }
+                // if (s.downstreamSeed === s) {console.log("same"); continue; }
+
+                     console.log(`COMMENTED THIS OUT BC INFINITE LOOP`);
+
+                // while (s && !s.isRiver) {
+
+                //     thisRuns++;
+                //     if (thisRuns > MAX_RUNS) {console.log('breaking'); break;}
+
+                //         console.log(`Marking river at ${s.x},${s.z} with water ${s.water}`);
+                //     s.isRiver = true;  
+                //     s = s.upstreamSeed;
+                //     }
+                // }
+            }
+        }
+    }
+
 
     //#region Downstream Sd
     getDownstreamSeed(seed) {
