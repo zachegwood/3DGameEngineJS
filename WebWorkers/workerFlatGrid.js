@@ -19,6 +19,9 @@ const voronoi = new VoronoiRegions();
 
 
 
+// This is called by generateFlatGridAsync in terrain.js
+
+
 
 onmessage = function (e) {
     const { width, depth, segmentsX, segmentsZ, offsetX, offsetZ, debugBiomeColors, mapSize } = e.data;
@@ -35,6 +38,8 @@ onmessage = function (e) {
 
     //if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE) - seedBuffer);
     if (voronoi.seeds.length === 0) voronoi.generateSeeds((mapSize * WORLD_SCALE));
+
+
 
 
     //console.log(`map is ${mapSize}`);

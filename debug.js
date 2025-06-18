@@ -1,5 +1,5 @@
 import { mat4, vec3, vec4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
-import { rayInFrustum } from '../frustum.js';
+import { rayInFrustum, cullRaysToggle } from '../frustum.js';
 import { VORONOI_RAYS_TOGGLE } from './config.js';
 
 //console.log("debug.js loaded");
@@ -11,8 +11,11 @@ export const debugSettings = {
     GRID: false,
     COLLIDERS: false,
     BIOME_COLORS: true,
-    RAYCASTS: false,
+    RAYCASTS: true,
+    CULLRAYS: false,
 }
+
+cullRaysToggle(debugSettings.CULLRAYS);
 
 const raysToDraw = [];
 

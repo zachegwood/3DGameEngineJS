@@ -17,6 +17,9 @@ export class VoronoiRegions {
         this.seeds = [];            // all seed points
         this.buckets = new Map();   // spacial has buckets
 
+        this.biomeCount = {};
+
+        this.flowMap = [];
 
     }
 
@@ -27,68 +30,58 @@ export class VoronoiRegions {
     //#region Gen Seeds
     generateSeeds(mapSize) {
 
-        const margin = this.bucketSize;
-        
+        const margin = this.bucketSize;        
 
         // fill a square area centered on (0.0)
         for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
-            // const x = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin); // center on 0,0
-            // const z = Math.random() * (mapSize - 2 * margin) - (mapSize/2 - margin);
             const x = Math.random() * mapSize - mapSize/2; // center on 0,0
             const z = Math.random() * mapSize - mapSize/2;
 
+            // Generate Simplex Noise. Probably change this later to ref a stored version
+            let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
 
-    // Generate Simplex Noise. Probably change this later to ref a stored version
-    let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
+            // debug -- disables continent map
+            //continentValue = 1;
+            // debug -- disables voronoi regions (replace elevation below)
+            //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
-    // debug -- disables continent map
-    //continentValue = 1;
+            let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
+            let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
 
-            //const elevation = Math.random() * VORONOI_BASE_ELEVATION; // base elevation bias
-
-let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
-let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
-
-//let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
-
+            //#region Biome Values
             const slope = this.getSlope(x,z); // partial derivitive of continent. gets rain shadow
-
-            // if Wind is blowing from +X, check if slope is -X.
-            // if so, it's BEHIND a slope, so drier
-
-            const moisture = slope.x < 0 ? 0.2 : 1.0; // drier if in rain shadow
-
-
-    // // debug -- disables voronoi regions
-    // //elevation = continentValue * VORONOI_BASE_ELEVATION;
-    
-            
-            //#region temperature
+            const flow = this.getFlow(x,z, slope);
+            const moisture = slope.x < 0 ? 0.2 : 1.0; // Wind blows from +X. Terrain drier if in rain shadow
             const zNormalized = (z / mapSize) + 0.5; // between 0 - 1
             const temperature = zNormalized.toFixed(2); // warmer north, colder south
-
-
-
-
-
-
             const biome = this.getBiome(elevation, moisture, temperature);
             const color = this.getBiomeColor(biome);
 
-            //console.log(`this biome is ${biome}. moisture is ${moisture}. Temperature is ${temperature}`);
-
+            //#region SEED
             const seed = { 
                 x, z, 
                 elevation, 
                 slope, // includes xDir, yDir, and mag
+                flow,   // reverse slope
+                downstreamSeed: null, // gets set below AFTER this loop builds all seeds
                 moisture,
                 temperature,
                 biome,
                 color
-             };
+            };
 
-            //const seed = { x, z, elevation };
+            this.biomeCount[seed.biome] = (this.biomeCount[seed.biome] || 0) + 1;
 
+
+
+            // // update our count of biomes
+            // if (this.biomeCount[seed.biome]) {
+            //     this.biomeCount[seed.biome] + 1;
+            // } else {
+            //     this.biomeCount[seed.biome] = 1;
+            // }
+            
 
             // print out every 20th seed to console
             //if (i % 20 === 0) console.log(`continentValue ${continentValue.toFixed(2)}. seed # ${i}: `, seed);
@@ -105,15 +98,59 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         }
 
         //console.log("Total buckets:", this.buckets.size);
-        
+
+        // Follow flow map to link seeds together
+        // find seed downstream
+        for (const seed of this.seeds) {
+            seed.downstreamSeed = this.getDownstreamSeed(seed);
+            seed.water = 1; // init, used below to accumulate
+        }        
+
+        for (const seed of this.seeds) {
+            let ds = seed.downstreamSeed;
+            while (ds) {
+                ds.water += 1;
+                ds = ds.downstreamSeed;
+            }
+        }
+
+        for (const seed of this.seeds) {
+            const erosion = seed.water * seed.flow.magnitude * 0.01; // tune constant
+            seed.elevation -= erosion; 
+            console.log(`seed water is ${seed.water}`)
+        }
+
+
+
+        console.log(this.biomeCount);
     }
 
+    //#region Downstream Sd
+    getDownstreamSeed(seed) {
+        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize);
 
-    /*
-    
-        elevation: continent value (original simplex noise before anything else) [mult by voronoi height]
-    
-    */
+        // bugfix - if nothing nearby, serach farther
+        if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*4);
+
+        let best = null;
+        let bestScore = -Infinity;
+
+        for (const neighbor of candidates) {
+            if (neighbor.elevation >= seed.elevation) continue; // ignore uphill seeds                   
+
+            const dx = neighbor.x - seed.x;
+            const dz = neighbor.z - seed.z;
+
+            const dot = (dx * seed.flow.x + dz * seed.flow.z) / Math.sqrt(dx*dx + dz*dz);
+            if (dot > bestScore) {
+                bestScore = dot;
+                best = neighbor;  
+            }
+        }
+
+        return best; // may still be null if local min or basin
+    }
+
 
     //#region Get Biome
     getBiome(elevation, moisture, temperature) {
@@ -122,21 +159,26 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         elevation = elevation / VORONOI_BASE_ELEVATION;
 
         if (elevation > 0.80) {
-            if (moisture < 0.3) return "plateau"; // high and dry
+            if (moisture < 0.25) return "plateau"; // high and dry
             return 'mountain';
         }
 
-        if (elevation > 0.6) {
-            return 'forest';
+        if (elevation > 0.60) {
+            if (moisture > 0.5) return 'forest';
+            if (temperature < 0.25) return 'tundra'; // cold and high
+            return 'plateau'; // dry but not cold
         }
 
-        if (elevation > 0.2) {
-            if (moisture < 0.2) return `desert`;
-            if (temperature < 0.3) return 'tundra';
-            else return 'plains';
+        if (elevation > 0.3) {
+            if (moisture < 0.15) return `desert`;
+            if (temperature < 0.2) return 'tundra'; // expands to lower elevation if cold
+            return 'plains';
         }
 
-        if (moisture > 0.8) return 'swamp';
+        if (elevation > 0.1) {
+            if (moisture > 0.75) return 'swamp';
+            return 'plains';
+        }
 
         return 'coastal' // fallback
     }
@@ -148,7 +190,7 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
             case `mountains`: return [0.4, 0.4, 0.4];
             case `plateau`: return [0.1, 0.5, 0.2];
 
-            case 'forest': return [0.8, 0.6, 0.6];      // this is about half the map. lower elev
+            case 'forest': return [0.8, 0.6, 0.6];      
 
             case 'desert': return [1.0, 1.0, 0.4];
             case 'tundra': return [0.8, 0.8, 1.0];
@@ -161,6 +203,7 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         }
     }
 
+    //#region Find Candidates
     // search each seed bucket to find closest seeds
     findCandidates(x, z, sizeOfBucket) {
 
@@ -228,7 +271,7 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         return { y: elevationBias, closestSeed: closestSeed};
     }
 
-    //#region Slope
+    //#region Get Slope
     getSlope(x,z) { // used to calculate rain shadow (ie, blocked by wind?)
 
         const delta = 10; // or chunk/grid scale
@@ -247,8 +290,23 @@ let elevation = Math.pow(Math.random(), 1 / bias) * VORONOI_BASE_ELEVATION * con
         const slope = { 
             x: dx, z: dz,       // normalized direction vector
             magnitude: slopeMag 
-        };
+        };        
 
         return slope;
+    }
+
+    //#region Get Flow
+    getFlow(x,z, slope) {  // flow is opposite of slope
+
+        if (!slope) slope = this.getSlope(x,z);
+
+        const flow = {
+            x: -slope.x, 
+            z: -slope.z, 
+            magnitude: slope.magnitude
+        }
+
+        return flow;
+
     }
 }

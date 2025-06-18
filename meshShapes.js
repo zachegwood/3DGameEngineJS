@@ -417,6 +417,8 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
         segments, segments,
         worldOffsetX, worldOffsetZ
     ); // from terrain.js
+
+
     
     // calculate normals using a webworker (workerNormals.js)
     const normals = await calculateNormalsAsync(terrainInfo.positions, terrainInfo.indices); // from terrain.js
@@ -432,13 +434,34 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
     if (alreadyDrawnVoronoiSeedRays === false) {
         alreadyDrawnVoronoiSeedRays = true;
         for (let i = 0; i < terrainInfo.seeds.length; i++) {
-            const ray = {
-                origin: [terrainInfo.seeds[i].x, 0, terrainInfo.seeds[i].z],
+
+            const seed = terrainInfo.seeds[i];
+            let streamDir = [seed.x, seed.elevation, seed.z];
+            if (seed.downstreamSeed !== null) {
+                streamDir = [
+                    seed.downstreamSeed.x -         seed.x,
+                    seed.downstreamSeed.elevation - seed.elevation,
+                    seed.downstreamSeed.z -         seed.z                   
+                ]
+
+            }
+
+            const seedRay = {
+                origin: [seed.x, seed.elevation, seed.z],
                 direction: [0,1,0],
-                length: 1000,
+                length: 10,
                 color: [1,0,0],
             }
-            addToRaycast(ray);
+            addToRaycast(seedRay);
+
+            const flowRay = {                
+                
+                origin: [seed.x, seed.elevation, seed.z],
+                direction: streamDir,
+                length: seed.flow.magnitude*10,
+                color: [1,1,1],
+            }
+            addToRaycast(flowRay);
         }
     }
 

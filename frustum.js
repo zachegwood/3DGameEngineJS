@@ -2,8 +2,11 @@ import { mat4, vec3 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/ind
 
 console.log("frustum.js loaded", new Error().stack);
 
-
 let planes = [];
+
+let cullRays = false;
+
+export function cullRaysToggle(value) {cullRays = value}
 
 export function setFrustumPlanes(newPlanes) { // called from SceneNode.
         planes = newPlanes;
@@ -106,6 +109,8 @@ function pointOutsidePlane(plane, point) {
 }
 
 export function rayInFrustum(origin, end) {   
+
+    if (cullRays === false) return true;
 
     //if (planes.length === 0) return false; // bugfix. scene.js has its own frustrum drwaing setup
 
