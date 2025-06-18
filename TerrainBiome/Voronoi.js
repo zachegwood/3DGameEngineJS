@@ -65,23 +65,15 @@ export class VoronoiRegions {
                 slope, // includes xDir, yDir, and mag
                 flow,   // reverse slope
                 downstreamSeed: null, // gets set below AFTER this loop builds all seeds
+                upstreamSeed: null,
                 moisture,
                 temperature,
                 biome,
-                color
+                color,
+                
             };
 
             this.biomeCount[seed.biome] = (this.biomeCount[seed.biome] || 0) + 1;
-
-
-
-            // // update our count of biomes
-            // if (this.biomeCount[seed.biome]) {
-            //     this.biomeCount[seed.biome] + 1;
-            // } else {
-            //     this.biomeCount[seed.biome] = 1;
-            // }
-            
 
             // print out every 20th seed to console
             //if (i % 20 === 0) console.log(`continentValue ${continentValue.toFixed(2)}. seed # ${i}: `, seed);
@@ -97,11 +89,10 @@ export class VoronoiRegions {
             this.buckets.get(key).push(seed);
         }
 
-        for (let i = 0; i < 30; i++) this.setErosion();
+        for (let i = 0; i < 30; i++) 
+            this.setErosion();
 
         this.setRivers();
-
-
 
         console.log(this.biomeCount);
     }
@@ -112,11 +103,10 @@ export class VoronoiRegions {
         // Follow flow map to link seeds together
         // find seed downstream
         for (const seed of this.seeds) {
+
             seed.downstreamSeed = this.getDownstreamSeed(seed);
             seed.water = 1; // init, used below to accumulate
         }      
-        
-   
 
         for (const seed of this.seeds) {
             let ds = seed.downstreamSeed;
@@ -143,8 +133,13 @@ export class VoronoiRegions {
     
 
     setRivers() {
+
+        let seedsWithWater = 0;
+
         for (const seed of this.seeds) {
             if (seed.water > 15) {
+
+                seedsWithWater++;
                 //console.log(`should be a river -- ${seed.water}`);
 
                 let s = seed;
@@ -152,20 +147,33 @@ export class VoronoiRegions {
                 // if (s.upstreamSeed === s) {console.log("same"); continue; }
                 // if (s.downstreamSeed === s) {console.log("same"); continue; }
 
-                     console.log(`COMMENTED THIS OUT BC INFINITE LOOP`);
+
+                let elev = s.elevation;
+                let upstream = 'noUpstream';
+                let downstream = 'noDownstream';
+                if (s.upstreamSeed) upstream = s.upstreamSeed;
+                if (s.downstreamSeed) downstream = s.downstreamSeed;
+                     //console.log(`COMMENTED THIS OUT BC INFINITE LOOP`);
+                     console.log(`
+                            Elv: ${elev}
+                            UpS: `, upstream, `
+                            DnS: `, downstream, `
+                        `);
 
                 // while (s && !s.isRiver) {
 
                 //     thisRuns++;
                 //     if (thisRuns > MAX_RUNS) {console.log('breaking'); break;}
 
-                //         console.log(`Marking river at ${s.x},${s.z} with water ${s.water}`);
+                        console.log(`Marking river at ${s.x.toFixed(0)},${s.z.toFixed(0)} with water ${s.water}`);
                 //     s.isRiver = true;  
                 //     s = s.upstreamSeed;
                 //     }
                 // }
             }
         }
+
+        console.log(`seeds with water: ${seedsWithWater}`);
     }
 
 
@@ -174,12 +182,15 @@ export class VoronoiRegions {
         const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize);
 
         // bugfix - if nothing nearby, serach farther
-        if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*4);
+        if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
+
+        if (candidates.length === 0) console.error("NO CANDIATES FOUND FOR DOWNSTREAM SEED: ", seed)
 
         let best = null;
         let bestScore = -Infinity;
 
         for (const neighbor of candidates) {
+            if (neighbor === seed) {console.log('neighbor is self'); continue;}; //ignore self
             if (neighbor.elevation >= seed.elevation) continue; // ignore uphill seeds                   
 
             const dx = neighbor.x - seed.x;
