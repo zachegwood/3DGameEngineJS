@@ -21,6 +21,9 @@ export class VoronoiRegions {
 
         this.flowMap = [];
 
+        this.lowestElevation = 0; // for if we want to raise the total elevation after river erosion
+        this.highestElevation = 0;
+
     }
 
 
@@ -52,11 +55,10 @@ export class VoronoiRegions {
             //#region Biome Values
             const slope = this.getSlope(x,z); // partial derivitive of continent. gets rain shadow
             const flow = this.getFlow(x,z, slope);
+
             const moisture = slope.x < 0 ? 0.2 : 1.0; // Wind blows from +X. Terrain drier if in rain shadow
             const zNormalized = (z / mapSize) + 0.5; // between 0 - 1
             const temperature = zNormalized.toFixed(2); // warmer north, colder south
-            const biome = this.getBiome(elevation, moisture, temperature);
-            const color = this.getBiomeColor(biome);
 
             //#region SEED
             const seed = { 
@@ -69,12 +71,12 @@ export class VoronoiRegions {
                 riverLength: 0,
                 moisture,
                 temperature,
-                biome,
-                color,
+                biome: null,
+                color: [1,1,1],
                 
             };
 
-            this.biomeCount[seed.biome] = (this.biomeCount[seed.biome] || 0) + 1;
+            
 
             // print out every 20th seed to console
             //if (i % 20 === 0) console.log(`continentValue ${continentValue.toFixed(2)}. seed # ${i}: `, seed);
@@ -93,11 +95,40 @@ export class VoronoiRegions {
         for (let i = 0; i < 30; i++) 
             this.setErosion();
 
+        // for (let seed of this.seeds) {
+        //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
+        //         console.warn("Seed has no upstream or downstream:", seed);
+        //     }
+        // }
+
         this.setRivers();
 
-        console.log(this.biomeCount);
+        for (const seed of this.seeds) {
+
+            let biome = null;
+
+            if (seed.biome === null) {
+                biome = this.setBiome(seed);
+                console.log(`setting biome to ${biome}`);
+            } else {
+                biome = seed.biome;
+            }
+
+            //console.log(`--- `, biome);
+
+            seed.biome = biome;
+            seed.color = this.getBiomeColor(biome);
+
+            // update count of how many of each biome
+            this.biomeCount[seed.biome] = (this.biomeCount[seed.biome] || 0) + 1;
+        }
+
+        let total = Object.values(this.biomeCount).reduce((sum, count) => sum + count, 0);
+
+        //console.log(`${total} biomes: `, this.biomeCount);
     }
 
+    //#region Set Erosion
     setErosion() {
    //console.log("Total buckets:", this.buckets.size);
    //console.log(`seeds count is ${this.seeds.length}`);
@@ -108,6 +139,12 @@ export class VoronoiRegions {
 
             seed.downstreamSeed = this.getDownstreamSeed(seed);
             seed.water = 1; // init, used below to accumulate
+
+            console.log(seed);
+
+             if (!seed.upstreamSeed && !seed.downstreamSeed) {
+                console.warn("Seed has no upstream or downstream:", seed);
+            }
         }      
 
         for (const seed of this.seeds) {
@@ -126,23 +163,26 @@ export class VoronoiRegions {
         }
 
         for (const seed of this.seeds) {
-            const erosion = seed.water * seed.flow.magnitude * 100 // tune constant            
+            const erosion = seed.water * seed.flow.magnitude * .1 // tune constant            
 
             if (seed.downstreamSeed && erosion > 0) {
                 seed.elevation -= erosion; 
                 seed.downstreamSeed.elevation += erosion * 0.5; // deposit a portion
             }
+
+            if (seed.elevation < this.lowestElevation) this.lowestElevation = seed.elevation;
+            if (seed.elevation > this.highestElevation) this.highestElevation = seed.elevation;
         }
     }
 
     
-
+    //#region Set Rivers
     setRivers() {
 
         let seedsWithWater = 0;
 
         for (const seed of this.seeds) {
-            if (seed.water > 10) {
+            if (seed.water > 5) {
 
                 seedsWithWater++;
 
@@ -155,16 +195,20 @@ export class VoronoiRegions {
                 if (s.upstreamSeed) upstream = s.upstreamSeed;
                 if (s.downstreamSeed) downstream = s.downstreamSeed;
 
-                console.log(`
-                    Elv: ${elev} | UpS: `, upstream, ` | DnS: `, downstream, `
-                `);
+                // console.log(`
+                //     Elv: ${elev} | UpS: `, upstream, ` | DnS: `, downstream, `
+                // `);
 
                 while (s && !s.isRiver) {
 
-                    s.riverLength = s.riverLength + 1;                    
-                    s.isRiver = true;  
+                    //console.log(`s.biome is ${s.biome}`);
 
-                    console.log(`Marking river at ${s.x.toFixed(0)},${s.z.toFixed(0)} with water ${s.water} `, s);
+                    s.riverLength = s.riverLength + 1;                    
+                    s.isRiver = true; 
+                    
+                    s.biome = 'river';
+
+                    //console.log(`Marking river at ${s.x.toFixed(0)},${s.z.toFixed(0)} with water ${s.water} `, s);
                     
                     s = s.upstreamSeed;
                 }
@@ -178,7 +222,7 @@ export class VoronoiRegions {
     //#region Downstream Sd
     getDownstreamSeed(seed) {
 
-        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize);
+        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*1.5);
 
         //console.log(`candidates length is ${candidates.length}`);
 
@@ -191,9 +235,7 @@ export class VoronoiRegions {
         let bestScore = -Infinity;
 
         for (const neighbor of candidates) {
-            if (neighbor === seed) {
-                continue;
-            }; //ignore self
+            if (neighbor === seed)  continue; //ignore self
             if (neighbor.elevation >= seed.elevation) continue; // ignore uphill seeds                   
 
             const dx = neighbor.x - seed.x;
@@ -210,24 +252,30 @@ export class VoronoiRegions {
     }
 
 
-    //#region Get Biome
-    getBiome(elevation, moisture, temperature) {
+    //#region Set Biome
+    setBiome(seed) {
 
-        // normalize
-        elevation = elevation / VORONOI_BASE_ELEVATION;
+        if (seed.biome !== null) return; //probably already set as river
 
-        if (elevation > 0.80) {
+        const elevation = (seed.elevation - this.lowestElevation) / (this.highestElevation - this.lowestElevation); // normalize
+        const moisture = seed.moisture;
+        const temperature = seed.temperature;
+        const isRiver = seed.isRiver;
+
+        //console.log (`elevation is ` + elevation.toFixed(2) + `. moisture is ` + moisture + `. temp = `  + temperature);
+
+        if (elevation > 0.70) {
             if (moisture < 0.25) return "plateau"; // high and dry
-            return 'mountain';
-        }
+            return 'mountains';
+        }        
 
-        if (elevation > 0.60) {
+        if (elevation > 0.40) {
             if (moisture > 0.5) return 'forest';
             if (temperature < 0.25) return 'tundra'; // cold and high
-            return 'plateau'; // dry but not cold
+            return 'desert'; // dry but not cold
         }
 
-        if (elevation > 0.3) {
+        if (elevation > 0.2) {
             if (moisture < 0.15) return `desert`;
             if (temperature < 0.2) return 'tundra'; // expands to lower elevation if cold
             return 'plains';
@@ -238,24 +286,30 @@ export class VoronoiRegions {
             return 'plains';
         }
 
+        //console.log(`biome fail. E|M|T => ${elevation.toFixed(1)} | ${moisture} | ${temperature}`);
+
         return 'coastal' // fallback
     }
 
     //#region Biome Color
     getBiomeColor(biome) {
 
-        switch (biome) {
-            case `mountains`: return [0.4, 0.4, 0.4];
-            case `plateau`: return [0.1, 0.5, 0.2];
+        //if (biome !== undefined) console.log(biome);
 
-            case 'forest': return [0.8, 0.6, 0.6];      
+        switch (biome) {
+            case `mountains`: return [0.4, 0.4, 0.8];
+            case `plateau`: return [0.6, 0.8, 0.1];
+
+            case 'forest': return [0.2, 1.0, 0.2];      
 
             case 'desert': return [1.0, 1.0, 0.4];
             case 'tundra': return [0.8, 0.8, 1.0];
-            case 'plains': return [0.3, 0.3, 0.3];            
+            case 'plains': return [0.8, 0.9, 0.6];            
 
-            case 'swamp': return [0.0, 0.6, 0.0];
-            case 'coastal': return [0.0, 0.0, 0.6];
+            case 'swamp': return [0.2, 0.6, 0.0];
+            case 'coastal': return [0.6, 0.0, 0.0];
+
+            case 'river': return [0.0, 0.0, 1];
 
             default: return [1.0, 1.0, 1.0]; // white = unknown
         }
