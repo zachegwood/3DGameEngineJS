@@ -66,6 +66,7 @@ export class VoronoiRegions {
                 flow,   // reverse slope
                 downstreamSeed: null, // gets set below AFTER this loop builds all seeds
                 upstreamSeed: null,
+                riverLength: 0,
                 moisture,
                 temperature,
                 biome,
@@ -99,6 +100,7 @@ export class VoronoiRegions {
 
     setErosion() {
    //console.log("Total buckets:", this.buckets.size);
+   //console.log(`seeds count is ${this.seeds.length}`);
 
         // Follow flow map to link seeds together
         // find seed downstream
@@ -109,8 +111,11 @@ export class VoronoiRegions {
         }      
 
         for (const seed of this.seeds) {
+
+            const visited = new Set();
             let ds = seed.downstreamSeed;
-            while (ds) {
+            while (ds && !visited.has(ds)) {
+                visited.add(ds);
                 ds.water += 1;
 
                 if (!ds.upstreamSeed) ds.upstreamSeed = seed; // for tracing rivers
@@ -137,39 +142,32 @@ export class VoronoiRegions {
         let seedsWithWater = 0;
 
         for (const seed of this.seeds) {
-            if (seed.water > 15) {
+            if (seed.water > 10) {
 
                 seedsWithWater++;
-                //console.log(`should be a river -- ${seed.water}`);
 
                 let s = seed;
-
-                // if (s.upstreamSeed === s) {console.log("same"); continue; }
-                // if (s.downstreamSeed === s) {console.log("same"); continue; }
-
 
                 let elev = s.elevation;
                 let upstream = 'noUpstream';
                 let downstream = 'noDownstream';
+
                 if (s.upstreamSeed) upstream = s.upstreamSeed;
                 if (s.downstreamSeed) downstream = s.downstreamSeed;
-                     //console.log(`COMMENTED THIS OUT BC INFINITE LOOP`);
-                     console.log(`
-                            Elv: ${elev}
-                            UpS: `, upstream, `
-                            DnS: `, downstream, `
-                        `);
 
-                // while (s && !s.isRiver) {
+                console.log(`
+                    Elv: ${elev} | UpS: `, upstream, ` | DnS: `, downstream, `
+                `);
 
-                //     thisRuns++;
-                //     if (thisRuns > MAX_RUNS) {console.log('breaking'); break;}
+                while (s && !s.isRiver) {
 
-                        console.log(`Marking river at ${s.x.toFixed(0)},${s.z.toFixed(0)} with water ${s.water}`);
-                //     s.isRiver = true;  
-                //     s = s.upstreamSeed;
-                //     }
-                // }
+                    s.riverLength = s.riverLength + 1;                    
+                    s.isRiver = true;  
+
+                    console.log(`Marking river at ${s.x.toFixed(0)},${s.z.toFixed(0)} with water ${s.water} `, s);
+                    
+                    s = s.upstreamSeed;
+                }
             }
         }
 
@@ -179,7 +177,10 @@ export class VoronoiRegions {
 
     //#region Downstream Sd
     getDownstreamSeed(seed) {
+
         const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize);
+
+        //console.log(`candidates length is ${candidates.length}`);
 
         // bugfix - if nothing nearby, serach farther
         if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
@@ -190,7 +191,9 @@ export class VoronoiRegions {
         let bestScore = -Infinity;
 
         for (const neighbor of candidates) {
-            if (neighbor === seed) {console.log('neighbor is self'); continue;}; //ignore self
+            if (neighbor === seed) {
+                continue;
+            }; //ignore self
             if (neighbor.elevation >= seed.elevation) continue; // ignore uphill seeds                   
 
             const dx = neighbor.x - seed.x;
@@ -267,16 +270,22 @@ export class VoronoiRegions {
         const bx = Math.floor(x / sizeOfBucket);
         const bz = Math.floor(z / sizeOfBucket);
 
+       
+
          // Search surrounding buckets
         for (let dz = -1; dz <= 1; dz++) {
             for (let dx = -1; dx <= 1; dx++) {
                 const key = `${bx+dx},${bz+dz}`;
+
+                if (bx+dx === x && bz+dz === z) continue; // same
 
                 if (this.buckets.has(key)) {
                     newCandidates.push(...this.buckets.get(key));
                 }
             }
         }        
+
+        //console.log(`newcandidates length is ${newCandidates.length}`);
 
         return newCandidates;
     }
