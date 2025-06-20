@@ -33,12 +33,18 @@ export class VoronoiRegions {
     //#region Gen Seeds
     generateSeeds(mapSize) {
 
-        const margin = this.bucketSize;        
+        const margin = this.bucketSize;    
+        
+        const randSeedIndex = Math.floor(Math.random()*VORONOI_SEED_COUNT);        
+
+        // this.seeds[randSeedIndex].elevation += 250;
 
         // fill a square area centered on (0.0)
         for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
             const x = rng() * mapSize - mapSize/2; // center on 0,0
             const z = rng() * mapSize - mapSize/2;
+
+
 
             // Generate Simplex Noise. Probably change this later to ref a stored version
             let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
@@ -50,7 +56,17 @@ export class VoronoiRegions {
 
             let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
             let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            //let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
+
+//console.log(randSeedIndex + ` | ` + i);
+                        // Random Seed, just to change elevation manually to see what happens
+            if (randSeedIndex === i) {
+                elevation += 200;
+                console.log(`Random Seed: (${x}, ${z})`);
+            }
+
+
 
             //#region Biome Values
             const slope = this.getSlope(x,z); // partial derivitive of continent. gets rain shadow
@@ -92,6 +108,9 @@ export class VoronoiRegions {
             this.buckets.get(key).push(seed);
         }
 
+
+
+
         for (let i = 0; i < 30; i++) 
             this.setErosion();
 
@@ -109,7 +128,7 @@ export class VoronoiRegions {
 
             if (seed.biome === null) {
                 biome = this.setBiome(seed);
-                console.log(`setting biome to ${biome}`);
+                //console.log(`setting biome to ${biome}`);
             } else {
                 biome = seed.biome;
             }
@@ -140,10 +159,10 @@ export class VoronoiRegions {
             seed.downstreamSeed = this.getDownstreamSeed(seed);
             seed.water = 1; // init, used below to accumulate
 
-            console.log(seed);
+            //console.log(seed);
 
              if (!seed.upstreamSeed && !seed.downstreamSeed) {
-                console.warn("Seed has no upstream or downstream:", seed);
+                //console.warn("Seed has no upstream or downstream:", seed);
             }
         }      
 
@@ -182,7 +201,7 @@ export class VoronoiRegions {
         let seedsWithWater = 0;
 
         for (const seed of this.seeds) {
-            if (seed.water > 5) {
+            if (seed.water > 15) {
 
                 seedsWithWater++;
 
@@ -222,7 +241,7 @@ export class VoronoiRegions {
     //#region Downstream Sd
     getDownstreamSeed(seed) {
 
-        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*1.5);
+        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
 
         //console.log(`candidates length is ${candidates.length}`);
 
@@ -247,6 +266,8 @@ export class VoronoiRegions {
                 best = neighbor;  
             }
         }
+
+        if (best !== null) best.upstreamSeed = seed;
 
         return best; // may still be null if local min or basin
     }

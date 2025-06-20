@@ -184,7 +184,7 @@ const camPropertiesOverhead = {
     id: "camera_overhead",
     MIN_FOLLOW_DIST: 100,
     MAX_FOLLOW_DIST: 300,
-    followDistance: 200,
+    followDistance: 300,
     position: vec3.fromValues(0, 200, 0),
     MIN_PITCH: -1.5,
     MAX_PITCH: -.2

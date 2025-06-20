@@ -11,7 +11,7 @@ export const debugSettings = {
     GRID: false,
     COLLIDERS: false,
     BIOME_COLORS: true,
-    RAYCASTS: true,
+    RAYCASTS: false,
     CULLRAYS: false,
 }
 
