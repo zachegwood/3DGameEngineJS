@@ -3,6 +3,7 @@ import { drawWireFrameCube, findWireFrameCube } from './collisions.js';
 import { generateFlatGridAsync, calculateNormalsAsync } from './TerrainBiome/terrain.js';
 import { addToRaycast } from './main.js';
 import { WORLD_SCALE } from '/config.js'
+import { biomeDebugOverlay } from './debug.js';
 
 const TILE_SIZE = 1;
 
@@ -417,6 +418,8 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
         segments, segments,
         worldOffsetX, worldOffsetZ
     ); // from terrain.js
+
+    biomeDebugOverlay(terrainInfo.biomeCount);
 
 
     

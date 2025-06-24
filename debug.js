@@ -26,6 +26,65 @@ let grid = null;
 
 const positions = [];
 
+let biomes = null;
+let alreadySetBiomes = false;
+
+export function biomeDebugOverlay(newBiomes = null) {
+
+    if (alreadySetBiomes) return;
+
+    // called once from voronoi webworker to setup vars.
+    // called again from testLevel_Terrain.js to use vars
+
+    if (newBiomes !== null && biomes === null) {        // call coming from meshShapes.js terrain builder
+        biomes = newBiomes;
+        console.log(`set new biomes `, biomes);
+        return;
+    }
+
+    // call coming from test level scene
+
+    const biomeOverlay = document.getElementById("biome_container");
+
+    for (let b in biomes) {
+        const item = document.createElement("div");
+        item.textContent = `${b}: ${biomes[b]}`;
+
+        const [r_, g_, b_] = getBiomeColor(b);
+        item.style.background = `rgb(${r_ * 255}, ${g_ * 255}, ${b_ * 255})`; // valid CSS
+        item.style.color = 'black';
+        biomeOverlay.append(item);
+    }
+
+    alreadySetBiomes = true;
+}
+
+//#region Biome Color
+    function getBiomeColor(biome) { // this isa COPY of the one in voronoi. IT IS NOT THE SAME
+
+        //if (biome !== undefined) console.log(biome);
+
+        console.log(`getting color of ${biome}`)
+
+        switch (biome) {
+            case `mountains`: return [0.4, 0.4, 0.8];
+            case `plateau`: return [0.6, 0.8, 0.1];
+
+            case 'forest': return [0.2, 1.0, 0.2];      
+
+            case 'desert': return [1.0, 1.0, 0.4];
+            case 'tundra': return [0.8, 0.8, 1.0];
+            case 'plains': return [0.8, 0.9, 0.6];            
+
+            case 'swamp': return [0.2, 0.6, 0.0];
+            case 'coastal': return [0.6, 0.0, 0.0];
+
+            case 'river': return [0.0, 0.0, 1];
+
+            default: return [1.0, 1.0, 1.0]; // white = unknown
+        }
+    }
+
 
 //#region Create Grid
 

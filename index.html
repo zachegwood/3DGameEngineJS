@@ -87,12 +87,26 @@
             top: 200px;
             font-size: 45px;
         }
+        #biome_container {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            width: 100px;
+            background: black;
+            color: white;
+            top: 30px;
+            left: 10px;
+        }
+        .biome {
+            background: green;
+        }
 
     </style>
 
 </head>
 <body>
     <div id="pause_text">GAME PAUSED</div>
+    <div id="biome_container"></div>
     <div id="debug_container">
         <button id="debug_toggle_grid">GRID</div>
         <button id="debug_toggle_colliders">COLLIDER</button>

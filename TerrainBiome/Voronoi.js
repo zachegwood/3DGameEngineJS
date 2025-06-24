@@ -4,7 +4,6 @@ import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.
 import { generateSimplexNoise, rng } from "./simplexNoise.js";
 import { generatePoissonPoints } from "./Poisson.js";
 
-
 const CONTINENT_FREQ = 0.0008
 
 

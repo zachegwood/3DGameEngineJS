@@ -4,6 +4,7 @@ import { Light } from "../lights.js";
 
 import { createSquare, createTriangle, loadTexture, loadModel, createCube, createTerrainMesh} from '../meshShapes.js';
 import { buildTerrain } from "../TerrainBiome/terrain.js";
+import { biomeDebugOverlay } from "/debug.js";
 
 
 
@@ -41,10 +42,13 @@ export async function buildLevel(gl, myShaders) {
 
  //#region Terrain
     const terrain2 = await buildTerrain(gl);
+    biomeDebugOverlay();
     const chunksArray = Array.from(terrain2.values());
     for (let i = 0; i < terrain2.size; i++) {
         scene.add(chunksArray[i]);
     }
+
+    
 
 
 

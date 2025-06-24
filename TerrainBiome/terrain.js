@@ -112,7 +112,7 @@ export async function generateFlatGridAsync(width, depth, segmentsX, segmentsZ, 
 
     return new Promise((resolve) => {
         worker.onmessage = (e) => {
-            const { positions, indices, uvs, biomes, biomeColors, yMax, yMin, seeds } = e.data;
+            const { positions, indices, uvs, biomes, biomeColors, yMax, yMin, seeds, biomeCount } = e.data;
             resolve({
                 positions,
                 indices,
@@ -121,7 +121,8 @@ export async function generateFlatGridAsync(width, depth, segmentsX, segmentsZ, 
                 biomeColors,
                 yMax,
                 yMin,
-                seeds
+                seeds,
+                biomeCount
             });
         };
 

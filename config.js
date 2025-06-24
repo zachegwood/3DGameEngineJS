@@ -26,7 +26,6 @@ console.log(`WORLD_SEED: ${WORLD_SEED}`);
 // Current Debug Changes
 /*
 
-    Commented out Erosion and Rivers from Voronoi.js
     Disabled Frustum Culling in debugSettings.js
     Set cam far to 3000 instead of 1000 in camera.js
 

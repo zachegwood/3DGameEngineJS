@@ -155,7 +155,7 @@ onmessage = function (e) {
             }
         }  
     
-        postMessage({ positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray, yMax: yHighest, yMin: yLowest, seeds: voronoi.seeds});
+        postMessage({ positions, indices, uvs, biomes: biomesArray, biomeColors: colorsArray, yMax: yHighest, yMin: yLowest, seeds: voronoi.seeds, biomeCount: voronoi.biomeCount});
     
 };
 
