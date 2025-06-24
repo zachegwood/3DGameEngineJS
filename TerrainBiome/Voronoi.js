@@ -59,8 +59,8 @@ export class VoronoiRegions {
             //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
             let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
-            //let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
-            let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
+            let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            //let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
             //let elevation = VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = continentValue;
@@ -117,16 +117,16 @@ export class VoronoiRegions {
 
 
 
-        // for (let i = 0; i < 30; i++) 
-        //     this.setErosion();
+        for (let i = 0; i < 30; i++) 
+            this.setErosion();
 
-        // // for (let seed of this.seeds) {
-        // //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
-        // //         console.warn("Seed has no upstream or downstream:", seed);
-        // //     }
-        // // }
+        // for (let seed of this.seeds) {
+        //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
+        //         console.warn("Seed has no upstream or downstream:", seed);
+        //     }
+        // }
 
-        // this.setRivers();
+        this.setRivers();
 
         for (const seed of this.seeds) {
 
