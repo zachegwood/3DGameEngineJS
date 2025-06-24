@@ -1,9 +1,12 @@
-import { rng } from "./simplexNoise.js";
+import { rngs } from "./simplexNoise.js";
 
-const MAX_ATTEMPTS = 15;
+const MAX_ATTEMPTS = 30;
+const MIN_DIST = 100;
 
-export function generatePoissonPoints(mapSize, minDist) {
-    const cellSize = minDist / Math.SQRT2;
+const rng = rngs.poisson;
+
+export function generatePoissonPoints(mapSize) {
+    const cellSize = MIN_DIST / Math.SQRT2;
     const gridWidth = Math.ceil(mapSize / cellSize);
     const grid = new Array(gridWidth * gridWidth).fill(null);
 
@@ -35,7 +38,7 @@ export function generatePoissonPoints(mapSize, minDist) {
                 if (neighbor) {
                     const dx = neighbor.x - x;
                     const dz = neighbor.z - z;
-                    if (dx*dx + dz*dz < minDist*minDist) return false;
+                    if (dx*dx + dz*dz < MIN_DIST*MIN_DIST) return false;
                 }
             }
         }
@@ -57,7 +60,7 @@ export function generatePoissonPoints(mapSize, minDist) {
 
         for (let i = 0; i < MAX_ATTEMPTS; i++) {
             const angle = rng() * Math.PI * 2;
-            const radius = minDist * (1 + rng());
+            const radius = MIN_DIST * (1 + rng());
             const x = point.x + Math.cos(angle) * radius;
             const z = point.z + Math.sin(angle) * radius;
 

@@ -4,7 +4,15 @@ import { WORLD_SEED } from "/config.js";
 const perm = new Uint8Array(512);
 const p = new Uint8Array(256);
 
-export const rng = mulberry32(WORLD_SEED);
+export function rng(seed) { return mulberry32(seed); }
+
+export const rngs = {
+    poisson: rng(WORLD_SEED + 1),
+    elevation: rng(WORLD_SEED + 2),
+    biome: rng(WORLD_SEED + 3),
+    river: rng(WORLD_SEED + 4),
+    simplex: rng(WORLD_SEED + 5)
+};
 
 //#region Mulberry
 export function mulberry32(seed) {
@@ -33,7 +41,7 @@ for (let i = 0; i < 12; i++) {
 
 for (let i = 0; i < 256; i++) p[i] = i; // fill with 1,2,3...255
 for (let i = 0; i < 256; i++) {
-    const j = Math.floor(rng() * 256);
+    const j = Math.floor(rngs.simplex() * 256);
     [p[i], p[j]] = [p[j], p[i]]; // shuffle
 }
 for (let i = 0; i < 512; i++) {

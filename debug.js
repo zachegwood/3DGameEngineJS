@@ -38,7 +38,7 @@ export function biomeDebugOverlay(newBiomes = null) {
 
     if (newBiomes !== null && biomes === null) {        // call coming from meshShapes.js terrain builder
         biomes = newBiomes;
-        console.log(`set new biomes `, biomes);
+        //console.log(`set new biomes `, biomes);
         return;
     }
 
@@ -64,7 +64,7 @@ export function biomeDebugOverlay(newBiomes = null) {
 
         //if (biome !== undefined) console.log(biome);
 
-        console.log(`getting color of ${biome}`)
+        //console.log(`getting color of ${biome}`)
 
         switch (biome) {
             case `mountains`: return [0.4, 0.4, 0.8];

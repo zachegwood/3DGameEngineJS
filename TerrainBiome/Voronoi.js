@@ -1,7 +1,7 @@
 import { lerp } from "../utils.js";
 
 import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.js'
-import { generateSimplexNoise, rng } from "./simplexNoise.js";
+import { generateSimplexNoise, rngs } from "./simplexNoise.js";
 import { generatePoissonPoints } from "./Poisson.js";
 
 const CONTINENT_FREQ = 0.0008
@@ -44,7 +44,7 @@ export class VoronoiRegions {
         //     const x = rng() * mapSize - mapSize/2; // center on 0,0
         //     const z = rng() * mapSize - mapSize/2;
 
-        const poissonPoints = generatePoissonPoints(mapSize, 100);
+        const poissonPoints = generatePoissonPoints(mapSize);
         for (let {x, z} of poissonPoints) {
 
 
@@ -58,13 +58,13 @@ export class VoronoiRegions {
             //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
             let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
-            let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            let elevation = Math.pow(rngs.elevation(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
             //let elevation = VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = continentValue;
 
-//console.log(randSeedIndex + ` | ` + i);
+            //console.log(randSeedIndex + ` | ` + i);
                         // Random Seed, just to change elevation manually to see what happens
             // if (randSeedIndex === i) {
             //     elevation += 200;
