@@ -2,6 +2,7 @@ import { lerp } from "../utils.js";
 
 import { VORONOI_SEED_COUNT, VORONOI_BASE_ELEVATION, CHUNK_SIZE } from '/config.js'
 import { generateSimplexNoise, rng } from "./simplexNoise.js";
+import { generatePoissonPoints } from "./Poisson.js";
 
 
 const CONTINENT_FREQ = 0.0008
@@ -11,8 +12,8 @@ const CONTINENT_FREQ = 0.0008
 export class VoronoiRegions {
     constructor() {
 
-        this.bucketSize = 64;
-        this.regionSize = 64;
+        this.bucketSize = 64;           // used to be 64 and 64
+        this.regionSize = 256;
 
         this.seeds = [];            // all seed points
         this.buckets = new Map();   // spacial has buckets
@@ -35,14 +36,17 @@ export class VoronoiRegions {
 
         const margin = this.bucketSize;    
         
-        const randSeedIndex = Math.floor(Math.random()*VORONOI_SEED_COUNT);        
+        //const randSeedIndex = Math.floor(Math.random()*VORONOI_SEED_COUNT);        
 
         // this.seeds[randSeedIndex].elevation += 250;
 
         // fill a square area centered on (0.0)
-        for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
-            const x = rng() * mapSize - mapSize/2; // center on 0,0
-            const z = rng() * mapSize - mapSize/2;
+        // for (let i = 0; i < VORONOI_SEED_COUNT; i++) {
+        //     const x = rng() * mapSize - mapSize/2; // center on 0,0
+        //     const z = rng() * mapSize - mapSize/2;
+
+        const poissonPoints = generatePoissonPoints(mapSize, 100);
+        for (let {x, z} of poissonPoints) {
 
 
 
@@ -55,16 +59,18 @@ export class VoronoiRegions {
             //elevation = continentValue * VORONOI_BASE_ELEVATION;
 
             let bias = 1.5; // >1 biases toward higher values, <1 biases toward lower values
-            let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
-            //let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
+            //let elevation = Math.pow(rng(), 1 / bias) * VORONOI_BASE_ELEVATION * continentValue;
+            let elevation = rng() * VORONOI_BASE_ELEVATION * continentValue;
             //let elevation = ((generateSimplexNoise(x * 0.02, z * 0.02) + 1) / 2) * continentValue * VORONOI_BASE_ELEVATION;
+            //let elevation = VORONOI_BASE_ELEVATION * continentValue;
+            //let elevation = continentValue;
 
 //console.log(randSeedIndex + ` | ` + i);
                         // Random Seed, just to change elevation manually to see what happens
-            if (randSeedIndex === i) {
-                elevation += 200;
-                console.log(`Random Seed: (${x}, ${z})`);
-            }
+            // if (randSeedIndex === i) {
+            //     elevation += 200;
+            //     console.log(`Random mountain at Random Seed: (${x}, ${z})`);
+            // }
 
 
 
@@ -111,16 +117,16 @@ export class VoronoiRegions {
 
 
 
-        for (let i = 0; i < 30; i++) 
-            this.setErosion();
+        // for (let i = 0; i < 30; i++) 
+        //     this.setErosion();
 
-        // for (let seed of this.seeds) {
-        //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
-        //         console.warn("Seed has no upstream or downstream:", seed);
-        //     }
-        // }
+        // // for (let seed of this.seeds) {
+        // //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
+        // //         console.warn("Seed has no upstream or downstream:", seed);
+        // //     }
+        // // }
 
-        this.setRivers();
+        // this.setRivers();
 
         for (const seed of this.seeds) {
 
@@ -241,12 +247,18 @@ export class VoronoiRegions {
     //#region Downstream Sd
     getDownstreamSeed(seed) {
 
-        const candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
+        let candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
 
         //console.log(`candidates length is ${candidates.length}`);
+        let multiplier = 2;
 
-        // bugfix - if nothing nearby, serach farther
-        if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
+        while (candidates.length === 0 ) {
+            candidates = this.findCandidates(seed.x, seed.z, this.bucketSize * multiplier);
+            multiplier = multiplier + 1;
+        }
+
+        // // bugfix - if nothing nearby, serach farther
+        // if (candidates.length === 0) candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*3);
 
         if (candidates.length === 0) console.error("NO CANDIATES FOUND FOR DOWNSTREAM SEED: ", seed)
 
@@ -370,11 +382,17 @@ export class VoronoiRegions {
     getSeedInfo(x,z) {
 
         let candidates = this.findCandidates(x, z, this.bucketSize);
+        let multiplier = 2;
 
-        // bug fix. if you couldn't find any close seeds, look farther
-        if (candidates.length === 0) {
-            candidates = this.findCandidates(x, z, this.bucketSize * 2);
+        while (candidates.length === 0 ) {
+            candidates = this.findCandidates(x, z, this.bucketSize * multiplier);
+            multiplier = multiplier + 1;
         }
+
+        // // bug fix. if you couldn't find any close seeds, look farther
+        // if (candidates.length === 0) {
+        //     candidates = this.findCandidates(x, z, this.bucketSize * 2);
+        // }
         
 
         //console.log(`x,z (${x},${z}) : bx,bz (${bx},${bz}) -- bucketSize is ${this.bucketSize}`);

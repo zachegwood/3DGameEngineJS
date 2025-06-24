@@ -4,6 +4,7 @@
 
 import { mat4 } from 'https://cdn.jsdelivr.net/npm/gl-matrix@3.4.3/esm/index.js';
 import { extractFrustumPlanes, isAABBInFrustum, setFrustumPlanes } from '../frustum.js'
+import { debugSettings } from '../debug.js';
 
 const entities = [];
 const visibleEntities = [];
@@ -96,6 +97,8 @@ export class SceneNode {
                 } else if (isAABBInFrustum(child.worldAABB, frustumPlanes)) {
                     shouldDraw = true;
                 } else {
+
+                    if (debugSettings.FRUSTUMCULL === false) shouldDraw = true; // dont cull ANYTHING if set
                     //console.log(`culling this: ${child.id}`);
                 }
             //}

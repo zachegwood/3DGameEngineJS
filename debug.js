@@ -13,6 +13,7 @@ export const debugSettings = {
     BIOME_COLORS: true,
     RAYCASTS: false,
     CULLRAYS: false,
+    FRUSTUMCULL: false,
 }
 
 cullRaysToggle(debugSettings.CULLRAYS);

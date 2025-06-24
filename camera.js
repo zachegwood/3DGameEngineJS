@@ -16,7 +16,7 @@ export class Camera {
         // Perspective Values
         this.fov = Math.PI / 4;
         this.near = 0.5;
-        this.far = 1000;
+        this.far = 3000;
 
         this.viewMatrix = mat4.create();
         this.projectionMatrix = mat4.create();
