@@ -104,7 +104,7 @@ onmessage = function (e) {
 //seedInfo.biome
                     let color = [1,1,1];
 
-                    if (seedInfo) {
+                    if (seedInfo && seedInfo.closestSeed) {
                         //console.log(seedInfo.closestSeed.color);
                         color = seedInfo.closestSeed.color;
                     }

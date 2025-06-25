@@ -44,10 +44,16 @@ export class VoronoiRegions {
         //     const x = rng() * mapSize - mapSize/2; // center on 0,0
         //     const z = rng() * mapSize - mapSize/2;
 
+        //#region Poisson Points
         const poissonPoints = generatePoissonPoints(mapSize);
+
+        console.warn(`- LOOPING THROUGH ${poissonPoints.length} POISSON POINTS -`);
+
+        //let poissonCount = 0;
+
         for (let {x, z} of poissonPoints) {
 
-
+            //console.warn(`pt ${poissonCount}`); poissonCount++;
 
             // Generate Simplex Noise. Probably change this later to ref a stored version
             let continentValue = (generateSimplexNoise(x * CONTINENT_FREQ, z * CONTINENT_FREQ) + 1) / 2;
@@ -114,10 +120,10 @@ export class VoronoiRegions {
         }
 
 
+        // console.warn(`- Setting Erosion -`);
 
-
-        for (let i = 0; i < 30; i++) 
-            this.setErosion();
+        // for (let i = 0; i < 30; i++) 
+        //     this.setErosion();
 
         // for (let seed of this.seeds) {
         //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
@@ -125,7 +131,11 @@ export class VoronoiRegions {
         //     }
         // }
 
-        this.setRivers();
+        console.warn(`- Setting Rivers -`);
+
+        //this.setRivers();
+
+        console.warn(`- Setting Biome Per Seed (${this.seeds.length} seeds) -`);
 
         for (const seed of this.seeds) {
 
@@ -149,6 +159,8 @@ export class VoronoiRegions {
 
         let total = Object.values(this.biomeCount).reduce((sum, count) => sum + count, 0);
 
+        console.warn(`- Finished Building Terrain -`);
+
         //console.log(`${total} biomes: `, this.biomeCount);
     }
 
@@ -171,11 +183,14 @@ export class VoronoiRegions {
             }
         }      
 
+
         for (const seed of this.seeds) {
+
+            let maxHops = 500;
 
             const visited = new Set();
             let ds = seed.downstreamSeed;
-            while (ds && !visited.has(ds)) {
+            while (ds && !visited.has(ds) && maxHops-- > 0) {
                 visited.add(ds);
                 ds.water += 1;
 
@@ -184,6 +199,8 @@ export class VoronoiRegions {
                 // next iteration
                 ds = ds.downstreamSeed;                
             }
+
+            if (maxHops <= 0) console.error(`Erosion loop exceeded max hops`, seed);
         }
 
         for (const seed of this.seeds) {
@@ -279,6 +296,10 @@ export class VoronoiRegions {
         }
 
         if (best !== null) best.upstreamSeed = seed;
+
+        if (!best) {
+    console.warn("Seed is in a basin or local minimum", seed);
+}
 
         return best; // may still be null if local min or basin
     }
@@ -382,8 +403,9 @@ export class VoronoiRegions {
 
         let candidates = this.findCandidates(x, z, this.bucketSize);
         let multiplier = 2;
+        let maxMultiplier = 8;
 
-        while (candidates.length === 0 ) {
+        while (candidates.length === 0 && multiplier < maxMultiplier) {
             candidates = this.findCandidates(x, z, this.bucketSize * multiplier);
             multiplier = multiplier + 1;
         }
@@ -400,7 +422,10 @@ export class VoronoiRegions {
 
        
         // this shouldn't get triggered anymore
-        if (candidates.length === 0) {  return 0; }
+        if (candidates.length === 0) {      
+            console.warn(`No seeds found near (${x},${z}) even after max search`);
+            return { y: 0}; 
+        }
 
         // Find 2 closest seeds
         candidates.sort((a,b) => {

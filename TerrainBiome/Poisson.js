@@ -1,11 +1,14 @@
 import { rngs } from "./simplexNoise.js";
 
 const MAX_ATTEMPTS = 30;
-const MIN_DIST = 100;
+const MIN_DIST = 200;
 
 const rng = rngs.poisson;
 
 export function generatePoissonPoints(mapSize) {
+
+    console.warn("- GENERATING POISSON POINTS -");
+
     const cellSize = MIN_DIST / Math.SQRT2;
     const gridWidth = Math.ceil(mapSize / cellSize);
     const grid = new Array(gridWidth * gridWidth).fill(null);

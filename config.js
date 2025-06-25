@@ -13,7 +13,7 @@ export const VORONOI_BASE_ELEVATION = 100+50; // this gets multiplied. IE elevat
 export const VORONOI_RAYS_TOGGLE = true;
 
 export const CHUNK_SIZE = 32; // 32x32 units
-export const CHUNK_PIECES = 30;
+export const CHUNK_PIECES = 40;
 
 export const WORLD_SEED = 120;
 

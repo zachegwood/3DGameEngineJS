@@ -196,8 +196,8 @@ const camPropertiesPlayer = {
     MAX_FOLLOW_DIST: 100,
     followDistance: 15,
     position: vec3.fromValues(0, 30, 0),
-    MIN_PITCH: -1.5,
-    MAX_PITCH: -.5
+    MIN_PITCH: -1.25,
+    MAX_PITCH: -.2
 }
 
 const camera_player = new Camera(canvas, playerOne, camPropertiesPlayer);

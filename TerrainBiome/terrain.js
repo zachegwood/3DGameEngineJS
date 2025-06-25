@@ -56,9 +56,13 @@ export async function buildTerrain(gl) {
     //voronoi.generateSeeds(mapSize); // stores seeds in VoronoiRegions.seeds;
     // moved this to workerFlatGrid
 
+    let chunkCount = 0;
 
     for (let x = -halfPieces; x < halfPieces; x++) {
         for (let z = -halfPieces; z < halfPieces; z++){
+
+            chunkCount++;
+            console.warn(`building chunk #${chunkCount}`);
 
             const worldOffsetX = x * CHUNK_SIZE * WORLD_SCALE;
             const worldOffsetZ = z * CHUNK_SIZE * WORLD_SCALE;
@@ -95,6 +99,8 @@ export async function buildTerrain(gl) {
             //console.log(`${terrainChunk.id} -->  ${terrainChunk.position}`);
         }   
     }
+
+    console.warn(`- Finished Building Terrain Chunks -`);
 
     return chunks;
 }

@@ -468,7 +468,6 @@ export async function createTerrainMesh(gl, chunkSize, worldOffsetX, worldOffset
         }
     }
 
-
     return new Mesh(
         gl, 
         terrainInfo.positions, 
