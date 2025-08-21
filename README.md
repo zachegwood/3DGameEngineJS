@@ -1,8 +1,29 @@
-## What This Is
+# 3DGameEngineJS
+
+A custom 3D browser game engine
+by Zac Hegwood (HAWKWOOD)
+
+
+## Table of Contents
+
+[What Is This?](#what-is-this)
+
+[How to Run](#how-to-run)
+
+[Customize](#customize)
+
+[Future Improvements](#future-improvements)
+
+[Blender Export](#blender-export)
+
+
+## What Is This?
 
 A custom 3D game engine built by Zac Hegwood (HAWKWOOD), using vanilla JavaScript to run a 3D game in a browser.
-Currently builds a random terrain map, with a focus on effeciency. Offloads work to webworkers for speed/async.
-Includes Frustum Culling and terrain chunking to allow enormous randomized maps.
+Currently builds a random terrain map, with a focus on effeciency. 
+
+Biomes are set based on elevation, temperature, and erosion. Ex, tundra is North, desert is South.
+Engine uses Frustum Culling and terrain chunking to allow enormous randomized maps. Offloads work to webworkers for speed/async.
 For randomness, includes custom variations of Poisson points, Simplex Noise, and Voronoi points to handle biomes.
 Colliders are AABB, changing size when the object rotates, preserving the AABB alignment for quick collision tests.
 
@@ -14,119 +35,41 @@ Clone this repo, then open the folder in VSCode with the "Live Server" add-on. W
 Once it opens in your browser, click inside the browser window to activate it (locking the cursor). 
 You can unlock the cursor by pressing ESC.
 WASD to move, mouse to adjust camera, mouse wheel to zoom
+Game will pause when browser loses focus, then un-pause automatically when focus returns
+
+The buttons at the top-right can enable/disable debug functions. Including:
+
+> enable rays indicating poisson points and slope normal
+
+> enable colliders around terrain chunks to illustrate how frustum culling is achieved.
 
 
-### Changes you can make
+## Customize 
+
+ie, Changes you can make.
 
 You can edit the config.js file to change camera type, and other world-gen variables.
-ex, to change the camera from overhead (where you can see the frustum culling) to Third-person (where frustum culling is invislbe), change this: CURRENT_CAMERA = 'PLAYER_THIRD_PERSON';
+ex, to change the camera from overhead (where you can see the frustum culling) to Third-person (where frustum culling is invislbe), change this: 
+
+<code>
+    CURRENT_CAMERA = 'PLAYER_THIRD_PERSON'; 
+</code>
 
 
-### Planned Future Improvements
+## Future Improvements
 
-> Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
-    Blender import is 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
-> Continue biome work
-> LODs (difficult atm because of how terrain chunks are built)
+>   Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
 
+>   Blender import is 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
 
-# Table of Contents
+>   Continue biome work
 
-[Main](#mainjs)
-
-[Controls](#controlsjs)
-
-[Camera](#camerajs)
-
-[Player](#playerjs)
-
-[Mesh Shapes](#meshshapesjs)
-
-[Shaders](#shadersjs)
-
-[Debug](#debugjs)
-
-[Blender](#blender)
+>   LODs (difficult atm because of how terrain chunks are built)
 
 
+## Blender Export
 
-
-# 3DGameEngineJS
-
-
-
-## Main.js
-
-Holds ref to gl. 
-
-const myShaders -- a list of shaders from Shaders.js. Access like <code> myShaders.SolidColor </code>
-
-Render loop.
-
-Update loop.
-
-
-
-
-## Controls.js
-
-Keybindings.
-
-Also exports the movement vector based on player input.
-
-
-
-## Camera.js
-
-Set vars for: follow distance, pitch, yaw, zoom, etc
-
-Has a "follow target", which defaults to the player (set in main).
-
-
-
-
-
-## Player.js
-
-Sets its initial Y position to half-height so it's not centered in the floor.
-
-Player Update() is vector math based on "Forward Vector" and "Right Vector" imported from camera.js
-
-Player Draw() is 
-
-
-## MeshShapes.js
-
-Mesh class. Handles indentity matrix, and buffers for shapes. position, uv, normals, etc. 
-Includes helper functions to scale, rotate, etc.
-Includes <code>Mesh.draw(shader)</code>
-
-Shape factory. Defines vertex matrices of shapes, which defines positions, uvs, and normals.
-
-Includes LoadTexture function
-
-Includes LoadModel function, which imports JSON that was exported from Blender
-
-
-
-## Shaders.js
-
-All actual shader code. Stored in <code>const: shaders<code> 
-
-Has Shader Class. Includes building shader program, tracking shader vars, etc
-
-CreateShaders(gl) -- Passes an object of shader programs to Main.js. 
-Access in main with <code> myShaders.SolidColor </code>
-
-
-
-## Debug.js
-
-Runs Debug Gridlines and Origin Raycast
-
-
-
-## Blender
+This project includes custom code for exporting a Blender model as a single JSON, for easy, quick, low-resource loading
 
 Paste the following code in the "Scripting" tab inside Blender. Tested with version 4.4.3
 
@@ -134,49 +77,49 @@ This will export the model's vertecies into a JSON file in the same directory as
 
 <code>
 
-import bpy
-import bmesh
-import json
-import os
+    import bpy
+    import bmesh
+    import json
+    import os
 
-obj = bpy.context.active_object
-mesh = obj.data
+    obj = bpy.context.active_object
+    mesh = obj.data
 
-# Ensure mesh is triangulated
-bm = bmesh.new()
-bm.from_mesh(mesh)
-bmesh.ops.triangulate(bm, faces=bm.faces[:])  # Triangulate in-place
-bm.verts.ensure_lookup_table()
+    # Ensure mesh is triangulated
+    bm = bmesh.new()
+    bm.from_mesh(mesh)
+    bmesh.ops.triangulate(bm, faces=bm.faces[:])  # Triangulate in-place
+    bm.verts.ensure_lookup_table()
 
-vertices = []
-for face in bm.faces:
-    for loop in face.loops:
-        vert = loop.vert
-        
-        #normal = loop.vert.normal      # auto-smooths
-        normal = face.normal            # no smoothing
-        
-        uv_layer = bm.loops.layers.uv.active
-        uv = loop[uv_layer].uv if mesh.uv_layers.active else (0.0, 0.0)
+    vertices = []
+    for face in bm.faces:
+        for loop in face.loops:
+            vert = loop.vert
+            
+            #normal = loop.vert.normal      # auto-smooths
+            normal = face.normal            # no smoothing
+            
+            uv_layer = bm.loops.layers.uv.active
+            uv = loop[uv_layer].uv if mesh.uv_layers.active else (0.0, 0.0)
 
-        # Transform Blender coords [x, y, z] → WebGL coords [x, z, -y]
-        co = vert.co
-        x, y, z = co.x, co.y, co.z
-        nx, ny, nz = normal.x, normal.y, normal.z
+            # Transform Blender coords [x, y, z] → WebGL coords [x, z, -y]
+            co = vert.co
+            x, y, z = co.x, co.y, co.z
+            nx, ny, nz = normal.x, normal.y, normal.z
 
-        vertex = {
-            "position": [x, z, -y],
-            "normal":   [nx, nz, -ny],
-            "uv":       [uv.x, 1 - uv.y],  # Flip V to match WebGL
-        }
-        vertices.append(vertex)
+            vertex = {
+                "position": [x, z, -y],
+                "normal":   [nx, nz, -ny],
+                "uv":       [uv.x, 1 - uv.y],  # Flip V to match WebGL
+            }
+            vertices.append(vertex)
 
-bm.free()
+    bm.free()
 
-output_path = os.path.join(bpy.path.abspath("//"), "model_export.json")
-with open(output_path, "w") as f:
-    json.dump(vertices, f, indent=2)
+    output_path = os.path.join(bpy.path.abspath("//"), "model_export.json")
+    with open(output_path, "w") as f:
+        json.dump(vertices, f, indent=2)
 
-print("Exported to", output_path)
+    print("Exported to", output_path)
 
 </code>

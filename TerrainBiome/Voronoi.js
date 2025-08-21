@@ -122,8 +122,8 @@ export class VoronoiRegions {
 
         console.warn(`- Setting Erosion -`);
 
-        // for (let i = 0; i < 30; i++) 
-        //     this.setErosion();
+        for (let i = 0; i < 30; i++) 
+            this.setErosion();
 
         // for (let seed of this.seeds) {
         //     if (!seed.upstreamSeed && !seed.downstreamSeed) {
@@ -133,7 +133,7 @@ export class VoronoiRegions {
 
         console.warn(`- Setting Rivers -`);
 
-        //this.setRivers();
+        // this.setRivers();
 
         console.warn(`- Setting Biome Per Seed (${this.seeds.length} seeds) -`);
 

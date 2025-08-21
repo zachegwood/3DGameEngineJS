@@ -22,11 +22,3 @@ console.log(`WORLD_SEED: ${WORLD_SEED}`);
 
 
 
-
-// Current Debug Changes
-/*
-
-    Disabled Frustum Culling in debugSettings.js
-    Set cam far to 3000 instead of 1000 in camera.js
-
-*/
