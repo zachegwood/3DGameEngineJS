@@ -1,9 +1,31 @@
-### Future Improvements
 
-Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
 
-: 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
 
+
+
+
+
+
+
+### How to Run
+
+Clone this repo, then run in VSCode with the "Live Server" add-on. With that running, right-click index.html and choose "Open with Live Server"
+
+Once it opens in your browser, click inside the browser window to activate it (locking the cursor). 
+You can unlock the cursor by pressing ESC.
+WASD to move, mouse to adjust camera, mouse wheel to zoom
+
+### Changes you can make
+
+Edit the config.js file to change camera type. 
+ex, changing the camera: CURRENT_CAMERA = 'PLAYER_THIRD_PERSON';
+
+
+### Planned Future Improvements
+
+> Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
+    Blender import is 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
+> 
 
 
 
