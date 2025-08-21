@@ -1,33 +1,100 @@
-## What This Is
+### CURRENT TEMPORARY SETTINGS
 
-A custom 3D game engine built by Zac Hegwood (HAWKWOOD), using vanilla JavaScript to run a 3D game in a browser.
-Currently builds a random terrain map, with a focus on effeciency. Offloads work to webworkers for speed/async.
-Includes Frustum Culling and terrain chunking to allow enormous randomized maps.
-For randomness, includes custom variations of Poisson points, Simplex Noise, and Voronoi points to handle biomes.
-Colliders are AABB, changing size when the object rotates, preserving the AABB alignment for quick collision tests.
+"GRID" debug button disabled
+"BIOMES" debug button disabled. Hardcoded on.
 
 
-## How to Run
 
-Clone this repo, then open the folder in VSCode with the "Live Server" add-on. With that running, right-click index.html from inside VSCode and choose "Open with Live Server"
+
+
+
+
+
+### How to Run
+
+Clone this repo, then run in VSCode with the "Live Server" add-on. With that running, right-click index.html and choose "Open with Live Server"
 
 Once it opens in your browser, click inside the browser window to activate it (locking the cursor). 
 You can unlock the cursor by pressing ESC.
 WASD to move, mouse to adjust camera, mouse wheel to zoom
 
-
 ### Changes you can make
 
-You can edit the config.js file to change camera type, and other world-gen variables.
-ex, to change the camera from overhead (where you can see the frustum culling) to Third-person (where frustum culling is invislbe), change this: CURRENT_CAMERA = 'PLAYER_THIRD_PERSON';
+Edit the config.js file to change camera type. 
+ex, changing the camera: CURRENT_CAMERA = 'PLAYER_THIRD_PERSON';
 
 
 ### Planned Future Improvements
 
 > Change to a custom glTF to binary import format for Blender files. Preprocess glTF into Your Own Format.
-    Blender import is 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
-> Continue biome work
-> LODs (difficult atm because of how terrain chunks are built)
+> Blender import is 2–10× faster depending on how much animation, mesh, and material data you strip/pack.
+
+
+
+
+
+
+Tracing Terrain Creation and Randomness ffs ugh
+
+-[TestLevel_Terrain.js]
+    const terrain2 = await buildTerrain(gl);
+
+-buildTerrain(gl) [terrain.js] (creates chunks)
+    const newMesh = 
+    await createTerrainMesh(gl, CHUNK_SIZE, worldOffsetX, worldOffsetZ);
+    const terrainChunk = new Entity(
+        {
+            mesh: newMesh,
+            position: [worldOffsetX, 0, worldOffsetZ],
+            shader: myShaders.Lighting,
+            texture: texture,
+            id: `terrain_chunk_${x},${z}`,
+        });
+-createTerrainMesh [meshShapes.js] 
+(returns "terrainInfo" to create mesh for entity chunk)
+    generateFlatGridAsync()
+
+-generateFlatGridAsync [terrain.js]
+    worker_flatGrid
+
+-[workerFlatGrid.js] (gets height and biome values)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+NEW CHANGE:
+
+new way to create a shape. Create it as an Entity, which takes a new mesh as its constructor. Ex:
+
+const triangle = new Entity(createTriangle(gl, 1), [0,0,0]);
+
+When creating a new shape, you also have to put it in the draw() method of main or it won't appear
+
+
+
+Mesh Shapes defines shapes, like Cube
+Scene creates new Entity(mesh=createCube // from Mesh Shapesz)
+mesh calculates AABB, but holds it, since it's only local
+Entity then takes that AABB and converts it to world space. THATS where the collider comes from
+AABB never changes, since the model never changes, but the worldAABB does. so that's the collider.
+
+
+
+
+
 
 
 # Table of Contents

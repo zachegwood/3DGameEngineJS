@@ -120,7 +120,7 @@ export class VoronoiRegions {
         }
 
 
-        // console.warn(`- Setting Erosion -`);
+        console.warn(`- Setting Erosion -`);
 
         // for (let i = 0; i < 30; i++) 
         //     this.setErosion();
@@ -166,8 +166,8 @@ export class VoronoiRegions {
 
     //#region Set Erosion
     setErosion() {
-   //console.log("Total buckets:", this.buckets.size);
-   //console.log(`seeds count is ${this.seeds.length}`);
+   console.log("Total buckets:", this.buckets.size);
+   console.log(`seeds count is ${this.seeds.length}`);
 
         // Follow flow map to link seeds together
         // find seed downstream
@@ -265,7 +265,7 @@ export class VoronoiRegions {
 
         let candidates = this.findCandidates(seed.x, seed.z, this.bucketSize*2);
 
-        //console.log(`candidates length is ${candidates.length}`);
+        console.log(`candidates length is ${candidates.length}`);
         let multiplier = 2;
 
         while (candidates.length === 0 ) {
@@ -298,7 +298,7 @@ export class VoronoiRegions {
         if (best !== null) best.upstreamSeed = seed;
 
         if (!best) {
-    console.warn("Seed is in a basin or local minimum", seed);
+            console.warn("Seed is in a basin or local minimum", seed);
 }
 
         return best; // may still be null if local min or basin

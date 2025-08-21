@@ -1,7 +1,7 @@
 import { rngs } from "./simplexNoise.js";
 
 const MAX_ATTEMPTS = 30;
-const MIN_DIST = 300;
+const MIN_DIST = 100;
 
 const rng = rngs.poisson;
 

@@ -47,16 +47,16 @@ debugToggleColliders.addEventListener("click", () => {
     console.log("toggling debug colliders");
     debugSettings.COLLIDERS = !debugSettings.COLLIDERS;
 });
-debugToggleGrid.addEventListener("click", () => {
-    debugToggleGrid.classList.toggle("debug_enabled");
-    console.log("toggling debug grid");
-    debugSettings.GRID = !debugSettings.GRID;
-});
-debugToggleBiomeColors.addEventListener("click", () => {
-    debugToggleBiomeColors.classList.toggle("debug_enabled");
-    console.log("toggling debug biome colors");
-    debugSettings.BIOME_COLORS = !debugSettings.BIOME_COLORS;
-});
+// debugToggleGrid.addEventListener("click", () => {
+//     debugToggleGrid.classList.toggle("debug_enabled");
+//     console.log("toggling debug grid");
+//     debugSettings.GRID = !debugSettings.GRID;
+// });
+// debugToggleBiomeColors.addEventListener("click", () => {
+//     debugToggleBiomeColors.classList.toggle("debug_enabled");
+//     console.log("toggling debug biome colors");
+//     debugSettings.BIOME_COLORS = !debugSettings.BIOME_COLORS;
+// });
 debugToggleRaycasts.addEventListener("click", () => {
     debugToggleRaycasts.classList.toggle("debug_enabled");
     console.log("toggling debug raycasts");
@@ -134,6 +134,11 @@ export function unPauseGame() {
          isGameLoopRunning = true;
     }
     
+}
+
+// called by terrain.js after building the map
+export function loadingDone() {
+    document.getElementById("loading_text").style.display = "none";
 }
 
 

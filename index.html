@@ -28,7 +28,7 @@
             top: 0px;
             right: 50px;
             color: white;
-            background: rgba(255, 2, 2, 0.5);
+            background: white(255, 2, 2, 0.5);
             padding: 5px;
             font-family: monospace;
             font-size: 12px;
@@ -49,7 +49,7 @@
             top: 70px;
             right: 50px;
             color: white;
-            background: rgba(255, 2, 2, 0.5);
+            background: white(255, 2, 2, 0.5);
             padding: 5px;
             font-family: monospace;
             font-size: 12px;
@@ -87,6 +87,17 @@
             top: 200px;
             font-size: 45px;
         }
+        #loading_text {
+            display: block;
+            position: absolute;
+            color: white;
+            background: gray;
+            border: 2px solid black;
+            left: 700px;
+            top: 200px;
+            font-size: 45px;
+            padding:10px;
+        }
         #biome_container {
             position: absolute;
             display: flex;
@@ -106,6 +117,7 @@
 </head>
 <body>
     <div id="pause_text">GAME PAUSED</div>
+    <div id="loading_text">LOADING TERRAIN...</div>
     <div id="biome_container"></div>
     <div id="debug_container">
         <button id="debug_toggle_grid">GRID</div>

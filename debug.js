@@ -12,8 +12,8 @@ export const debugSettings = {
     COLLIDERS: false,
     BIOME_COLORS: true,
     RAYCASTS: false,
-    CULLRAYS: false,
-    FRUSTUMCULL: false,
+    CULLRAYS: true,
+    FRUSTUMCULL: true,
 }
 
 cullRaysToggle(debugSettings.CULLRAYS);
@@ -60,7 +60,7 @@ export function biomeDebugOverlay(newBiomes = null) {
 }
 
 //#region Biome Color
-    function getBiomeColor(biome) { // this isa COPY of the one in voronoi. IT IS NOT THE SAME
+    function getBiomeColor(biome) { // this is a COPY of the one in voronoi. IT IS NOT THE SAME
 
         //if (biome !== undefined) console.log(biome);
 

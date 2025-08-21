@@ -1,6 +1,6 @@
 import { Entity } from '../entity.js'
 import { createTerrainMesh, loadTexture } from '../meshShapes.js';
-import { myShaders, workers } from '../main.js';
+import { myShaders, workers, loadingDone } from '../main.js';
 //import { generateSimplexNoise,  fractalNoise, fractalNoiseRaw } from './simplexNoise.js';
 //import { biomeData, weightFunctions } from './TerrainBiome/biomes.js';
 //import { BiomeBlender } from './biomeBlender.js';
@@ -101,6 +101,8 @@ export async function buildTerrain(gl) {
     }
 
     console.warn(`- Finished Building Terrain Chunks -`);
+
+    loadingDone(); // main.js function to turn off loading screen
 
     return chunks;
 }
